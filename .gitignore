@@ -3,3 +3,4 @@
 .git
 .gradle
 /build
+/bin
