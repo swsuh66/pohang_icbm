@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">  
+
+<mapper namespace="mars.icbm.reftb">
+
+	<select id="importList" parameterType="java.util.Map" resultType="java.util.Map">
+      
+      select 			 			
+			data_sq		as	"dataSq",
+			cust_name	as	"custNm",
+			admin_no	as	"adminNo",
+			addr		as	"addr",
+			addr_new	as	"addrNew",
+			loc_lng		as	"locLng",
+			loc_lat		as	"locLat",
+			business_name	as	"useType",
+			master_site_sq	as	"masterSiteSq",
+			master_site_nm	as	"masterSiteNm",
+			site_nm		as	"siteNm",
+			blk_nm		as	"blkNm",
+			set_years	as	"setYears",
+			read_responsi	as	"readOpr",
+			check_day	as	"checkDay",
+			meter_no	as	"meterNo",
+			pipe_diameter	as	"pipeDia",
+			ami_type	as	"amiType",
+			cust_phone	as	"custPhone",
+			sub_dev_no	as	"subDevNo",
+			dev_no		as	"devNo",
+			company_nm	as	"companyNm",
+			set_dt		as	"setDt",
+			token_key	as	"tokenKey",
+			ins_dt		as	"insDt",
+			to_char(ins_dt, 'yyyy-mm-dd') as "insDttStr",
+			flag		as	"flag"			
+		from
+			tb_m1_info_import 
+		where 
+      		master_site_sq = 0
+            
+    </select>
+    
+    
+    <select id="importCtnList" parameterType="java.util.Map" resultType="java.util.Map">
+      
+      select 			 			
+			data_sq		as	"dataSq",
+			
+			ami_type	as	"amiType",
+			cse_id		as	"cseId",
+			ctn			as	"ctn",
+			company_nm	as	"comNm",
+			set_dt		as	"setDt",
+			token_key	as	"tokenKey",
+			ins_dt		as	"insDt",			
+			flag		as	"flag",
+			master_site_sq	as	"masterSiteSq",
+			master_site_nm	as	"masterSiteNm"			
+		from
+			tb_m1_ctn_import 
+		where 
+      		master_site_sq = 0
+            
+    </select>
+    
+    <select id="importcustList" parameterType="java.util.Map" resultType="java.util.Map">
+      
+      select 			
+     '1' as	"dataSq",
+	 '1' as "adminNo",
+	 '1' as "tapGb", 
+	 '1' as "tapNo" 
+     
+    </select>
+    
+    <select id="selectAllChildAdmin" parameterType="java.util.Map" resultType="java.util.Map">
+      select '1234' as "admin_no",
+		     '5678' as "child_admin_id",
+		     'test' as "admin_nm",
+		     'test_child' as "child_admin_nm"
+    </select>
+	
+	
+	
+</mapper>

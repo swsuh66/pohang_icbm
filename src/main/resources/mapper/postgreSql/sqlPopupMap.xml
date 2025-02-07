@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="mars.icbm.map1.popup">
+	<sql id="pageHeader">
+		<![CDATA[
+		SELECT
+	         w.*
+	      FROM
+	         (
+	          SELECT
+	          ROW_NUMBER() OVER(PARTITION BY TT."pageNo") AS "rownum_",
+	          TT.*,
+	          COUNT(*) OVER(PARTITION BY "pageNo")        AS "totalCount"
+	          FROM
+	             (
+	             SELECT
+	                ROW_.* ,
+	                ${rnTop} / (${rnTop} - ${rnBottom} )   AS "pageNo",
+	                ${rnTop} - ${rnBottom}                 AS "pageSize"    
+	             FROM
+	                (
+		
+		]]> 
+	</sql>
+   
+   	<sql id="pageFooter">			
+      		) ROW_
+            <if test="sortField != null">
+				order by "${sortField}" <if test="sortOrder != null"> ${sortOrder} </if>
+			</if>
+             ) TT
+          ) w
+      <![CDATA[    
+      WHERE "rownum_" <= ${rnTop} AND "rownum_" > ${rnBottom} 
+      ]]> 
+           
+
+      order by "rownum_"      
+      
+   </sql>
+
+	<select id="popupPointList" parameterType="java.util.Map" resultType="java.util.Map">
+      <include refid="popupPointList_sql"/>      
+    </select>
+	
+	<select id="popupPointList_paging" parameterType="java.util.Map" resultType="java.util.Map">
+      <include refid="pageHeader"/>      
+      <include refid="popupPointList_sql"/>      
+      <include refid="pageFooter"/>           
+    </select>
+    
+	<sql id="popupPointList_sql">
+	
+			select
+			  (ROW_NUMBER() OVER()) AS "rownum",
+			  a.point_sq	 as "pointSq",	-- 장비 Sq
+			  a.site_sq   as "siteSq",			  
+			  a.site_nm0 as "siteNm0", --지자체
+        	  a.site_nm1 as "siteNm1", --사업소
+		      a.site_nm2 as "siteNm2", --구
+			  a.site_nm as "siteNm", --사이트 이름 (동)
+			  a.blk_sq	 as "blkSq",	-- 블럭 Sq
+			  a.set_years as "setYears", --수용가 대상년도
+			  a.cust_sq	 as "custSq",	-- 수용가 Sq
+			  a.use_cd	 as "useCd",	-- 사용코드 (0:점검, 1:사용중, 7:사용중지)
+			  case a.use_cd
+			    when '1' then '검침중'
+			    when '7' then '검침중지'
+			  end "useCdStr",
+			  a.check_day as "checkDay", --검침일
+			  a.admin_id	 as "adminId",	-- 검침관리코드
+			  a.cust_nm	 as "custNm",	-- 수용가 이름
+			  a.addr_old	 as "addrOld",	-- 구주소
+			  a.addr_new	 as "addrNew",	-- 도로명주소
+			  a.meter_no	 as "meterNo",	-- 미터번호
+			  a.use_type	 as "useType",	-- 업종 (가정용/일반용/학교용)
+			  a.pipe_dia	 as "pipeDia",	-- 관경
+			  a.blk_name1	 as "blkNm1",	-- 상위 블럭이름
+			  a.blk_name2	 as "blkNm2",	-- 중블럭이름
+			  a.blk_name as "blkNm",	-- 하위 블럭이름
+			  a.read_opr  as "readOpr",	-- 검침원
+			  a.check_day as "chkDay", --검침일
+			  a.cust_phone as "custPhone", --전화번호
+			  a.loc_lng	 as "locLng",	-- 위도
+			  a.loc_lat	 as "locLat",	-- 경도
+			  a.set_dt	 as "setDt",	-- ami 설치일
+			  to_char(a.set_dt, 'yyyy-mm-dd') as "setDtStr",
+			  a.p_remark	 as "pointRemark",	-- 비고
+			  a.ins_dt	 as "insDt",	-- 등록일시
+			  a.upd_dt	 as "updDt",	-- 수정일시,
+			  b.meas_dt   as "measDt",
+			  to_char(b.meas_dt, 'yyyy-mm-dd hh24:mi') as "measDtStr",
+			  trunc(b.accu_iv)   as "accuIv",
+			  b.adjst_os  as "adjstV",
+			  b.stat_cd   as "statCd",
+			  case position('1' in a.stat_cd)			  
+			      when 1 then '통신 장애'
+			      when 2 then '계량기 장애'
+			      when 3 then 'Q4 초과'
+			      when 4 then '역류'
+			      when 5 then '누수'		      		      
+			      when 6 then '정상'
+			      when 7 then '정상'
+			      when 8 then 'BAT'
+			      else '정상'
+			  end "statCdStr",		
+			  a.ami_type as "amiType",
+			  a.dev_no   as "devNo",
+			  a.sub_dev_no   as "subDevNo",
+			  b.raw_cnt_0d as "rawCnt_0d",
+			  b.term_cv_0d as "termCv_0d",
+			  b.raw_cnt_1d as "rawCnt_1d",
+			  b.term_cv_1d as "termCv_1d",
+			  b.raw_cnt_7d as "rawCnt_7d",
+			  b.term_cv_7d as "termCv_7d",
+			  b.raw_cnt_30d as "rawCnt_30d",
+			  b.term_cv_30d as "termCv_30d",
+			  b.delay_rcv as "delayRcv",
+			  b.bat2_iv as "bat2Iv",
+			  			  
+			  case
+		        when b.bat2_stat = '1' then '장애'
+		        when b.bat2_stat = '0' then '정상'		        
+		      end "bat2Stat",			  
+
+			  a.company_sq as "comSq",
+		      a.company_nm as "comNm",
+		      a.company_cd as "comCd",
+		      
+		      c.meas_dt as "leakMeasDt",			  			  
+			  to_char(c.meas_dt, 'yyyy-mm-dd hh24:mi') as "leakMeasDtStr",			  
+			  c.waterleak_flag as "leakFg",
+			  
+			  a.inform_cd as "informCd",
+			  
+			  a.send_cd as "sendCd",
+			  a.send_dt as "sendDt",
+			  b.temperature,
+			  a.img_src_gum,
+    		  a.img_src_bf,
+    		  a.img_src_af,
+    		  a.img_src_add
+		  from
+		    vi_m1_sv_point_list a
+		    left outer join vi_m1_sv_meas_now b on b.POINT_SQ = a.POINT_SQ
+		    left outer join tb_m1_meas_waterleak c on c.point_sq = a.point_sq
+		 where 1=1 
+		<if test="useCd != null">
+<!-- 	    	and a.use_cd = #{useCd} -->
+	    	and a.use_cd in ('1', '9')
+	    </if>
+		
+		<if test="statCd != null">
+	    	and position('1' in a.stat_cd) = #{statCd}::integer
+	    </if>
+	</sql>
+	
+</mapper>

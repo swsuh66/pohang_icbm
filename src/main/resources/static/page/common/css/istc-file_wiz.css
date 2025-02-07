@@ -1,0 +1,94 @@
+/* 로딩 overlay 스타일 */
+.loading-overlay {
+	z-index: 100000 !important;
+}
+
+/* 로딩 content 스타일 */
+.loading-overlay-content {
+	letter-spacing: 0 !important;
+}
+
+/* grid header selector 타입 일 시 폰트 스타일 */
+.table-header-selector {
+	/* color: white !important;
+	background: #29a3cc; */
+	font-weight: bolder;
+	width: 100%;
+}
+
+/* grid header 색 설정 */
+.jsgrid-header-cell.header-cell-white {
+	background: #ffffff;
+	border: 0px;
+}
+
+/* file grid header에 스크롤 바 삭제 */
+.file-grid .jsgrid-header-scrollbar {
+	overflow-y: hidden;
+}
+
+/* 모달 창 내에서의 특수 크기 지정 */
+.modal-dialog.modal-65size {
+	width: 65%;
+}
+
+/* 모달 창 내에서의 grid body 크기 조정 */
+.modal-dialog .file-grid .jsgrid-grid-body {
+	height: 150px !important;
+}
+
+/* 모달 창 내에서의 wizard css */
+.modal-dialog .wizard>.content {
+	min-height: 20em;
+}
+
+.modal-dialog .wizard>.content>.body {
+	width: 100%;
+}
+
+/* 기존 jquery step 배경을 제거 */
+.wizard>.content {
+	background: #fff;
+	border: 1px solid #eee;
+}
+
+/* wizard에 취소 버튼을 위치를 정의 */
+.wizard>.actions>ul.cancel {
+	float: left;
+}
+
+/* wizard에 취소 버튼의 스타일을 정의 */
+.wizard>.actions>ul.cancel>a {
+	background: #fff;
+	border: 1px solid #ccc;
+	color: black;	
+	cursor: pointer;
+}
+
+/* wizard 상단에 navigator를 클릭하지 못함 */
+.wizard .steps.clearfix li[role='tab']>a {
+	pointer-events:none;
+} 
+
+/* wizard 취소 옵션1의 스타일 (안씀).*/
+.jalert-button-1 {
+	margin: 0 10px 5px 0 !important;
+}
+
+/* wizard 취소 옵션2의 스타일 (안씀).*/
+.jalert-button-2 {
+	margin: 0 0 5px 0 !important;
+}
+
+.upload-hidden {
+	position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    border: 0;
+}
+
+

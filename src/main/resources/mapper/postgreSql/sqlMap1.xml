@@ -1,0 +1,4609 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="mars.icbm.map1">
+
+	<sql id="pageHeader">
+	<![CDATA[
+	SELECT
+         w.*
+      FROM
+         (
+          SELECT
+          ROW_NUMBER() OVER(PARTITION BY TT."pageNo") AS "rownum_",
+          TT.*,
+          COUNT(*) OVER(PARTITION BY "pageNo")        AS "totalCount"
+          FROM
+             (
+             SELECT
+                ROW_.* ,
+                ${rnTop} / (${rnTop} - ${rnBottom} )   AS "pageNo",
+                ${rnTop} - ${rnBottom}                 AS "pageSize"    
+             FROM
+                (
+	
+	]]> 
+	</sql>
+   
+   	<sql id="pageFooter">			
+      		) ROW_
+            <if test="sortField != null">
+				order by "${sortField}" <if test="sortOrder != null"> ${sortOrder} </if>
+			</if>
+             ) TT
+          ) w
+      <![CDATA[    
+      WHERE "rownum_" <= ${rnTop} AND "rownum_" > ${rnBottom} 
+      ]]> 
+           
+
+      order by "rownum_"      
+      
+   </sql>
+   
+   <select id="userInfo_paging" parameterType="java.util.Map" resultType="java.util.Map">
+   /*userInfo_paging*/
+      <include refid="pageHeader"/>      
+      <include refid="userInfo_sql"/>      
+      <include refid="pageFooter"/>           
+    </select>
+    
+    <select id="userInfo" parameterType="java.util.Map" resultType="java.util.Map">     
+	/*userInfo*/      
+      <include refid="userInfo_sql"/>                      
+    </select>
+  
+	<sql id="userInfo_sql">
+	
+		select
+			(ROW_NUMBER() OVER(order by ins_dt desc)) AS "rownum",
+			<!-- yscho --> 
+			site_sq as "siteSq", 
+			site_nm as "siteNm",
+			scco_cd as "sccoCd",
+			user_sq as "userSq",
+			user_nm as "userNm",
+			user_lv as "rollCd",
+			case user_lv
+			    when '1' then '검침원사용자'
+			    when '5' then '타사사용자'
+				when '7' then '준마스터사용자'
+				when '9' then '마스터사용자'
+			end "useCdStr",
+			user_id as "userId",
+			user_pwd as "userPwd",			
+			email as "email",
+			phone as "custPhone",
+			remark as "remark",			
+			site_path as "sitePath",
+			site_lv as "siteLv",
+			ins_dt as "insDt"
+		from 
+			vi_m1_sv_login			
+		where 1=1
+		  and use_cd = '1'
+		
+		<if test="userId != null"> 
+			and user_id = #{userId}						   
+		</if>
+		
+	</sql>
+	
+	<select id="blockList" parameterType="java.util.Map" resultType="java.util.Map">
+		select 
+			site_sq 	as "siteSq",
+			blk_sq		as "blkSq",
+			up_blk_sq 	as "parSq",
+			blk_cd 		as "blkCd",
+			blk_nm 		as "blkNm",			
+			"level" 		as "level",
+			leap 		as "leap" 
+		from vi_m1_sv_block_list
+		where
+			site_sq = #{siteSq}
+		
+		<if test="upBlkSq != null and lv != null">
+			 and blk_sq in (
+			    select blk_sq from fn_prj_blockes(#{upBlkSq}::integer, #{lv}::integer)
+			 )					 			
+		</if>
+		
+		order by blk_path  
+	</select>
+	
+	<select id="sitesList" parameterType="java.util.Map" resultType="java.util.Map">
+		select
+		  site_sq as "grpSeq",
+		  up_site_sq as "parSeq",
+		  site_nm as "grpName",
+		  site_nm as "siteName",
+		  site_path as "fullName",
+		  level as "lv"
+		from vi_m1_sv_site_list
+		order by site_sq
+	</select>
+
+	
+	<select id="rawDayList_paging" parameterType="java.util.Map" resultType="java.util.Map">
+      <include refid="pageHeader"/>      
+      <include refid="rawDayList_sql"/>      
+      <include refid="pageFooter"/>           
+    </select>
+    
+    <select id="rawDayList" parameterType="java.util.Map" resultType="java.util.Map">           
+      <include refid="rawDayList_sql"/>                      
+    </select>
+	
+	
+	<sql id="rawDayList_sql">
+		select
+          (ROW_NUMBER() OVER()) AS "rownum", 
+          b.point_sq	 as "pointSq",
+	      b.blk_name     as "blkNm",
+	      b.use_type     as "useType",
+	      b.pipe_dia     as "pipeDia",
+	      b.admin_id     as "adminId",
+		  b.cust_nm      as "custName",
+		  b.addr_new     as "addr",
+		  substr(b.read_opr,1,3)     as "readOpr",
+		  b.site_sq		 as "siteSq",
+		  b.dev_no		 as "devNo",
+		  b.meter_no	 as "meterNo",
+  	      a.iv_d1	     as "D01",
+	      a.iv_d2	     as "D02",
+	      a.iv_d3	     as "D03",
+	      a.iv_d4	     as "D04",
+	      a.iv_d5	     as "D05",
+	      a.iv_d6	     as "D06",
+	      a.iv_d7	     as "D07",
+	      a.iv_d8	     as "D08",
+	      a.iv_d9	     as "D09",
+	      a.iv_d10	     as "D10",
+	      a.iv_d11	     as "D11",
+	      a.iv_d12	     as "D12",
+	      a.iv_d13	     as "D13",
+	      a.iv_d14	     as "D14",
+	      a.iv_d15	     as "D15",
+	      a.iv_d16	     as "D16",
+	      a.iv_d17	     as "D17",
+	      a.iv_d18	     as "D18",
+	      a.iv_d19	     as "D19",
+	      a.iv_d20	     as "D20",
+	      a.iv_d21	     as "D21",
+	      a.iv_d22	     as "D22",
+	      a.iv_d23	     as "D23",
+	      a.iv_d24	     as "D24",
+	      a.iv_d25	     as "D25",
+	      a.iv_d26	     as "D26",
+	      a.iv_d27	     as "D27",
+	      a.iv_d28	     as "D28",
+	      a.iv_d29	     as "D29",
+	      a.iv_d30	     as "D30",
+	      a.iv_d31	     as "D31"
+		from
+			fn_meas_raw_for_day(to_date(#{baseDate}, 'yyyy-mm-dd')) a
+			right outer join vi_m1_sv_point_list b on a.point_sq = b.point_sq
+			
+		<trim prefix="WHERE" prefixOverrides="AND|OR">
+	         <choose>
+				<when test="upSiteSq != null and lv != null">
+					 and b.site_sq in (
+					    select site_sq from fn_prj_sites(#{upSiteSq}::integer, #{lv}::integer)
+					 )					 	
+				</when>
+				<when test="siteSq != null">
+					 and b.site_sq = #{siteSq}::integer		 	
+				</when>
+			</choose>			
+     	</trim>	
+     	
+     	<choose>
+			<when test="upBlkSq != null and lv != null">
+				 and b.blk_sq in (
+				    select blk_sq from fn_prj_blockes(#{upBlkSq}::integer, #{lv}::integer)
+				 )					 	
+			</when>
+			<when test="blkSq != null and blkSq != -2">
+				 and b.blk_sq = #{blkSq}::integer		 	
+			</when>							
+			<when test="blkSq != null and blkSq == -2">
+				 and b.blk_sq IS NULL		 	
+			</when>
+		</choose>
+     	
+		<choose>
+			<when test="comSq != null and comSq != -2">
+			and b.company_sq = #{comSq}::integer
+			</when>
+			<when test="comSq != null and comSq == -2">
+			and b.company_sq IS NULL
+			</when>
+		</choose>	      
+	    
+	     <choose>
+			<when test="amiType != null and !amiType.equals('-2')">
+			and b.ami_type = #{amiType}
+			</when>
+			<when test="amiType != null and amiType.equals('-2')">
+			and b.ami_type IS NULL
+			</when>
+		</choose>
+		
+		 <choose>
+			<when test="readOpr != null and !readOpr.equals('-2')">
+			and b.read_opr = #{readOpr}
+			</when>
+			<when test="readOpr != null and readOpr.equals('-2')">
+			and b.read_opr IS NULL
+			</when>
+		</choose>
+		
+		<choose>
+			<when test="chkDay != null and !chkDay.equals('-2')">
+			and b.check_day = #{chkDay}
+			</when>
+			<when test="chkDay != null and chkDay.equals('-2')">
+			and b.check_day IS NULL
+			</when>
+		</choose>
+		 
+	     <choose>
+			<when test="useType != null and !useType.equals('-2')">
+			and b.use_type = #{useType}
+			</when>
+			<when test="useType != null and useType.equals('-2')">
+			and b.use_type IS NULL
+			</when>
+		</choose>
+		
+		<choose>
+			<when test="setYears != null and !setYears.equals('-2')">
+			and b.set_years = #{setYears}
+			</when>
+			<when test="setYears != null and setYears.equals('-2')">
+			and b.set_years IS NULL
+			</when>
+		</choose>
+
+	     <choose>
+			<when test="pipeDia != null and pipeDia != -2">
+			and b.pipe_dia = #{pipeDia}::numeric
+			</when>
+			<when test="pipeDia != null and pipeDia == -2">
+			and b.pipe_dia is null
+			</when>
+		</choose>
+	    	and b.use_cd = '1'
+		<if test="statCd != null">
+	    	and position('1' in b.stat_cd) = #{statCd}::integer
+	    </if>
+		
+		<if test="pointSq != null">
+	    	and b.point_sq = #{pointSq}
+	    </if>
+	     <if test="leakFg != null">
+	    	AND b.waterleak_flag = #{leakFg}
+	     </if>
+	     
+	     <if test="sendCd != null">
+	    	AND b.send_cd = #{sendCd}
+	     </if>
+	     <!--  신규 필터 -->
+	     <if test='cust_nm != null and cust_nm != ""'>
+	       and b.cust_nm like  '%' || #{cust_nm} || '%'
+	     </if>
+	     <if test='admin_no != null and admin_no != ""'>
+	       and b.admin_id like  '%' || #{admin_no} || '%'
+	     </if>
+	     <if test='tap_gb != null and tap_gb != ""'>
+	       and b.tap_gb = #{tap_gb}
+	     </if>
+	     <if test='bungu_cd != null and bungu_cd != ""'>
+	       and b.bungu_cd = #{bungu_cd}
+	     </if>
+	     <if test='(addr_1 != null and addr_1 != "")'>
+	       and b.site_sq in (
+	       	  select site_sq from fn_prj_sites(#{addr_1} :: integer, '4' :: integer)
+	       )
+	     </if>
+	     <if test='addr != null and addr != ""'>
+	       and (b.addr_old like '%' || #{addr} || '%' 
+	        or  b.addr_new like '%' || #{addr} || '%')
+	     </if>
+
+	</sql>
+	
+	<select id="pointList" parameterType="java.util.Map" resultType="java.util.Map">
+      <include refid="pointList_sql"/>      
+    </select>
+	
+	<select id="pointList_paging" parameterType="java.util.Map" resultType="java.util.Map">
+      <include refid="pageHeader"/>      
+      <include refid="pointList_sql"/>      
+      <include refid="pageFooter"/>           
+    </select>
+	
+	
+	<sql id="pointList_sql">
+	
+			select
+			  (ROW_NUMBER() OVER()) AS "rownum",
+			  a.point_sq	 as "pointSq",	-- 장비 Sq
+			  a.site_sq   as "siteSq",			  
+			  a.site_nm0 as "siteNm0", --지자체
+        	  a.site_nm1 as "siteNm1", --사업소
+		      a.site_nm2 as "siteNm2", --구
+			  a.site_nm as "siteNm", --사이트 이름 (동)
+			  a.blk_sq	 as "blkSq",	-- 블럭 Sq
+			  a.set_years as "setYears", --수용가 대상년도
+			  a.cust_sq	 as "custSq",	-- 수용가 Sq
+			  a.use_cd	 as "useCd",	-- 사용코드 (0:점검, 1:사용중, 7:사용중지)
+			  case a.use_cd
+			    when '1' then '검침중'
+			    else '검침중지'
+			  end "useCdStr",
+			  a.check_day as "checkDay", --검침일
+			  a.admin_id	 as "adminId",	-- 검침관리코드
+			  a.cust_nm	 as "custNm",	-- 수용가 이름
+			  a.addr_old	 as "addrOld",	-- 구주소
+			  a.addr_new	 as "addrNew",	-- 도로명주소
+			  a.meter_no	 as "meterNo",	-- 미터번호
+			  a.use_type	 as "useType",	-- 업종 (가정용/일반용/학교용)
+			  a.pipe_dia	 as "pipeDia",	-- 관경
+			  a.blk_name1	 as "blkNm1",	-- 상위 블럭이름
+			  a.blk_name2	 as "blkNm2",	-- 중블럭이름
+			  a.blk_name as "blkNm",	-- 하위 블럭이름
+			  a.read_opr  as "readOpr",	-- 검침원
+			  a.check_day as "chkDay", --검침일
+			  a.cust_phone as "custPhone", --전화번호
+			  a.loc_lng	 as "locLng",	-- 위도
+			  a.loc_lat	 as "locLat",	-- 경도
+			  a.set_dt	 as "setDt",	-- ami 설치일
+			  to_char(a.set_dt, 'yyyy-mm-dd') as "setDtStr",
+			  a.p_remark	 as "pointRemark",	-- 비고
+			  a.ins_dt	 as "insDt",	-- 등록일시
+			  a.upd_dt	 as "updDt",	-- 수정일시,
+			  b.meas_dt   as "measDt",
+			  to_char(b.meas_dt, 'yyyy-mm-dd hh24:mi') as "measDtStr",
+			  trunc(b.accu_iv)   as "accuIv",
+			  b.adjst_os  as "adjstV",
+			  b.stat_cd   as "statCd",
+			  case position('1' in a.stat_cd)			  
+			      when 1 then '통신 장애'
+			      when 2 then '계량기 장애'
+			      when 3 then 'Q4 초과'
+			      when 4 then '역류'
+			      when 5 then '누수'		      		      
+			      when 6 then '정상'
+			      when 7 then '정상'
+			      when 8 then 'BAT'
+			      else '정상'
+			  end "statCdStr",		
+			  a.ami_type as "amiType",
+			  a.dev_no   as "devNo",
+			  a.sub_dev_no   as "subDevNo",
+			  b.raw_cnt_0d as "rawCnt_0d",
+			  b.term_cv_0d as "termCv_0d",
+			  b.raw_cnt_1d as "rawCnt_1d",
+			  b.term_cv_1d as "termCv_1d",
+			  b.raw_cnt_7d as "rawCnt_7d",
+			  b.term_cv_7d as "termCv_7d",
+			  b.raw_cnt_30d as "rawCnt_30d",
+			  b.term_cv_30d as "termCv_30d",
+			  b.delay_rcv as "delayRcv",
+			  b.bat2_iv as "bat2Iv",
+			  			  
+			  case
+		        when b.bat2_stat = '1' then '장애'
+		        when b.bat2_stat = '0' then '정상'		        
+		      end "bat2Stat",			  
+
+			  a.company_sq as "comSq",
+		      a.company_nm as "comNm",
+		      a.company_cd as "comCd",
+		      
+			  a.inform_cd as "informCd",
+			  
+			  a.send_cd as "sendCd",
+			  a.send_dt as "sendDt",
+			  b.temperature,
+			  a.img_src_gum,
+    		  a.img_src_bf,
+    		  a.img_src_af,
+    		  a.img_src_add,
+			  a.note
+		  from
+		    vi_m1_sv_point_list a
+		    left outer join vi_m1_sv_meas_now b on b.POINT_SQ = a.POINT_SQ
+		    
+		 <trim prefix="WHERE" prefixOverrides="AND|OR">
+	         <choose>
+				<when test="upSiteSq != null and lv != null">
+					 and a.site_sq in (
+					    select site_sq from fn_prj_sites(#{upSiteSq}::integer, #{lv}::integer)
+					 )					 	
+				</when>
+				<when test="siteSq != null">
+					 and a.site_sq = #{siteSq}::integer		 	
+				</when>							
+			</choose>
+     	</trim>	
+     	
+     	<choose>
+			<when test="upBlkSq != null and lv != null">
+				 and a.blk_sq in (
+				    select blk_sq from fn_prj_blockes(#{upBlkSq}::integer, #{lv}::integer)
+				 )					 	
+			</when>
+			<when test="blkSq != null and blkSq != -2">
+				 and a.blk_sq = #{blkSq}::integer		 	
+			</when>							
+			<when test="blkSq != null and blkSq == -2">
+				 and a.blk_sq IS NULL		 	
+			</when>
+		</choose>
+     	
+		<choose>
+			<when test="comSq != null and comSq != -2">
+			and a.company_sq = #{comSq}::integer
+			</when>
+			<when test="comSq != null and comSq == -2">
+			and a.company_sq IS NULL
+			</when>
+		</choose>	      
+	    
+	     <choose>
+			<when test="amiType != null and !amiType.equals('-2')">
+			and a.ami_type = #{amiType}
+			</when>
+			<when test="amiType != null and amiType.equals('-2')">
+			and a.ami_type IS NULL
+			</when>
+		</choose>
+		
+		 <choose>
+			<when test="readOpr != null and !readOpr.equals('-2')">
+			and a.read_opr = #{readOpr}
+			</when>
+			<when test="readOpr != null and readOpr.equals('-2')">
+			and a.read_opr IS NULL
+			</when>
+		</choose>
+		
+		<choose>
+			<when test="chkDay != null and !chkDay.equals('-2')">
+			and a.check_day = #{chkDay}
+			</when>
+			<when test="chkDay != null and chkDay.equals('-2')">
+			and a.check_day IS NULL
+			</when>
+		</choose>
+		 
+	     <choose>
+			<when test="useType != null and !useType.equals('-2')">
+			and a.use_type = #{useType}
+			</when>
+			<when test="useType != null and useType.equals('-2')">
+			and a.use_type IS NULL
+			</when>
+		</choose>
+		
+		<choose>
+			<when test="setYears != null and !setYears.equals('-2')">
+			and a.set_years = #{setYears}
+			</when>
+			<when test="setYears != null and setYears.equals('-2')">
+			and a.set_years IS NULL
+			</when>
+		</choose>
+
+	     <choose>
+			<when test="pipeDia != null and pipeDia != -2">
+			and a.pipe_dia = #{pipeDia}::numeric
+			</when>
+			<when test="pipeDia != null and pipeDia == -2">
+			and a.pipe_dia is null
+			</when>
+		</choose>
+		<if test="statCd != null">
+	    	and position('1' in a.stat_cd) = #{statCd}::integer
+	    </if>
+		
+		<if test="pointSq != null">
+	    	and a.point_sq = #{pointSq}
+	    </if>
+	    
+	    <if test="searchParamList != null">
+		    <foreach collection="searchParamList" item="item" index="index" open="AND (" close=")" separator="OR ">
+		    	(
+		    		a.cust_nm like '%${item}%'
+			    	OR a.admin_id like '%${item}%'
+			    	OR a.addr_new like '%${item}%'
+		    	)
+		    </foreach>
+	    </if>
+	     <if test="leakFg != null">
+	    	AND c.waterleak_flag = #{leakFg}
+	     </if>
+	     
+	     <if test="sendCd != null">
+	    	AND a.send_cd = #{sendCd}
+	     </if>
+	</sql>
+	
+	
+	
+	
+	
+	
+	<select id="settingList" parameterType="java.util.Map" resultType="java.util.Map">
+	/*settingList*/
+      <include refid="settingList_sql"/>      
+    </select>
+	
+	<select id="settingList_paging" parameterType="java.util.Map" resultType="java.util.Map">
+	/*settingList_paging*/
+      <include refid="pageHeader"/>      
+      <include refid="settingList_sql"/>      
+      <include refid="pageFooter"/>           
+    </select>
+	
+	
+	<sql id="settingList_sql">
+		select
+			(ROW_NUMBER() OVER(order by a.admin_id)) AS "rownum",
+			a.point_sq	 as "pointSq",	-- 장비 Sq
+			a.site_sq   as "siteSq",
+			a.site_nm0 as "siteNm0", --지자체
+			a.site_nm1 as "siteNm1", --사업소
+			a.site_nm2 as "siteNm2", --구
+			a.site_nm as "siteNm", --사이트 이름 (동)
+			a.blk_sq	 as "blkSq",	-- 블럭 Sq
+			a.cust_sq	 as "custSq",	-- 수용가 Sq
+			a.use_cd	 as "useCd",	-- 사용코드 (0:점검, 1:사용중, 7:사용중지)
+			case a.use_cd
+			when '1' then '검침중'
+			else '검침중지'
+			end "useCdStr",
+			a.admin_id	 as "adminId",	-- 검침관리코드
+			a.cust_nm	 as "custNm",	-- 수용가 이름
+			a.addr_old	 as "addrOld",	-- 구주소
+			a.addr_new	 as "addrNew",	-- 도로명주소
+			a.meter_no	 as "meterNo",	-- 미터번호
+			a.use_type	 as "useType",	-- 업종 (가정용/일반용/학교용)
+			a.pipe_dia	 as "pipeDia",	-- 관경
+			a.blk_name1	 as "blkNm1",	-- 상위 블럭이름
+			a.blk_name2	 as "blkNm2",	-- 중블럭이름
+			a.blk_name as "blkNm",	-- 하위 블럭이름
+			a.read_opr  as "readOpr",	-- 검침원
+			a.check_day as "chkDay", --검침일
+			a.cust_phone as "custPhone", --전화번호
+			a.loc_lng	 as "locLng",	-- 위도
+			a.loc_lat	 as "locLat",	-- 경도
+			a.set_dt	 as "setDt",	-- ami 설치일
+			to_char(a.set_dt, 'yyyy-mm-dd') as "setDtStr",
+			a.p_remark	 as "pointRemark",	-- 비고
+			a.ins_dt	 as "insDt",	-- 등록일시
+			a.upd_dt	 as "updDt",	-- 수정일시,
+			a.ami_type2 as "amiType",
+			a.dev_no2   as "devNo",
+			a.sub_dev_no2   as "subDevNo",
+			a.company_sq2 as "comSq",
+			a.company_nm2 as "comNm",
+			a.company_cd as "comCd",
+			a.inform_cd as "informCd",
+			a.send_cd as "sendCd",
+			a.send_dt as "sendDt",
+			a.note
+		from (
+		  select
+				a.*,
+				a.dev_no dev_no2,
+				a.sub_dev_no sub_dev_no2,
+				a.company_nm_tmp company_nm2,
+				a.company_sq_tmp company_sq2,
+				a.ami_type  ami_type2
+		    from (
+				select a.*, a.company_nm as company_nm_tmp, a.company_sq as company_sq_tmp 
+				from vi_m1_sv_point_list a
+				where 1=1
+				<choose>
+					<when test="upSiteSq != null and lv != null">
+						and a.site_sq in (
+							select site_sq from fn_prj_sites(#{upSiteSq}::integer, #{lv}::integer)
+						)					 	
+					</when>
+					<when test="siteSq != null">
+						and a.site_sq = #{siteSq}::integer		 	
+					</when>							
+				</choose>
+			) a
+		) a
+		where
+		  1=1
+     	<choose>
+			<when test="upBlkSq != null and lv != null">
+				 and a.blk_sq in (
+				    select blk_sq from fn_prj_blockes(#{upBlkSq}::integer, #{lv}::integer)
+				 )					 	
+			</when>
+			<when test="blkSq != null and blkSq != -2">
+				 and a.blk_sq = #{blkSq}::integer		 	
+			</when>							
+			<when test="blkSq != null and blkSq == -2">
+				 and a.blk_sq IS NULL		 	
+			</when>
+		</choose>
+     	
+		<choose>
+			<when test="comSq != null and comSq != -2">
+			and a.company_sq2 = #{comSq}::integer
+			</when>
+			<when test="comSq != null and comSq == -2">
+			and a.company_sq2 IS NULL
+			</when>
+		</choose>	      
+	    
+	     <choose>
+			<when test="amiType != null and !amiType.equals('-2')">
+			and a.ami_type2 = #{amiType}
+			</when>
+			<when test="amiType != null and amiType.equals('-2')">
+			and a.ami_type2 IS NULL
+			</when>
+		</choose>
+		
+		 <choose>
+			<when test="readOpr != null and !readOpr.equals('-2')">
+			and a.read_opr = #{readOpr}
+			</when>
+			<when test="readOpr != null and readOpr.equals('-2')">
+			and a.read_opr IS NULL
+			</when>
+		</choose>
+		
+		<choose>
+			<when test="chkDay != null and !chkDay.equals('-2')">
+			and a.check_day = #{chkDay}
+			</when>
+			<when test="chkDay != null and chkDay.equals('-2')">
+			and a.check_day IS NULL
+			</when>
+		</choose>
+		 
+	     <choose>
+			<when test="useType != null and !useType.equals('-2')">
+			and a.use_type = #{useType}
+			</when>
+			<when test="useType != null and useType.equals('-2')">
+			and a.use_type IS NULL
+			</when>
+		</choose>
+		
+		<choose>
+			<when test="setYears != null and !setYears.equals('-2')">
+			and a.set_years = #{setYears}
+			</when>
+			<when test="setYears != null and setYears.equals('-2')">
+			and a.set_years IS NULL
+			</when>
+		</choose>
+
+	     <choose>
+			<when test="pipeDia != null and pipeDia != -2">
+			and a.pipe_dia = #{pipeDia}::numeric
+			</when>
+			<when test="pipeDia != null and pipeDia == -2">
+			and a.pipe_dia is null
+			</when>
+		</choose>
+		
+		<if test='useCd != null and useCd != ""'>
+	    	and a.use_cd = #{useCd}
+	    </if>
+		
+		<if test="statCd != null">
+	    	and position('1' in a.stat_cd) = #{statCd}::integer
+	    </if>
+		
+		<if test="pointSq != null">
+	    	and a.point_sq = #{pointSq}
+	    </if>
+		 
+		<if test="searchParamList != null">
+		    <foreach collection="searchParamList" item="item" index="index" open="AND (" close=")" separator="OR ">
+		    	<choose>
+				    <when test="searchOption != null and searchOption == 0">
+			        	
+			        	(
+				        	a.cust_nm like '%${item}%'
+					    	OR a.admin_id like '%${item}%'
+					    	OR a.addr_new like '%${item}%'
+					    	
+				    	)
+			        </when>	
+			        <when test="searchOption == null and item != null">
+			        	 
+			        	(
+				        	a.cust_nm like '%${item}%'
+					    	OR a.admin_id like '%${item}%'
+					    	OR a.addr_new like '%${item}%'
+					    	
+				    	)
+			        </when>	   
+			         <when test="searchOption != null and searchOption == 1">
+			        	
+			        	(
+				        	a.dev_no2 like '%${item}%'
+				        	OR a.sub_dev_no2 like '%${item}%'			    	
+				        	OR a.meter_no like '%${item}%'
+				    	)
+			        </when>	        
+		        </choose>
+		    	
+		    </foreach>
+	    </if> 
+	     <if test="leakFg != null">
+	    	AND c.waterleak_flag = #{leakFg}
+	     </if>
+	     
+	     <if test="sendCd != null">
+	    	AND a.send_cd = #{sendCd}
+	     </if>
+	     
+	     <!--  신규 필터 -->
+	     <if test='cust_nm != null and cust_nm != ""'>
+	       and a.cust_nm like  '%' || #{cust_nm} || '%'
+	     </if>
+	     <if test='admin_no != null and admin_no != ""'>
+	       and a.admin_id like  '%' || #{admin_no} || '%'
+	     </if>
+	     <if test='addr != null and addr != ""'>
+	       and (a.addr_old like '%' || #{addr} || '%' 
+	        or  a.addr_new like '%' || #{addr} || '%')
+	     </if>
+		 <if test='meter_no != null and meter_no != ""'>
+	       and (
+			   a.sub_dev_no like '%' || #{meter_no} || '%' 
+			or a.dev_no like '%' || #{meter_no} || '%' 
+			or a.meter_no like '%' || #{meter_no} || '%' 
+		   )
+	     </if>
+	</sql>
+	
+	<select id="selectRatio" parameterType="java.util.Map" resultType="java.util.Map">
+		with tb_t as (
+		
+		  select
+		    b.point_sq, a.raw_cnt
+		  from
+		    vi_m1_sv_meas_day a
+		    right join (
+		      select b.* from vi_m1_sv_point_list b
+	      	<trim prefix="WHERE" prefixOverrides="AND|OR">
+	         	<choose>
+					<when test="upSiteSq != null and lv != null">
+						 and b.site_sq in (
+						    select site_sq from fn_prj_sites(#{upSiteSq}::integer, #{lv}::integer)
+						 )
+					</when>
+					<when test="siteSq != null">
+						 and b.site_sq = #{siteSq}::integer
+					</when>
+				</choose>
+	     	</trim>
+		  ) b on b.point_sq = a.point_sq
+		  <![CDATA[
+			  and a.meas_dt >= date_trunc('days', now()) - (#{day}::text || ' days')::interval		  
+			  and a.meas_dt < date_trunc('days', now())
+		  ]]>
+		
+		),
+		tb_total_t as (
+		  select point_sq, count(*) cnt from tb_t where raw_cnt is not null group by point_sq
+		),
+		tb_result_t as (
+		  select
+		    a.point_sq,
+		    case
+		      when a.t_ratio - MOD(a.t_ratio::integer, 10) <![CDATA[<]]>  80 or t_ratio is null then 0
+		      else a.t_ratio - MOD(a.t_ratio::integer, 10)
+		    end t_ratio
+		  from (
+		
+		    select
+		      point_sq,
+		      trunc((sum(raw_cnt)::float/(#{day}*24)::float)*100) t_ratio
+		    from
+		      tb_t
+		    where
+		      raw_cnt is not null
+		    group by point_sq
+		
+		  ) a
+		),
+		tb_total_d as (
+		  select point_sq, count(*) cnt from tb_t group by point_sq
+		),
+		tb_result_d as (
+		    select
+		      point_sq,
+		      case
+		        when d_ratio <![CDATA[<]]>  80 or d_ratio is null then 0
+		        else d_ratio
+		      end d_ratio
+		    from (
+		
+		      select
+		        a.point_sq,
+		        trunc(b.not_null_cnt::float / a.cnt::float) * 100 d_ratio
+		      from
+		       tb_total_d a
+		       left join (
+		        select point_sq, count(*) not_null_cnt from tb_t where raw_cnt is not null group by point_sq
+		       ) b on b.point_sq = a.point_sq
+		
+		   ) a
+		)
+		select
+		  *
+		from (
+		  select d_ratio as ratio, count(*) cnt, '1'::text as type, 2::integer as indexOf from tb_result_d group by d_ratio
+		  union all
+		  select null as ratio, count(*), '0'::text as type, 2::integer as indexOf from tb_total_d a
+		  union all
+		  select t_ratio as ratio, count(*) cnt, '1'::text as type, 1::integer as indexOf from tb_result_t group by t_ratio
+		  union all
+		  select null as ratio, count(*), '0'::text as type, 1::integer as indexOf from tb_total_t
+		) a
+		<trim prefix="WHERE" prefixOverrides="AND|OR">
+	       	<if test="indexOf != null">
+				 a.indexOf = #{indexOf}
+			</if>
+    	</trim>
+
+
+
+	</select>
+	
+	<select id="decreaseList_paging" parameterType="java.util.Map" resultType="java.util.Map">
+      <include refid="pageHeader"/>      
+      <include refid="decreaseList_sql"/>      
+      <include refid="pageFooter"/>           
+    </select>
+	
+	<select id="decreaseList" parameterType="java.util.Map" resultType="java.util.Map">
+      <include refid="decreaseList_sql"/>      
+    </select>
+	
+	
+	<sql id="decreaseList_sql">
+
+		select
+		  (ROW_NUMBER() OVER()) AS "rownum",
+		  a.point_sq	 as "pointSq",	-- 장비 Sq
+		  a.site_sq   as "siteSq",
+		  a.site_nm0  as "siteNm0",
+		  a.site_nm  as "siteNm",
+		  a.blk_sq	 as "blkSq",	-- 블럭 Sq
+		  a.use_cd	 as "useCd",	-- 사용코드 (0:점검, 1:사용중, 7:사용중지)
+
+		  case a.use_cd
+		    when '1' then '검침중'
+		    else '검침중지'
+		  end "useCdStr",
+
+		  a.use_type as "useType",
+		  a.cust_phone as "custPhone",
+
+		  a.admin_id	 as "adminId",	-- 검침관리코드
+		  a.cust_nm	 as "custNm",	-- 수용가 이름
+		  a.addr_new	 as "addrNew",	-- 도로명주소
+		  a.use_type	 as "useType",	-- 업종 (가정용/일반용/학교용)
+		  a.blk_name1	 as "blkNm1",	-- 상위 블럭이름
+		  a.blk_name2	 as "blkNm2",	-- 중블럭이름
+		  a.blk_name as "blkNm",	-- 하위 블럭이름
+		  a.read_opr  as "readOpr",	-- 검침원
+		  a.pipe_dia	 as "pipeDia",	-- 관경
+		  a.dev_no		 as "devNo",
+		  a.meter_no	 as "meterNo",
+
+		  a.send_cd as "sendCd",
+
+		  b.meas_dt as "decreaseMeasDt",
+		  b.term_cv as "termCv",
+		  b.std_v as "stdV",
+		  to_char(b.meas_dt, 'yyyy-mm-dd hh24:mi') as "decreaseMeasDtStr"
+
+		from
+		  vi_m1_sv_point_list a
+		  join tb_m1_meas_decrease b on b.point_sq = a.point_sq
+		  left join tb_m1_decrease_setting d on d.site_sq = a.site_sq
+		<trim prefix="WHERE" prefixOverrides="AND|OR">
+	         <choose>
+				<when test="upSiteSq != null and lv != null">
+					 and a.site_sq in (
+					    select site_sq from fn_prj_sites(#{upSiteSq}::integer, #{lv}::integer)
+					 )					 	
+				</when>
+				<when test="siteSq != null">
+					 and a.site_sq = #{siteSq}::integer		 	
+				</when>							
+			</choose>
+     	</trim>	
+     	
+     	<choose>
+			<when test="upBlkSq != null and lv != null">
+				 and a.blk_sq in (
+				    select blk_sq from fn_prj_blockes(#{upBlkSq}::integer, #{lv}::integer)
+				 )					 	
+			</when>
+			<when test="blkSq != null and blkSq != -2">
+				 and a.blk_sq = #{blkSq}::integer		 	
+			</when>							
+			<when test="blkSq != null and blkSq == -2">
+				 and a.blk_sq IS NULL		 	
+			</when>
+		</choose>
+     	
+		<choose>
+			<when test="comSq != null and comSq != -2">
+			and a.company_sq = #{comSq}::integer
+			</when>
+			<when test="comSq != null and comSq == -2">
+			and a.company_sq IS NULL
+			</when>
+		</choose>	      
+	    
+	     <choose>
+			<when test="amiType != null and !amiType.equals('-2')">
+			and a.ami_type = #{amiType}
+			</when>
+			<when test="amiType != null and amiType.equals('-2')">
+			and a.ami_type IS NULL
+			</when>
+		</choose>
+		
+		 <choose>
+			<when test="readOpr != null and !readOpr.equals('-2')">
+			and a.read_opr = #{readOpr}
+			</when>
+			<when test="readOpr != null and readOpr.equals('-2')">
+			and a.read_opr IS NULL
+			</when>
+		</choose>
+		
+		<choose>
+			<when test="chkDay != null and !chkDay.equals('-2')">
+			and a.check_day = #{chkDay}
+			</when>
+			<when test="chkDay != null and chkDay.equals('-2')">
+			and a.check_day IS NULL
+			</when>
+		</choose>
+	     
+	     <choose>
+			<when test="useType != null and !useType.equals('-2')">
+			and a.use_type = #{useType}
+			</when>
+			<when test="useType != null and useType.equals('-2')">
+			and a.use_type IS NULL
+			</when>
+		</choose>
+		
+		<choose>
+			<when test="setYears != null and !setYears.equals('-2')">
+			and a.set_years = #{setYears}
+			</when>
+			<when test="setYears != null and setYears.equals('-2')">
+			and a.set_years IS NULL
+			</when>
+		</choose>
+
+	     <choose>
+			<when test="pipeDia != null and pipeDia != -2">
+			and a.pipe_dia = #{pipeDia}::numeric
+			</when>
+			<when test="pipeDia != null and pipeDia == -2">
+			and a.pipe_dia is null
+			</when>
+		</choose>
+		
+		and	a.use_cd = '1'
+		
+		<if test="statCd != null">
+    		and position('1' in a.stat_cd) = #{statCd}::integer
+   		 </if>
+		
+		<if test="pointSq != null">
+	    	and a.point_sq = #{pointSq}
+	    </if>
+	    <if test="searchParamList != null">
+		    <foreach collection="searchParamList" item="searchParam" index="index" open="AND (" close=")" separator="OR ">
+		    	<choose>
+				    <when test="searchOption != null and searchOption == 0">
+			        	(
+				        	a.cust_nm like '%${searchParam}%'
+					    	OR a.admin_id like '%${searchParam}%'
+					    	OR a.addr_new like '%${searchParam}%'
+					    	
+				    	)
+			        </when>	
+			        <when test="searchOption == null and searchParam != null">
+			        	(
+				        	a.cust_nm like '%${searchParam}%'
+					    	OR a.admin_id like '%${searchParam}%'
+					    	OR a.addr_new like '%${searchParam}%'
+					    	
+				    	)
+			        </when>	   
+			         <when test="searchOption != null and searchOption == 1">
+			        	(
+				        	a.dev_no like '%${searchParam}%'			    	
+				        	OR a.meter_no like '%${searchParam}%'
+				    	)
+			        </when>	        
+		        </choose>
+		    	
+		    </foreach>
+	    </if>
+	     
+		and b.flag = '1'
+	    and date_trunc('day', b.upd_dt) = date_trunc('day', now())
+		
+
+	</sql>
+	
+	
+	<insert id="insertUser" parameterType="java.util.Map">
+		
+		<selectKey resultType="java.util.HashMap" keyProperty="userSq" order="BEFORE">
+			SELECT nextval('tb_m1_info_user_user_sq_seq') as "userSq"
+		</selectKey>
+		
+		insert into tb_m1_info_user (
+		  user_sq,
+		  site_sq,
+		  user_id,
+		  user_lv,
+		  user_nm,
+		  user_pwd,
+		  email,
+		  phone,
+		  use_cd,
+		  ins_dt,
+		  upt_dt
+		)
+		values (
+		  #{userSq}::integer,
+		  #{siteSq}::integer,
+		  #{userId},
+		  #{rollCd},
+		  #{userNm},
+		  #{userPwd},
+		  #{email},
+		  #{custPhone},
+		  '1',
+		  now(),
+		  now()
+		)
+				
+		
+	</insert>
+	
+	<update id="updateUser" parameterType="java.util.Map">
+		update tb_m1_info_user set
+			  user_id = #{userId},
+			  user_nm = #{userNm},
+			  user_lv = #{rollCd},
+			  email   = #{email},
+			  phone   = #{custPhone},
+			  site_sq = #{siteSq}::integer
+		where user_sq = #{userSq}::integer	
+	</update>
+	
+	<update id="updatePwd" parameterType="java.util.Map">
+		update tb_m1_info_user set
+			  user_pwd = #{userPwd}			  
+		where user_sq = #{userSq}::integer	
+	</update>
+	
+	<update id="updateSendCd" parameterType="java.util.Map">
+		update tb_m1_info_point set
+		       send_cd	 = #{sendCd}		       
+		 where point_sq = #{pointSq}::integer
+	</update>
+	
+	 <update id="updateInformCd" parameterType="java.util.Map">
+		update tb_m1_info_point set
+		       inform_cd = #{informCd}		       
+		 where point_sq = #{pointSq}
+	</update>
+	
+	<update id="removeNbiotMapping" parameterType="java.util.Map">
+		begin;
+	
+		update tb_m1_cmap_device set
+			point_sq = null
+		where
+			point_sq = #{pointSq}::integer;
+		
+		
+		
+		commit;	
+			
+	</update>
+	
+	<update id="removeLoraMapping" parameterType="java.util.Map">
+	    begin;
+	    
+		update tb_m1_cmap_device set
+			point_sq = null			
+		where
+			point_sq = #{pointSq}::integer
+	    
+		commit;
+	</update>
+	
+	<insert id="updateNbiotMapping" parameterType="java.util.Map">
+	
+		<selectKey resultType="java.util.HashMap" keyProperty="siteSq" order="BEFORE">
+			select site_sq as "siteSq" from vi_m1_sv_point_list where point_sq = #{pointSq}::integer
+		</selectKey>
+		
+		update tb_m1_cmap_device set
+			point_sq = #{pointSq}::integer,	
+		where
+			sub_dev_no = #{subDevNo} and dev_no = #{devNo}			
+	</insert>
+	
+	<insert id="updateLoraMapping" parameterType="java.util.Map">
+	
+		<selectKey resultType="java.util.HashMap" keyProperty="siteSq" order="BEFORE">
+			select site_sq as "siteSq" from vi_m1_sv_point_list where point_sq = #{pointSq}::integer
+		</selectKey>
+		
+		update tb_m1_cmap_device set
+			point_sq = #{pointSq}::integer,
+		where
+			sub_dev_no = #{subDevNo} and dev_no = #{devNo} 
+	</insert>
+	
+	<update id="updateUseCd" parameterType="java.util.Map">
+		update tb_m1_info_point set
+			use_cd = #{useCd}			
+		where
+			point_sq = #{pointSq}
+	</update>
+	
+	<update id="updateAdminId" parameterType="java.util.Map">
+	/* 수용가정보 변경 버튼*/
+	  begin;
+		update tb_m1_info_customer set
+			cust_name  = #{adminNmNew}
+			,addr = #{modalAddr}
+			,addr_new = #{modalAddrNew}
+			,meter_no = #{meterNoNew}
+			,pipe_diameter = nullif(#{new_pipe}, '') ::integer
+			,business_name = #{new_use_type}
+			,read_responsi = #{new_read_opr}
+			,check_day     = nullif(#{new_check_day}, '') ::integer	
+			,udt_dt        = now()			
+		where
+			cust_sq = #{custSq}::integer;
+
+
+		update tb_m1_cmap_device
+		   set dev_no = #{new_dev_no}
+		     , sub_dev_no = #{new_sub_dev_no}
+			 , upd_dt = now()
+			 , company_sq = (select company_sq  from tb_m1_info_company where 1=1 and company_nm = #{newCompany} limit 1)
+		 where 1=1 
+		   and point_sq = #{pointSq}::integer;
+		commit;
+	</update>
+	
+	
+	<select id="noUseList" parameterType="java.util.Map" resultType="java.util.Map">           
+      <include refid="noUse_sql"/>            
+    </select>
+
+    
+    <select id="noUseList_paging" parameterType="java.util.Map" resultType="java.util.Map">
+      <include refid="pageHeader"/>
+      <include refid="noUse_sql"/>
+      <include refid="pageFooter"/>
+    </select>
+    
+    <sql id="noUse_sql">
+    	
+		with tb_t as (
+
+		  select
+		    point_sq,
+		    max(flow_max) flow_max
+		  from
+		    vi_m1_sv_meas_day
+		  where
+		     meas_dt  <![CDATA[ > ]]> now() - (#{noUseObDays}::text || ' days')::interval
+		     and meas_dt <![CDATA[ <= ]]> now()
+		  GROUP BY point_sq
+		
+		)
+		select
+		  (ROW_NUMBER() OVER()) AS "rownum",
+		  a.point_sq 	  as "pointSq",
+		  a.site_nm0	  as "siteNm0",
+		  a.site_nm	  	  as "siteNm",
+		  a.admin_id	  as "adminId",	--
+		  a.cust_nm  	  as "custNm",
+		  a.addr_new  	  as "addrNew",
+		  a.blk_sq	 	  as "blkSq",	-- 블럭 Sq
+		  a.blk_name	  as "blkNm",	-- 블럭 이름
+		  a.pipe_dia	  as "pipeDia",	-- 관경
+		  a.use_type	  as "useType",	-- 업종 (가정용/일반용/학교용)
+		  a.read_opr  	  as "readOpr",	-- 검침원
+		  a.dev_no		  as "devNo",
+		  a.meter_no	  as "meterNo",
+		  a.flag
+		from (
+		select
+		  a.*,
+		  
+		  CASE
+		  	<![CDATA[
+		      WHEN a.pipe_dia > 0   and a.pipe_dia <= 15  and b.flow_max < c.q1_15  THEN '1'
+		      WHEN a.pipe_dia > 15  and a.pipe_dia <= 20  and b.flow_max < c.q1_20  THEN '1'
+		      WHEN a.pipe_dia > 20  and a.pipe_dia <= 25  and b.flow_max < c.q1_25  THEN '1'
+		      WHEN a.pipe_dia > 25  and a.pipe_dia <= 32  and b.flow_max < c.q1_32  THEN '1'
+		      WHEN a.pipe_dia > 32  and a.pipe_dia <= 40  and b.flow_max < c.q1_40  THEN '1'
+		      WHEN a.pipe_dia > 40  and a.pipe_dia <= 50  and b.flow_max < c.q1_50  THEN '1'
+		      WHEN a.pipe_dia > 50  and a.pipe_dia <= 75  and b.flow_max < c.q1_75  THEN '1'
+		      WHEN a.pipe_dia > 75  and a.pipe_dia <= 100 and b.flow_max < c.q1_100 THEN '1'
+		      WHEN a.pipe_dia > 100 and a.pipe_dia <= 150 and b.flow_max < c.q1_150 THEN '1'
+		      WHEN a.pipe_dia > 150 and a.pipe_dia <= 200 and b.flow_max < c.q1_200 THEN '1'
+		      WHEN a.pipe_dia > 200 and a.pipe_dia <= 250 and b.flow_max < c.q1_250 THEN '1'
+		      WHEN a.pipe_dia > 250 and b.flow_max < c.q1_250 THEN '1'
+		    ]]>
+		      ELSE '0'
+		    END  flag
+		from
+		  vi_m1_sv_point_list a
+		  left join tb_t b on b.point_sq = a.point_sq
+		  left join tb_m1_waterleak_setting c on c.site_sq = a.site_sq
+		<trim prefix="WHERE" prefixOverrides="AND|OR">
+	         <choose>
+				<when test="upSiteSq != null and lv != null">
+					 and a.site_sq in (
+					    select site_sq from fn_prj_sites(#{upSiteSq}::integer, #{lv}::integer)
+					 )					 	
+				</when>
+				<when test="siteSq != null">
+					 and a.site_sq = #{siteSq}::integer		 	
+				</when>							
+			</choose>
+     	</trim>	
+     	
+     	<choose>
+			<when test="upBlkSq != null and lv != null">
+				 and a.blk_sq in (
+				    select blk_sq from fn_prj_blockes(#{upBlkSq}::integer, #{lv}::integer)
+				 )					 	
+			</when>
+			<when test="blkSq != null and blkSq != -2">
+				 and a.blk_sq = #{blkSq}::integer		 	
+			</when>							
+			<when test="blkSq != null and blkSq == -2">
+				 and a.blk_sq IS NULL		 	
+			</when>
+		</choose>
+     	
+		<choose>
+			<when test="comSq != null and comSq != -2">
+			and a.company_sq = #{comSq}::integer
+			</when>
+			<when test="comSq != null and comSq == -2">
+			and a.company_sq IS NULL
+			</when>
+		</choose>	      
+	    
+	     <choose>
+			<when test="amiType != null and !amiType.equals('-2')">
+			and a.ami_type = #{amiType}
+			</when>
+			<when test="amiType != null and amiType.equals('-2')">
+			and a.ami_type IS NULL
+			</when>
+		</choose>
+		
+		 <choose>
+			<when test="readOpr != null and !readOpr.equals('-2')">
+			and a.read_opr = #{readOpr}
+			</when>
+			<when test="readOpr != null and readOpr.equals('-2')">
+			and a.read_opr IS NULL
+			</when>
+		</choose>
+		
+		<choose>
+			<when test="chkDay != null and !chkDay.equals('-2')">
+			and a.check_day = #{chkDay}
+			</when>
+			<when test="chkDay != null and chkDay.equals('-2')">
+			and a.check_day IS NULL
+			</when>
+		</choose>
+	     
+	     <choose>
+			<when test="useType != null and !useType.equals('-2')">
+			and a.use_type = #{useType}
+			</when>
+			<when test="useType != null and useType.equals('-2')">
+			and a.use_type IS NULL
+			</when>
+		</choose>
+		
+		<choose>
+			<when test="setYears != null and !setYears.equals('-2')">
+			and a.set_years = #{setYears}
+			</when>
+			<when test="setYears != null and setYears.equals('-2')">
+			and a.set_years IS NULL
+			</when>
+		</choose>
+
+	     <choose>
+			<when test="pipeDia != null and pipeDia != -2">
+			and a.pipe_dia = #{pipeDia}::numeric
+			</when>
+			<when test="pipeDia != null and pipeDia == -2">
+			and a.pipe_dia is null
+			</when>
+		</choose>
+		
+		<choose>
+			<when test="useCd != null">
+			and	a.use_cd = #{useCd}
+			</when>
+			<when test="useCd == null">
+			and	a.use_cd = '1'
+			</when>
+		</choose>
+		
+		<if test="statCd != null">
+    		and position('1' in a.stat_cd) = #{statCd}::integer
+   		 </if>
+		
+		<if test="pointSq != null">
+	    	and a.point_sq = #{pointSq}
+	    </if>
+	    
+	    <if test="searchParamList != null">
+		    <foreach collection="searchParamList" item="searchParam" index="index" open="AND (" close=")" separator="OR ">
+		    	<choose>
+				    <when test="searchOption != null and searchOption == 0">
+			        	(
+				        	a.cust_nm like '%${searchParam}%'
+					    	OR a.admin_id like '%${searchParam}%'
+					    	OR a.addr_new like '%${searchParam}%'
+					    	
+				    	)
+			        </when>	
+			        <when test="searchOption == null and searchParam != null">
+			        	(
+				        	a.cust_nm like '%${searchParam}%'
+					    	OR a.admin_id like '%${searchParam}%'
+					    	OR a.addr_new like '%${searchParam}%'
+					    	
+				    	)
+			        </when>	   
+			         <when test="searchOption != null and searchOption == 1">
+			        	(
+				        	a.dev_no like '%${searchParam}%'	
+				        	OR a.meter_no like '%${searchParam}%'		    	
+				    	)
+			        </when>	        
+		        </choose>
+		    	
+		    </foreach>
+	    </if>
+		
+		) a
+		where
+		  a.flag = '1'
+		
+    </sql>
+	
+	<select id="iqrLeak" parameterType="java.util.Map" resultType="java.util.Map">           
+      <include refid="iqrLeak_sql"/>            
+    </select>
+
+    
+    <select id="iqrLeak_paging" parameterType="java.util.Map" resultType="java.util.Map">
+      <include refid="pageHeader"/>      
+      <include refid="iqrLeak_sql"/>      
+      <include refid="pageFooter"/>           
+    </select>
+    
+    <sql id="iqrLeak_sql">
+
+    	select
+		  a.point_sq 	  as "pointSq",
+		  b.site_nm0	  as "siteNm0",
+		  b.site_nm	  	  as "siteNm",		  
+		  b.admin_id	  as "adminId",	
+		  b.cust_nm  	  as "custNm",
+		  b.addr_new  	  as "addrNew",
+		  b.dev_no		  as "devNo",
+		  b.meter_no	  as "meterNo",
+		  b.blk_sq	 	  as "blkSq",	-- 블럭 Sq
+		  b.blk_name	  as "blkNm",	-- 블럭 이름
+		  b.pipe_dia	  as "pipeDia",	-- 관경
+		  b.use_type	  as "useType",	-- 업종 (가정용/일반용/학교용)		  
+		  b.read_opr  	  as "readOpr",	-- 검침원
+		  
+		  a.std1 		  as "q1",
+		  a.std2 		  as "q2",		  
+		  a.iqr      	  as "iqr",
+		  a.iqr_x3_0      as "iqr30",
+		  a.iqr_x1_5      as "iqr15",
+		  a.term_cv  	  as "termCv",
+		  a.stat_cd       as "statCd",
+		  a.meas_dt       as "measDt",
+		  to_char(a.meas_dt, 'yyyy-mm-dd') as "measDtStr",
+		  b.site_sq, b.site_nm
+		from		    		    
+		    fn_meas_waterleak_iqr(#{obDays}::int, #{rDays}::int) a
+		    join vi_m1_sv_point_list b on a.point_sq = b.point_sq
+		<trim prefix="WHERE" prefixOverrides="AND|OR">
+	         <choose>
+				<when test="upSiteSq != null and lv != null">
+					 and b.site_sq in (
+					    select site_sq from fn_prj_sites(#{upSiteSq}::integer, #{lv}::integer)
+					 )					 	
+				</when>
+				<when test="siteSq != null">
+					 and b.site_sq = #{siteSq}::integer		 	
+				</when>							
+			</choose>
+     	</trim>	
+     	
+     	<choose>
+			<when test="upBlkSq != null and lv != null">
+				 and b.blk_sq in (
+				    select blk_sq from fn_prj_blockes(#{upBlkSq}::integer, #{lv}::integer)
+				 )					 	
+			</when>
+			<when test="blkSq != null and blkSq != -2">
+				 and b.blk_sq = #{blkSq}::integer		 	
+			</when>							
+			<when test="blkSq != null and blkSq == -2">
+				 and b.blk_sq IS NULL		 	
+			</when>
+		</choose>
+     	
+		<choose>
+			<when test="comSq != null and comSq != -2">
+			and b.company_sq = #{comSq}::integer
+			</when>
+			<when test="comSq != null and comSq == -2">
+			and b.company_sq IS NULL
+			</when>
+		</choose>	      
+	    
+	     <choose>
+			<when test="amiType != null and !amiType.equals('-2')">
+			and b.ami_type = #{amiType}
+			</when>
+			<when test="amiType != null and amiType.equals('-2')">
+			and b.ami_type IS NULL
+			</when>
+		</choose>
+		
+		 <choose>
+			<when test="readOpr != null and !readOpr.equals('-2')">
+			and b.read_opr = #{readOpr}
+			</when>
+			<when test="readOpr != null and readOpr.equals('-2')">
+			and b.read_opr IS NULL
+			</when>
+		</choose>
+		
+		<choose>
+			<when test="chkDay != null and !chkDay.equals('-2')">
+			and b.check_day = #{chkDay}
+			</when>
+			<when test="chkDay != null and chkDay.equals('-2')">
+			and b.check_day IS NULL
+			</when>
+		</choose>
+	     
+	     <choose>
+			<when test="useType != null and !useType.equals('-2')">
+			and b.use_type = #{useType}
+			</when>
+			<when test="useType != null and useType.equals('-2')">
+			and b.use_type IS NULL
+			</when>
+		</choose>
+		
+		<choose>
+			<when test="setYears != null and !setYears.equals('-2')">
+			and b.set_years = #{setYears}
+			</when>
+			<when test="setYears != null and setYears.equals('-2')">
+			and b.set_years IS NULL
+			</when>
+		</choose>
+
+	     <choose>
+			<when test="pipeDia != null and pipeDia != -2">
+			and b.pipe_dia = #{pipeDia}::numeric
+			</when>
+			<when test="pipeDia != null and pipeDia == -2">
+			and b.pipe_dia is null
+			</when>
+		</choose>
+		
+		<choose>
+			<when test="useCd != null">
+			and	b.use_cd = #{useCd}
+			</when>
+			<when test="useCd == null">
+			and	b.use_cd = '1'
+			</when>
+		</choose>
+		
+		<if test="statCd != null">
+    		and position('1' in b.stat_cd) = #{statCd}::integer
+   		 </if>
+		
+		<if test="pointSq != null">
+	    	and b.point_sq = #{pointSq}
+	    </if>
+	    
+	    <if test="searchParamList != null">
+		    <foreach collection="searchParamList" item="searchParam" index="index" open="AND (" close=")" separator="OR ">
+		    	<choose>
+				    <when test="searchOption != null and searchOption == 0">
+			        	
+			        	(
+				        	b.cust_nm like '%${searchParam}%'
+					    	OR b.admin_id like '%${searchParam}%'
+					    	OR b.addr_new like '%${searchParam}%'
+					    	
+				    	)
+			        </when>	
+			        <when test="searchOption == null and searchParam != null">
+			        	 
+			        	(
+				        	b.cust_nm like '%${searchParam}%'
+					    	OR b.admin_id like '%${searchParam}%'
+					    	OR b.addr_new like '%${searchParam}%'
+					    	
+				    	)
+			        </when>	   
+			         <when test="searchOption != null and searchOption == 1">
+			        	
+			        	(
+				        	b.dev_no like '%${searchParam}%'
+				        	OR b.meter_no like '%${searchParam}%'			    	
+				    	)
+			        </when>	        
+		        </choose>
+		    	
+		    </foreach>
+	    </if>
+	
+    </sql>
+    
+    <select id="flowMinList_paging" parameterType="java.util.Map" resultType="java.util.Map">
+      <include refid="pageHeader"/>      
+      <include refid="flowMinList_sql"/>      
+      <include refid="pageFooter"/>           
+    </select>
+	
+	
+	<select id="flowMinList" parameterType="java.util.Map" resultType="java.util.Map">           
+      <include refid="flowMinList_sql"/>                      
+    </select>
+	
+	<sql id="flowMinList_sql">
+		
+        select
+          (ROW_NUMBER() OVER()) AS "rownum", 
+	      b.blk_name     as "blkNm",
+	      b.use_type     as "useType",
+	      b.pipe_dia     as "pipeDia",
+	      b.admin_id     as "adminId",
+		  b.cust_nm      as "custName",
+		  b.read_opr     as "readOpr",
+		  b.point_sq     as "pointSq",
+		  b.site_sq      as "siteSq",
+		  b.dev_no		 as "devNo",
+		  b.meter_no	 as "meterNo",
+		  a.f_m			 as "flowMinPoint",
+  	      a.iv_d1	     as "D01",
+	      a.iv_d2	     as "D02",
+	      a.iv_d3	     as "D03",
+	      a.iv_d4	     as "D04",
+	      a.iv_d5	     as "D05",
+	      a.iv_d6	     as "D06",
+	      a.iv_d7	     as "D07",
+	      a.iv_d8	     as "D08",
+	      a.iv_d9	     as "D09",
+	      a.iv_d10	     as "D10",
+	      a.iv_d11	     as "D11",
+	      a.iv_d12	     as "D12",
+	      a.iv_d13	     as "D13",
+	      a.iv_d14	     as "D14",
+	      a.iv_d15	     as "D15",
+	      a.iv_d16	     as "D16",
+	      a.iv_d17	     as "D17",
+	      a.iv_d18	     as "D18",
+	      a.iv_d19	     as "D19",
+	      a.iv_d20	     as "D20",
+	      a.iv_d21	     as "D21",
+	      a.iv_d22	     as "D22",
+	      a.iv_d23	     as "D23",
+	      a.iv_d24	     as "D24",
+	      a.iv_d25	     as "D25",
+	      a.iv_d26	     as "D26",
+	      a.iv_d27	     as "D27",
+	      a.iv_d28	     as "D28",
+	      a.iv_d29	     as "D29",
+	      a.iv_d30	     as "D30",
+	      a.iv_d31	     as "D31",
+	      a.iv_d32	     as "D32"
+		from
+			fn_meas_raw_for_day_flow_min(to_date(#{baseDate}, 'yyyy-mm-dd')) a
+			right outer join vi_m1_sv_point_list b on a.point_sq = b.point_sq
+		<trim prefix="WHERE" prefixOverrides="AND|OR">
+	         <choose>
+				<when test="upSiteSq != null and lv != null">
+					 and b.site_sq in (
+					    select site_sq from fn_prj_sites(#{upSiteSq}::integer, #{lv}::integer)
+					 )					 	
+				</when>
+				<when test="siteSq != null">
+					 and b.site_sq = #{siteSq}::integer		 	
+				</when>							
+			</choose>
+     	</trim>	
+     	
+     	<choose>
+			<when test="upBlkSq != null and lv != null">
+				 and b.blk_sq in (
+				    select blk_sq from fn_prj_blockes(#{upBlkSq}::integer, #{lv}::integer)
+				 )					 	
+			</when>
+			<when test="blkSq != null and blkSq != -2">
+				 and b.blk_sq = #{blkSq}::integer		 	
+			</when>							
+			<when test="blkSq != null and blkSq == -2">
+				 and b.blk_sq IS NULL		 	
+			</when>
+		</choose>
+     	
+		<choose>
+			<when test="comSq != null and comSq != -2">
+			and b.company_sq = #{comSq}::integer
+			</when>
+			<when test="comSq != null and comSq == -2">
+			and b.company_sq IS NULL
+			</when>
+		</choose>	      
+	    
+	     <choose>
+			<when test="amiType != null and !amiType.equals('-2')">
+			and b.ami_type = #{amiType}
+			</when>
+			<when test="amiType != null and amiType.equals('-2')">
+			and b.ami_type IS NULL
+			</when>
+		</choose>
+		
+		 <choose>
+			<when test="readOpr != null and !readOpr.equals('-2')">
+			and b.read_opr = #{readOpr}
+			</when>
+			<when test="readOpr != null and readOpr.equals('-2')">
+			and b.read_opr IS NULL
+			</when>
+		</choose>
+		
+		<choose>
+			<when test="chkDay != null and !chkDay.equals('-2')">
+			and b.check_day = #{chkDay}
+			</when>
+			<when test="chkDay != null and chkDay.equals('-2')">
+			and b.check_day IS NULL
+			</when>
+		</choose>
+		 
+	     <choose>
+			<when test="useType != null and !useType.equals('-2')">
+			and b.use_type = #{useType}
+			</when>
+			<when test="useType != null and useType.equals('-2')">
+			and b.use_type IS NULL
+			</when>
+		</choose>
+		
+		<choose>
+			<when test="setYears != null and !setYears.equals('-2')">
+			and b.set_years = #{setYears}
+			</when>
+			<when test="setYears != null and setYears.equals('-2')">
+			and b.set_years IS NULL
+			</when>
+		</choose>
+
+	     <choose>
+			<when test="pipeDia != null and pipeDia != -2">
+			and b.pipe_dia = #{pipeDia}::numeric
+			</when>
+			<when test="pipeDia != null and pipeDia == -2">
+			and b.pipe_dia is null
+			</when>
+		</choose>
+		
+		<choose>
+			<when test="useCd != null">
+			and	b.use_cd = #{useCd}
+			</when>
+			<when test="useCd == null">
+			and	b.use_cd = '1'
+			</when>
+		</choose>
+		
+		<if test="statCd != null">
+    		and position('1' in b.stat_cd) = #{statCd}::integer
+   		 </if>
+		
+		<if test="pointSq != null">
+	    	and b.point_sq = #{pointSq}
+	    </if>
+		<if test="searchParamList != null">
+		    <foreach collection="searchParamList" item="searchParam" index="index" open="AND (" close=")" separator="OR ">
+		    	<choose>
+				    <when test="searchOption != null and searchOption == 0">
+			        	
+			        	(
+				        	b.cust_nm like '%${searchParam}%'
+					    	OR b.admin_id like '%${searchParam}%'
+					    	OR b.addr_new like '%${searchParam}%'
+					    	
+				    	)
+			        </when>	
+			        <when test="searchOption == null and searchParam != null">
+			        	 
+			        	(
+				        	b.cust_nm like '%${searchParam}%'
+					    	OR b.admin_id like '%${searchParam}%'
+					    	OR b.addr_new like '%${searchParam}%'
+					    	
+				    	)
+			        </when>	   
+			         <when test="searchOption != null and searchOption == 1">
+			        	
+			        	(
+				        	b.dev_no like '%${searchParam}%'
+				        	OR b.meter_no like '%${searchParam}%'			    	
+				    	)
+			        </when>	        
+		        </choose>
+		    	
+		    </foreach>
+	    </if>
+	</sql>
+	
+	<select id="measList" parameterType="java.util.Map" resultType="java.util.Map">
+		select 
+			point_sq  as "pointSq",
+			meas_dt   as "measDt", 
+			accu_iv   as "accuIv", 
+			adjst_os  as "adjstV", 
+			stat_cd   as "statCd", 
+			raw_cnt_0d as "rawCnt_0d",
+			term_cv_0d as "termCv_0d",
+			raw_cnt_1d as "rawCnt_1d",
+			term_cv_1d as "termCv_1d",
+			raw_cnt_7d as "rawCnt_7d",
+			term_cv_7d as "termCv_7d",
+			raw_cnt_30d as "rawCnt_30d",
+			term_cv_30d as "termCv_30d",
+			delay_rcv as "delayRcv"		
+		from vi_m1_sv_meas_now
+		<trim prefix="WHERE" prefixOverrides="AND|OR">
+	         <choose>
+				<when test="upSiteSq != null and lv != null">
+					 and site_sq in (
+					    select site_sq from fn_prj_sites(#{upSiteSq}::integer, #{lv}::integer)
+					 )					 	
+				</when>
+				<when test="siteSq != null">
+					 and site_sq = #{siteSq}::integer		 	
+				</when>							
+			</choose>
+     	</trim>		
+		order by point_sq
+	</select>
+	
+	
+	<select id="pointWeekHisdata" parameterType="java.util.Map" resultType="java.util.Map">           
+      <include refid="pointWeekHisdata_sql"/>            
+    </select>
+    
+    <select id="pointWeekHisdata_paging" parameterType="java.util.Map" resultType="java.util.Map">
+      <include refid="pageHeader"/>      
+      <include refid="pointWeekHisdata_sql"/>      
+      <include refid="pageFooter"/>           
+    </select>
+	
+	<sql id="pointWeekHisdata_sql">	
+	
+		with tb_target as (
+		
+		  select
+		    cast(extract( day  from date_trunc('day', now()) - date_trunc('day', meas_dt)) as int) / 7 dw_no,
+		    a.*
+		  from
+		    fn_tb_meas_point_his_day_mov(#{pointSq}, to_date(#{begDate}, 'yyyy-mm-dd'), to_date(#{endDate}, 'yyyy-mm-dd') ) a
+		
+		
+		),
+		tb_cnt as (
+		  select count(*)/7 cnt, point_sq from tb_target group by point_sq
+		),
+		tb_week as (
+		  select
+		    a.*
+		  from
+		    tb_target a
+		    join tb_cnt b on b.point_sq = a.point_sq
+		  where	
+		  	<![CDATA[
+		    a.meas_dt > date_trunc('day', now()) -  make_interval(days => (b.cnt::integer * 7)) and a.meas_dt <= date_trunc('day', now())
+		    ]]>
+		)
+		select
+		  a.point_sq as "pointSq",
+		  a.meas_dt  as  "measDt", 
+ 		  b.sum_term as"termCv"
+		from (
+		
+		select
+		  a.point_sq,
+		  a.dw_no,
+		  max(a.meas_dt) meas_dt
+		from
+		  tb_week a
+		group by
+		  a.point_sq, a.dw_no
+		
+		) a
+		join (
+		
+		select
+		  a.point_sq,
+		  a.dw_no,
+		  sum(a.term_cv) sum_term
+		from
+		  tb_week a
+		group by
+		  a.point_sq, a.dw_no
+		
+		) b on b.point_sq = a.point_sq and b.dw_no = a.dw_no
+		order by 
+			a.meas_dt desc
+	
+	</sql>
+	
+			
+	<select id="pointHisdata_paging" parameterType="java.util.Map" resultType="java.util.Map">
+      <include refid="pageHeader"/>      
+      <include refid="pointHisdata_sql"/>      
+      <include refid="pageFooter"/>           
+    </select>
+
+<sql id="pointHisdata_sql">
+		select 
+		    (ROW_NUMBER() OVER()) AS "rownum", 
+			point_sq	as "pointSq", 
+			meas_dt	as     "measDt", 
+			to_char(meas_dt, 'YYYY-MM-DD')	as     "measDtStr", 
+			last_dt as 	"lastDt", 
+			raw_cnt	as     "rawCnt", 
+			stat_cd   as "statCd", 
+			accu_iv	  as   "accuIv",
+			accu_cv	 as    "accuCv",  
+			adjst_os as 	"adjstV", 
+			term_cv	as     "termCv",
+			term_cv_1d	as  "termCv_1d", 
+			term_cv_7d	as  "termCv_7d",
+			term_cv_30d	as  "termCv_30d",
+			temperature
+		from 			
+			fn_tb_meas_point_his_day_mov(#{pointSq}, to_date(#{begDate}, 'yyyy-mm-dd'), to_date(#{endDate}, 'yyyy-mm-dd') )  
+		order by 
+			meas_dt desc
+</sql>
+
+	<select id="pointHisdata" parameterType="java.util.Map" resultType="java.util.Map">
+		<include refid="pointHisdata_sql"/> 
+	</select>
+	
+
+
+	<select id="pointHisdataRaw" parameterType="java.util.Map" resultType="java.util.Map">           
+      <include refid="pointHisdataRaw_sql"/>            
+    </select>
+
+    
+    <select id="pointHisdataRaw_paging" parameterType="java.util.Map" resultType="java.util.Map">
+      <include refid="pageHeader"/>      
+      <include refid="pointHisdataRaw_sql"/>      
+      <include refid="pageFooter"/>           
+    </select>
+    
+    <sql id="pointHisdataRaw_sql">
+	
+		select
+			(ROW_NUMBER() OVER()) AS "rownum", 
+			a.point_sq		as "pointSq",
+			b.admin_id 		as "adminId",
+			b.cust_nm 		as "custNm",
+			a.meas_dt		as "measDt",				
+			to_char(a.meas_dt, 'yyyy-mm-dd-hh24-mi-ss') as "measDtStr",					
+			a.stat_cd   	as "statCd",			
+			case position('1' in a.stat_cd)			  
+		      when 1 then '통신 장애'
+		      when 2 then '계량기 장애'
+		      when 3 then 'Q4 초과'
+		      when 4 then '역류'
+		      when 5 then '누수'		      		      
+		      when 6 then '정상'
+		      when 7 then '정상'
+		      when 8 then 'BAT'
+		      else '정상'
+			end "statCdStr",			
+			a.accu_iv		as "accuIv",
+			a.accu_cv		as "accuCv",
+			a.term_cv		as "termCv",			
+			case when a.itval_h > 0 then trunc(a.term_cv / a.itval_h, 3) else null end as "termCh",			
+			a.adjst_os		as "adjstV",
+			a.itval_h		as "intavlH",
+			a.bat1_iv		as "batt1V",
+			a.bat2_iv		as "batt2V",
+			a.rssi_iv		as "rssiV",
+			a.snr_iv		as "snrV",
+			a.ni_rsrp      	as "rsrpV",
+      		a.ni_rsrq      	as "rsrqV",
+		    b.ami_type as "amiType",
+		     
+			<if test="begRawDate != null">
+			d.flow_min  as "flowMin",
+			</if>
+
+<![CDATA[
+		     CASE
+              WHEN b.pipe_dia <= 15 THEN w.q1_15
+              WHEN b.pipe_dia <= 20 THEN w.q1_20
+              WHEN b.pipe_dia <= 25 THEN w.q1_25
+              WHEN b.pipe_dia <= 32 THEN w.q1_32
+              WHEN b.pipe_dia <= 40 THEN w.q1_40
+              WHEN b.pipe_dia <= 50 THEN w.q1_50
+              WHEN b.pipe_dia <= 75 THEN w.q1_75
+              WHEN b.pipe_dia <= 100 THEN w.q1_100
+              WHEN b.pipe_dia <= 150 THEN w.q1_150
+              WHEN b.pipe_dia <= 200 THEN w.q1_200
+              WHEN b.pipe_dia <= 250 THEN w.q1_250
+           	 END * w.sca_coef as "minFlow"
+]]>
+			
+			, a.temperature
+			from
+		     vi_m1_sv_meas_raw a 
+		     join vi_m1_sv_point_list b on a.point_sq = b.point_sq
+	         left outer join tb_m1_waterleak_setting w on w.site_sq = b.site_sq
+	         <if test="begRawDate != null">
+			 left outer join vi_m1_sv_meas_day d on d.point_sq = a.point_sq
+			 </if>	         	        
+	        
+	        
+	        <trim prefix="WHERE" prefixOverrides="AND|OR">
+		         <choose>
+					<when test="upSiteSq != null and lv != null">
+						 and b.site_sq in (
+						    select site_sq from fn_prj_sites(#{upSiteSq}::integer, #{lv}::integer)
+						 )					 	
+					</when>
+					<when test="siteSq != null">
+						 and b.site_sq = #{siteSq}::integer		 	
+					</when>							
+				</choose>
+	     	</trim>	
+	     	
+	     	<choose>
+				<when test="upBlkSq != null and lv != null">
+					 and b.blk_sq in (
+					    select blk_sq from fn_prj_blockes(#{upBlkSq}::integer, #{lv}::integer)
+					 )					 	
+				</when>
+				<when test="blkSq != null and blkSq != -2">
+					 and b.blk_sq = #{blkSq}::integer		 	
+				</when>							
+				<when test="blkSq != null and blkSq == -2">
+					 and b.blk_sq IS NULL		 	
+				</when>
+			</choose>
+	     	
+			<choose>
+				<when test="comSq != null and comSq != -2">
+				and b.company_sq = #{comSq}::integer
+				</when>
+				<when test="comSq != null and comSq == -2">
+				and b.company_sq IS NULL
+				</when>
+			</choose>	      
+		    
+		     <choose>
+				<when test="amiType != null and !amiType.equals('-2')">
+				and b.ami_type = #{amiType}
+				</when>
+				<when test="amiType != null and amiType.equals('-2')">
+				and b.ami_type IS NULL
+				</when>
+			</choose>
+			
+			 <choose>
+				<when test="readOpr != null and !readOpr.equals('-2')">
+				and b.read_opr = #{readOpr}
+				</when>
+				<when test="readOpr != null and readOpr.equals('-2')">
+				and b.read_opr IS NULL
+				</when>
+			</choose>
+			
+			<choose>
+				<when test="chkDay != null and !chkDay.equals('-2')">
+				and b.check_day = #{chkDay}
+				</when>
+				<when test="chkDay != null and chkDay.equals('-2')">
+				and b.check_day IS NULL
+				</when>
+			</choose>
+		     
+		     <choose>
+				<when test="useType != null and !useType.equals('-2')">
+				and b.use_type = #{useType}
+				</when>
+				<when test="useType != null and useType.equals('-2')">
+				and b.use_type IS NULL
+				</when>
+			</choose>
+			
+			<choose>
+				<when test="setYears != null and !setYears.equals('-2')">
+				and b.set_years = #{setYears}
+				</when>
+				<when test="setYears != null and setYears.equals('-2')">
+				and b.set_years IS NULL
+				</when>
+			</choose>
+	
+		     <choose>
+				<when test="pipeDia != null and pipeDia != -2">
+				and b.pipe_dia = #{pipeDia}::numeric
+				</when>
+				<when test="pipeDia != null and pipeDia == -2">
+				and b.pipe_dia is null
+				</when>
+			</choose>
+			
+			<choose>
+				<when test="useCd != null">
+				and	b.use_cd = #{useCd}
+				</when>
+				<when test="useCd == null">
+				and	b.use_cd = '1'
+				</when>
+			</choose>
+			
+			<if test="statCd != null">
+    			and position('1' in b.stat_cd) = #{statCd}::integer
+   		 	</if>
+			
+			<if test="pointSq != null">
+		    	and b.point_sq = #{pointSq}
+		    </if>
+		    
+		     <if test="searchParam != null">	     
+		    	AND 
+		        	(
+			        	b.cust_nm like '%${searchParam}%'
+				    	or b.admin_id like '%${searchParam}%'			    	
+				    	or b.addr_new like '%${searchParam}%'			    
+				    	
+			    	)
+		     </if> 	        
+				
+					
+			<if test="begDate != null and endDate !=null">			
+				<![CDATA[
+				AND (a.meas_dt >= ( to_date(#{begDate}, 'yyyy-mm-dd') + 1) and (a.meas_dt < to_date(#{endDate}, 'yyyy-mm-dd') + 1))
+				]]>				
+			</if>
+			
+			<if test="begRawDate != null">			
+				<![CDATA[
+				and a.meas_dt >= (to_date(#{begRawDate}, 'yyyy-mm-dd') + '1 hours'::interval)
+			    and a.meas_dt <= (to_date(#{begRawDate}, 'yyyy-mm-dd')  + '1 days'::interval)
+				]]>				
+				and d.meas_dt = to_date(#{begRawDate}, 'yyyy-mm-dd')				
+			</if>
+	
+			order by
+				a.point_sq, a.meas_dt desc
+
+	</sql>
+
+	<select id="beforeMonth" parameterType="java.util.Map" resultType="java.util.Map">
+      
+	select 
+      	to_char(to_date(#{baseDate}, 'yyyy-mm-dd') - INTERVAL '1 MONTH', 'yyyy-mm-dd') as "begDate", 
+      	to_date(#{baseDate}, 'yyyy-mm-dd') as "endDate",
+      	to_date(#{baseDate}, 'yyyy-mm-dd')::date - (to_char(to_date(#{baseDate}, 'yyyy-mm-dd') - INTERVAL '1 MONTH', 'yyyy-mm-dd'))::date cnt
+
+    </select>
+	
+
+
+
+	<select id="datList" parameterType="java.util.Map" resultType="java.util.Map">
+		SELECT 
+			meas_dt_hn as "measDtHn",
+			site_cd_hn as "siteCdHn",
+			admin_id_hn as "adminIdHn",
+			jawon_cd as "jawonCd",
+			sub_no as "subNo",
+			read_day as "readDay",
+			cust_nm_hn  as "custNmHn",
+			addr_new_hn as "addrNewHn",
+			stat_cd_hn as "statCdHn",
+			accu_iv_hn as "accuIvHn",
+			term_cv_hn as "termCvHn",
+			note as "Note",
+			cust_phone_hn as "custPhoneHn",
+			cust_phone_cd as "custPhoneCd",
+			meter_pos as "meterPos",
+			meter_pos_cd as "meterPosCd"
+		  
+				FROM 
+					vi_m1_hn_dat
+				
+	</select>
+	
+	
+	<select id="selectAnalyResult" parameterType="java.util.Map" resultType="java.util.Map">
+		SELECT 
+			to_char(a.baseDate, 'yyyy-mm-dd') AS "measDt", 
+			to_char(a.baseDate, 'yyyy-mm-dd') as "measDtStr",
+			b.measCnt 	    AS "measCnt",
+			trunc(trunc(100.0 * b.measCnt / (b.resultCnt*24), 3))    AS "measRat",
+			trunc(b.resultCnt) 	AS "equipCnt", 
+			trunc(b.totUse)        AS "totUse", 
+			trunc(b.avgUse)        AS "avgUse", 
+			trunc(b.minUse)        AS "minUse", 
+			trunc(b.maxUse)        AS "maxUse",
+			trunc((b.resultCnt::float/c.totalUsrCnt::float)*100) AS "dayMeasRat"
+		FROM 
+			(
+				SELECT	generate_series(#{fromDate}::date + interval '1 day', #{toDate}::date, '1 day':: INTERVAL) AS baseDate
+			) a
+			LEFT outer JOIN 
+			(
+				SELECT 
+					c.meas_dt, 
+					sum(c.term_cv)      as totUse, 
+					avg(c.term_cv)  	as avgUse, 
+					min(c.term_cv)      as minUse, 
+					max(c.term_cv)      as maxUse,
+					sum(c.raw_cnt)		as measCnt,     
+					count(*)   			as resultCnt       
+				FROM 
+					vi_m1_sv_point_list b 
+					inner join vi_m1_sv_meas_day c on c.point_sq = b.point_sq
+				<trim prefix="WHERE" prefixOverrides="AND|OR">
+			         <choose>
+						<when test="upSiteSq != null and lv != null">
+							 and b.site_sq in (
+							    select site_sq from fn_prj_sites(#{upSiteSq}::integer, #{lv}::integer)
+							 )					 	
+						</when>
+						<when test="siteSq != null">
+							 and b.site_sq = #{siteSq}::integer		 	
+						</when>							
+					</choose>
+		     	</trim>	
+		     	
+		     	<choose>
+					<when test="upBlkSq != null and lv != null">
+						 and b.blk_sq in (
+						    select blk_sq from fn_prj_blockes(#{upBlkSq}::integer, #{lv}::integer)
+						 )					 	
+					</when>
+					<when test="blkSq != null and blkSq != -2">
+						 and b.blk_sq = #{blkSq}::integer		 	
+					</when>							
+					<when test="blkSq != null and blkSq == -2">
+						 and b.blk_sq IS NULL		 	
+					</when>
+				</choose>
+		     	
+				<choose>
+					<when test="comSq != null and comSq != -2">
+					and b.company_sq = #{comSq}::integer
+					</when>
+					<when test="comSq != null and comSq == -2">
+					and b.company_sq IS NULL
+					</when>
+				</choose>	      
+			    
+			     <choose>
+					<when test="amiType != null and !amiType.equals('-2')">
+					and b.ami_type = #{amiType}
+					</when>
+					<when test="amiType != null and amiType.equals('-2')">
+					and b.ami_type IS NULL
+					</when>
+				</choose>
+				
+				 <choose>
+					<when test="readOpr != null and !readOpr.equals('-2')">
+					and b.read_opr = #{readOpr}
+					</when>
+					<when test="readOpr != null and readOpr.equals('-2')">
+					and b.read_opr IS NULL
+					</when>
+				</choose>
+				
+				<choose>
+					<when test="chkDay != null and !chkDay.equals('-2')">
+					and b.check_day = #{chkDay}
+					</when>
+					<when test="chkDay != null and chkDay.equals('-2')">
+					and b.check_day IS NULL
+					</when>
+				</choose>
+			     
+			     <choose>
+					<when test="useType != null and !useType.equals('-2')">
+					and b.use_type = #{useType}
+					</when>
+					<when test="useType != null and useType.equals('-2')">
+					and b.use_type IS NULL
+					</when>
+				</choose>
+				
+				<choose>
+					<when test="setYears != null and !setYears.equals('-2')">
+					and b.set_years = #{setYears}
+					</when>
+					<when test="setYears != null and setYears.equals('-2')">
+					and b.set_years IS NULL
+					</when>
+				</choose>
+		
+			     <choose>
+					<when test="pipeDia != null and pipeDia != -2">
+					and b.pipe_dia = #{pipeDia}::numeric
+					</when>
+					<when test="pipeDia != null and pipeDia == -2">
+					and b.pipe_dia is null
+					</when>
+				</choose>
+				
+				<choose>
+					<when test="useCd != null">
+					and	b.use_cd = #{useCd}
+					</when>
+					<when test="useCd == null">
+					and	b.use_cd = '1'
+					</when>
+				</choose>
+				
+				<if test="statCd != null">
+    				and position('1' in b.stat_cd) = #{statCd}::integer
+   		 		</if>
+				
+				<if test="pointSq != null">
+			    	and b.point_sq = #{pointSq}
+			    </if>
+			    
+			     <if test="searchParam != null">	     
+			    	AND 
+			        	(
+				        	b.cust_nm like '%${searchParam}%'
+					    	or b.admin_id like '%${searchParam}%'			    	
+					    	or b.addr_new like '%${searchParam}%'			    
+					    	
+				    	)
+			     </if>
+			     		
+				<![CDATA[									 
+					and (c.meas_dt > #{fromDate}::date and c.meas_dt <= #{toDate}::date)
+				]]>					
+					
+				group by  
+					c.meas_dt
+			) b 
+			ON a.baseDate = b.meas_dt			
+			join (
+			
+				select
+			        baseDate,
+			        count(*) totalUsrCnt
+			    from
+			    (	
+					  SELECT	generate_series(#{fromDate}::date + interval '1 day', #{toDate}::date, '1 day':: INTERVAL) AS baseDate	
+			    ) a, vi_m1_sv_point_list b
+	        	<trim prefix="WHERE" prefixOverrides="AND|OR">
+			         <choose>
+						<when test="upSiteSq != null and lv != null">
+							 and b.site_sq in (
+							    select site_sq from fn_prj_sites(#{upSiteSq}::integer, #{lv}::integer)
+							 )					 	
+						</when>
+						<when test="siteSq != null">
+							 and b.site_sq = #{siteSq}::integer		 	
+						</when>							
+					</choose>
+		     	</trim>	
+		     	
+		     	<choose>
+					<when test="upBlkSq != null and lv != null">
+						 and b.blk_sq in (
+						    select blk_sq from fn_prj_blockes(#{upBlkSq}::integer, #{lv}::integer)
+						 )					 	
+					</when>
+					<when test="blkSq != null and blkSq != -2">
+						 and b.blk_sq = #{blkSq}::integer		 	
+					</when>							
+					<when test="blkSq != null and blkSq == -2">
+						 and b.blk_sq IS NULL		 	
+					</when>
+				</choose>
+		     	
+				<choose>
+					<when test="comSq != null and comSq != -2">
+					and b.company_sq = #{comSq}::integer
+					</when>
+					<when test="comSq != null and comSq == -2">
+					and b.company_sq IS NULL
+					</when>
+				</choose>	      
+			    
+			     <choose>
+					<when test="amiType != null and !amiType.equals('-2')">
+					and b.ami_type = #{amiType}
+					</when>
+					<when test="amiType != null and amiType.equals('-2')">
+					and b.ami_type IS NULL
+					</when>
+				</choose>
+				
+				 <choose>
+					<when test="readOpr != null and !readOpr.equals('-2')">
+					and b.read_opr = #{readOpr}
+					</when>
+					<when test="readOpr != null and readOpr.equals('-2')">
+					and b.read_opr IS NULL
+					</when>
+				</choose>
+				
+				<choose>
+					<when test="chkDay != null and !chkDay.equals('-2')">
+					and b.check_day = #{chkDay}
+					</when>
+					<when test="chkDay != null and chkDay.equals('-2')">
+					and b.check_day IS NULL
+					</when>
+				</choose>
+			     
+			     <choose>
+					<when test="useType != null and !useType.equals('-2')">
+					and b.use_type = #{useType}
+					</when>
+					<when test="useType != null and useType.equals('-2')">
+					and b.use_type IS NULL
+					</when>
+				</choose>
+				
+				<choose>
+					<when test="setYears != null and !setYears.equals('-2')">
+					and b.set_years = #{setYears}
+					</when>
+					<when test="setYears != null and setYears.equals('-2')">
+					and b.set_years IS NULL
+					</when>
+				</choose>
+		
+			     <choose>
+					<when test="pipeDia != null and pipeDia != -2">
+					and b.pipe_dia = #{pipeDia}::numeric
+					</when>
+					<when test="pipeDia != null and pipeDia == -2">
+					and b.pipe_dia is null
+					</when>
+				</choose>
+				
+				<choose>
+					<when test="useCd != null">
+					and	b.use_cd = #{useCd}
+					</when>
+					<when test="useCd == null">
+					and	b.use_cd = '1'
+					</when>
+				</choose>
+				
+				<if test="statCd != null">
+    				and position('1' in b.stat_cd) = #{statCd}::integer
+   		 		</if>
+				
+				<if test="pointSq != null">
+			    	and b.point_sq = #{pointSq}
+			    </if>
+			    
+			     <if test="searchParam != null">	     
+			    	AND 
+			        	(
+				        	b.cust_nm like '%${searchParam}%'
+					    	or b.admin_id like '%${searchParam}%'			    	
+					    	or b.addr_new like '%${searchParam}%'			    
+					    	
+				    	)
+			     </if>
+			         
+			         
+			      <![CDATA[   
+			      	and a.baseDate >= b.set_dt  
+			      ]]> 
+			         
+			      group by baseDate
+			
+			
+			) c on c.baseDate = a.baseDate
+			
+		order by 
+			a.baseDate desc
+	</select>
+	
+	
+	
+	<select id="customerList_paging" parameterType="java.util.Map" resultType="java.util.Map">
+	/*customerList_paging*/
+      <include refid="pageHeader"/>      
+      <include refid="customerList_sql"/>      
+      <include refid="pageFooter"/>           
+    </select>
+    
+    <select id="customerList" parameterType="java.util.Map" resultType="java.util.Map">
+	/*customerList*/
+      <include refid="customerList_sql"/>           
+    </select>
+ 	
+ 	<sql id="customerList_sql">
+ 		select
+ 		
+ 		 (ROW_NUMBER() OVER(order by p.admin_id)) AS "rownum", 
+ 		
+ 		 p.addr_new AS "addrNew",         
+         '2' as "tmpVal",
+         p.point_sq AS "pointSq",
+         p.blk_sq    as "blkSq",   -- 블럭 Sq
+         p.site_sq   as "siteSq",
+         blk_name AS "blockName",
+         use_type AS "useType",
+         pipe_dia AS "pipeDia",
+         admin_id AS "adminId",
+         cust_nm AS "custName",
+         dev_no AS "devNo",
+         meter_no AS "meterNo",
+         beg_accu_iv AS "begVal",
+         beg_meas_dt AS "begDay", 
+         to_char(beg_meas_dt, 'yyyy-mm-dd hh24:mi:ss') as "begDayStr",
+         to_char(beg_meas_dt_t, 'yyyy-mm-dd') as "begDayStrT",
+         end_accu_iv AS "endVal",
+         end_meas_dt AS "endDay", 
+         to_char(end_meas_dt, 'yyyy-mm-dd hh24:mi:ss') as "endDayStr",
+         to_char(end_meas_dt_t, 'yyyy-mm-dd') as "endDayStrT",
+         fadjst_os AS "adjstV",
+         term_iv AS "useVal",
+         (term_iv + fadjst_os) AS "rstVal",
+         term_dy AS "useDays",
+         p.stat_cd AS "statCd",
+         trunc( (term_iv + fadjst_os) ) AS "rstValTr",
+         trunc(beg_accu_iv)  AS "begValTr",
+         trunc(end_accu_iv)  AS "endValTr",
+         '아이에스테크놀로지(주)' AS "comNm",
+         '무선검침' AS "accuType",         
+         '단독' AS "meterType",
+         null AS "shareMeter",
+         null AS "region",
+         case position('1' in p.stat_cd)			  
+		      when 1 then '통신 장애'
+		      when 2 then '계량기 장애'
+		      when 3 then 'Q4 초과'
+		      when 4 then '역류'
+		      when 5 then '누수'		      		      
+		      when 6 then '정상'
+		      when 7 then '정상'
+		      when 8 then 'BAT'
+		      else '정상'
+		end "statCdStr",		
+         p.read_opr AS "readOpr",
+		 p.check_day
+      FROM vi_m1_sv_point_list p 
+	   <choose>
+				<when test='dateOption == "0"'>
+					left join fn_meas_total_month_for_std_day2 (to_date(#{fromDate}, 'yyyy-mm-dd'),to_date(#{toDate}, 'yyyy-mm-dd')) measDay ON measDay.point_sq = p.point_sq					 	
+				</when>
+				<otherwise>
+					left join  fn_meas_total_month_for_check_day( to_date(#{toDate}, 'yyyy-mm-dd') )  measDay ON measDay.point_sq = p.point_sq
+				</otherwise>
+			</choose>
+     where 1=1 
+	         <choose>
+				<when test="upSiteSq != null and lv != null">
+					 and p.site_sq in (
+					    select site_sq from fn_prj_sites(#{upSiteSq}::integer, #{lv}::integer)
+					 )					 	
+				</when>
+				<when test="siteSq != null">
+					 and p.site_sq = #{siteSq}::integer		 	
+				</when>							
+			</choose>
+     	
+     	<choose>
+			<when test="upBlkSq != null and lv != null">
+				 and p.blk_sq in (
+				    select blk_sq from fn_prj_blockes(#{upBlkSq}::integer, #{lv}::integer)
+				 )					 	
+			</when>
+			<when test="blkSq != null and blkSq != -2">
+				 and p.blk_sq = #{blkSq}::integer		 	
+			</when>							
+			<when test="blkSq != null and blkSq == -2">
+				 and p.blk_sq IS NULL		 	
+			</when>
+		</choose>
+     	
+		<choose>
+			<when test="comSq != null and comSq != -2">
+			and p.company_sq = #{comSq}::integer
+			</when>
+			<when test="comSq != null and comSq == -2">
+			and p.company_sq IS NULL
+			</when>
+		</choose>	      
+	    
+	     <choose>
+			<when test="amiType != null and !amiType.equals('-2')">
+			and p.ami_type = #{amiType}
+			</when>
+			<when test="amiType != null and amiType.equals('-2')">
+			and p.ami_type IS NULL
+			</when>
+		</choose>
+		
+		 <choose>
+			<when test="readOpr != null and !readOpr.equals('-2')">
+			and p.read_opr = #{readOpr}
+			</when>
+			<when test="readOpr != null and readOpr.equals('-2')">
+			and p.read_opr IS NULL
+			</when>
+		</choose>
+		
+		<choose>
+			<when test="chkDay != null and !chkDay.equals('-2')">
+			and p.check_day = #{chkDay} :: integer
+			</when>
+			<when test="chkDay != null and chkDay.equals('-2')">
+			and p.check_day IS NULL
+			</when>
+		</choose>
+	     
+	     <choose>
+			<when test="useType != null and !useType.equals('-2')">
+			and p.use_type = #{useType}
+			</when>
+			<when test="useType != null and useType.equals('-2')">
+			and p.use_type IS NULL
+			</when>
+		</choose>
+		
+		<choose>
+			<when test="setYears != null and !setYears.equals('-2')">
+			and p.set_years = #{setYears}
+			</when>
+			<when test="setYears != null and setYears.equals('-2')">
+			and p.set_years IS NULL
+			</when>
+		</choose>
+
+	     <choose>
+			<when test="pipeDia != null and pipeDia != -2">
+			and p.pipe_dia = #{pipeDia}::numeric
+			</when>
+			<when test="pipeDia != null and pipeDia == -2">
+			and p.pipe_dia is null
+			</when>
+		</choose>
+		
+		<choose>
+			<when test="useCd != null">
+			and	p.use_cd = #{useCd}
+			</when>
+			<when test="useCd == null">
+			and	p.use_cd = '1'
+			</when>
+		</choose>
+		
+		<if test="statCd != null">
+ 			and position('1' in p.stat_cd) = #{statCd}::integer
+		</if>
+		
+		<if test="pointSq != null">
+	    	and p.point_sq = #{pointSq}
+	    </if>
+
+       	<if test="isFee != null">	    
+         	and term_iv = (term_iv + fadjst_os)
+         	and err_flag = '0'
+	    </if>
+	    <if test='cust_nm != null and cust_nm != ""'>
+	       and p.cust_nm like  '%' || #{cust_nm} || '%'
+	     </if>
+	     <if test='admin_no != null and admin_no != ""'>
+	       and p.admin_id like  '%' || #{admin_no} || '%'
+	     </if>
+	     <if test='addr != null and addr != ""'>
+	       and (p.addr_old like '%' || #{addr} || '%' 
+	        or  p.addr_new like '%' || #{addr} || '%')
+	     </if>
+ 	</sql>
+ 	
+ 	
+	<insert id="insertImport" parameterType="java.util.Map">
+		insert into tb_m1_info_import (
+			data_sq,
+			cust_name,
+			admin_no,
+			addr,
+			addr_new,
+			loc_lng,
+			loc_lat,
+			business_name,
+			master_site_sq,
+			master_site_nm,
+			site_nm,
+			blk_nm,
+			cust_phone,
+			set_years,
+			read_responsi,
+			check_day,
+			meter_no,
+			pipe_diameter,
+			ami_type,
+			sub_dev_no,
+			dev_no,
+			company_nm,
+			set_dt,
+			token_key,
+			ins_dt			
+	    )	    
+	    values (
+	    	nullif(#{dataSq},'') :: numeric,
+			#{custNm},
+			#{adminNo},
+			#{addr},
+			#{addrNew},
+			nullif(#{locLng}, ''):: numeric,
+			nullif(#{locLat}, ''):: numeric,
+			#{useType},
+			#{upSiteSq},
+			#{masterSiteNm},
+			#{siteNm},
+			#{blkNm},
+			#{custPhone},
+			#{setYears},
+			#{readOpr},
+			nullif(#{checkDay},'')::numeric,
+			#{meterNo},
+			nullif(#{pipeDia},'')::numeric,
+			#{amiType},
+			#{subDevNo},
+			#{devNo},
+			#{companyNm},
+			#{setDt},
+			#{tokenKey},
+			now()		
+	    )
+	</insert>
+	
+	
+	<select id="importResult" parameterType="java.util.Map" resultType="java.util.Map">
+		select
+			data_sq as "dataSq",
+			msg 	as "msg"
+		from
+			fn_excel_import(#{tokenKey})            
+    </select>
+	
+	<select id="importList" parameterType="java.util.Map" resultType="java.util.Map">
+      <include refid="importList_sql"/>      
+    </select>
+	
+	<select id="importList_paging" parameterType="java.util.Map" resultType="java.util.Map">
+      <include refid="pageHeader"/>      
+      <include refid="importList_sql"/>      
+      <include refid="pageFooter"/>           
+    </select>
+    
+	
+	<sql id="importList_sql">
+	
+		select 
+			(ROW_NUMBER() OVER(order by a.ins_dt desc)) AS "rownum", 			
+			a.data_sq		as	"dataSq",
+			a.cust_name	as	"custNm",
+			a.admin_no	as	"adminNo",
+			a.addr		as	"addr",
+			a.addr_new	as	"addrNew",
+			a.loc_lng		as	"locLng",
+			a.loc_lat		as	"locLat",
+			a.business_name	as	"useType",
+			a.master_site_sq	as	"masterSiteSq",
+			a.master_site_nm	as	"masterSiteNm",
+			a.site_nm		as	"siteNm",
+			a.blk_nm		as	"blkNm",
+			a.set_years	as	"setYears",
+			a.cust_phone as "custPhoen",
+			a.read_responsi	as	"readOpr",
+			a.check_day	as	"checkDay",
+			a.meter_no	as	"meterNo",
+			a.pipe_diameter	as	"pipeDia",
+			a.ami_type	as	"amiType",
+			a.sub_dev_no	as	"subDevNo",
+			a.dev_no		as	"devNo",
+			a.company_nm	as	"companyNm",
+			a.set_dt		as	"setDt",
+			a.token_key	as	"tokenKey",
+			a.ins_dt		as	"insDt",
+			to_char(a.ins_dt, 'yyyy-mm-dd') as "insDtStr",
+			a.flag		as	"flag",
+			b.site_nm0	as "siteNm0"			
+		from
+			tb_m1_info_import a
+			left join vi_m1_sv_point_list b on b.admin_id = a.admin_no
+		where 
+			a.use_cd = '1'
+			and a.flag = '0'
+        <choose>
+			<when test="upSiteSq != null and lv != null">
+				 and b.site_sq in (
+				    select site_sq from fn_prj_sites(#{upSiteSq}::integer, #{lv}::integer)
+				 )					 	
+			</when>
+			<when test="siteSq != null">
+				 and b.site_sq = #{siteSq}::integer		 	
+			</when>							
+		</choose>
+	    	     
+    	<choose>
+			<when test="upBlkSq != null and lv != null">
+				 and b.blk_sq in (
+				    select blk_sq from fn_prj_blockes(#{upBlkSq}::integer, #{lv}::integer)
+				 )					 	
+			</when>
+			<when test="blkSq != null and blkSq != -2">
+				 and b.blk_sq = #{blkSq}::integer		 	
+			</when>							
+			<when test="blkSq != null and blkSq == -2">
+				 and b.blk_sq IS NULL		 	
+			</when>
+		</choose>
+     	
+		<choose>
+			<when test="comSq != null and comSq != -2">
+			and b.company_sq = #{comSq}::integer
+			</when>
+			<when test="comSq != null and comSq == -2">
+			and b.company_sq IS NULL
+			</when>
+		</choose>	      
+	    
+	     <choose>
+			<when test="amiType != null and !amiType.equals('-2')">
+			and b.ami_type = #{amiType}
+			</when>
+			<when test="amiType != null and amiType.equals('-2')">
+			and b.ami_type IS NULL
+			</when>
+		</choose>
+		
+		 <choose>
+			<when test="readOpr != null and !readOpr.equals('-2')">
+			and b.read_opr = #{readOpr}
+			</when>
+			<when test="readOpr != null and readOpr.equals('-2')">
+			and b.read_opr IS NULL
+			</when>
+		</choose>
+		
+		<choose>
+			<when test="chkDay != null and !chkDay.equals('-2')">
+			and b.check_day = #{chkDay}
+			</when>
+			<when test="chkDay != null and chkDay.equals('-2')">
+			and b.check_day IS NULL
+			</when>
+		</choose>
+		 
+	     <choose>
+			<when test="useType != null and !useType.equals('-2')">
+			and b.use_type = #{useType}
+			</when>
+			<when test="useType != null and useType.equals('-2')">
+			and b.use_type IS NULL
+			</when>
+		</choose>
+		
+		<choose>
+			<when test="setYears != null and !setYears.equals('-2')">
+			and b.set_years = #{setYears}
+			</when>
+			<when test="setYears != null and setYears.equals('-2')">
+			and b.set_years IS NULL
+			</when>
+		</choose>
+
+	     <choose>
+			<when test="pipeDia != null and pipeDia != -2">
+			and b.pipe_dia = #{pipeDia}::numeric
+			</when>
+			<when test="pipeDia != null and pipeDia == -2">
+			and b.pipe_dia is null
+			</when>
+		</choose>
+		
+		<if test="useCd != null">
+	    	and b.use_cd in ('1', '9')
+	    </if>
+		
+		<if test="statCd != null">
+	    	and position('1' in b.stat_cd) = #{statCd}::integer
+	    </if>
+		
+		<if test="pointSq != null">
+	    	and b.point_sq = #{pointSq}
+	    </if>
+	    
+	     
+	     <if test="sendCd != null">
+	    	AND b.send_cd = #{sendCd}
+	     </if>
+	     <!--  신규 필터 -->
+	     <if test='cust_nm != null and cust_nm != ""'>
+	       and b.cust_nm like  '%' || #{cust_nm} || '%'
+	     </if>
+	     <if test='admin_no != null and admin_no != ""'>
+	       and b.admin_id like  '%' || #{admin_no} || '%'
+	     </if>
+	     <if test='tap_gb != null and tap_gb != ""'>
+	       and b.tap_gb = #{tap_gb}
+	     </if>
+	     <if test='bungu_cd != null and bungu_cd != ""'>
+	       and b.bungu_cd = #{bungu_cd}
+	     </if>
+	     <if test='(addr_1 != null and addr_1 != "")'>
+	       and  b.site_sq in (
+	       	  select site_sq from fn_prj_sites(#{addr_1} :: integer, '4' :: integer)
+	       )
+	     </if>
+	     <if test='addr != null and addr != ""'>
+	       and (b.addr_old like '%' || #{addr} || '%' 
+	        or  b.addr_new like '%' || #{addr} || '%')
+	     </if>
+	</sql>
+
+	
+	<delete id="deleteUser" parameterType="java.util.Map">
+		DELETE FROM tb_m1_info_user
+		WHERE user_sq = #{userSq}
+	</delete>
+	
+	
+	<delete id="deleteNbiot" parameterType="java.util.Map">
+		DELETE FROM tb_m1_cmap_device
+		WHERE sub_dev_no = #{subDevNo} and dev_no = #{devNo} 
+	</delete>
+	
+	<delete id="deleteLora" parameterType="java.util.Map">
+		DELETE FROM tb_m1_cmap_device
+		WHERE sub_dev_no = #{subDevNo} and dev_no = #{devNo} 
+	</delete>
+	
+	
+	
+	
+	<!-- 미터기 상태이상 요약 정보 -->
+	<select id='statCdSumary' parameterType='java.util.Map' resultType='java.util.Map'>
+		
+		with tb_t as (
+		
+		  select
+		    position('1' in b.stat_cd) index_of,
+		    b.*
+		  from		    
+		    vi_m1_sv_point_list b
+		   <trim prefix="WHERE" prefixOverrides="AND|OR">
+		         <choose>
+					<when test="upSiteSq != null and lv != null">
+						 and b.site_sq in (
+						    select site_sq from fn_prj_sites(#{upSiteSq}::integer, #{lv}::integer)
+						 )					 	
+					</when>
+					<when test="siteSq != null">
+						 and b.site_sq = #{siteSq}::integer		 	
+					</when>							
+				</choose>
+	     	</trim>	
+	     	
+	     	<choose>
+				<when test="upBlkSq != null and lv != null">
+					 and b.blk_sq in (
+					    select blk_sq from fn_prj_blockes(#{upBlkSq}::integer, #{lv}::integer)
+					 )					 	
+				</when>
+				<when test="blkSq != null and blkSq != -2">
+					 and b.blk_sq = #{blkSq}::integer		 	
+				</when>							
+				<when test="blkSq != null and blkSq == -2">
+					 and b.blk_sq IS NULL		 	
+				</when>
+			</choose>
+	     	
+			<choose>
+				<when test="comSq != null and comSq != -2">
+				and b.company_sq = #{comSq}::integer
+				</when>
+				<when test="comSq != null and comSq == -2">
+				and b.company_sq IS NULL
+				</when>
+			</choose>	      
+		    
+		     <choose>
+				<when test="amiType != null and !amiType.equals('-2')">
+				and b.ami_type = #{amiType}
+				</when>
+				<when test="amiType != null and amiType.equals('-2')">
+				and b.ami_type IS NULL
+				</when>
+			</choose>
+			
+			 <choose>
+				<when test="readOpr != null and !readOpr.equals('-2')">
+				and b.read_opr = #{readOpr}
+				</when>
+				<when test="readOpr != null and readOpr.equals('-2')">
+				and b.read_opr IS NULL
+				</when>
+			</choose>
+			
+			<choose>
+				<when test="chkDay != null and !chkDay.equals('-2')">
+				and b.check_day = #{chkDay}
+				</when>
+				<when test="chkDay != null and chkDay.equals('-2')">
+				and b.check_day IS NULL
+				</when>
+			</choose>
+		     
+		     <choose>
+				<when test="useType != null and !useType.equals('-2')">
+				and b.use_type = #{useType}
+				</when>
+				<when test="useType != null and useType.equals('-2')">
+				and b.use_type IS NULL
+				</when>
+			</choose>
+			
+			<choose>
+				<when test="setYears != null and !setYears.equals('-2')">
+				and b.set_years = #{setYears}
+				</when>
+				<when test="setYears != null and setYears.equals('-2')">
+				and b.set_years IS NULL
+				</when>
+			</choose>
+	
+		     <choose>
+				<when test="pipeDia != null and pipeDia != -2">
+				and b.pipe_dia = #{pipeDia}::numeric
+				</when>
+				<when test="pipeDia != null and pipeDia == -2">
+				and b.pipe_dia is null
+				</when>
+			</choose>
+			
+				and	b.use_cd = '1'
+			
+			<if test="statCd != null">
+ 				and position('1' in b.stat_cd) = #{statCd}::integer
+			</if>
+			
+			<if test="pointSq != null">
+		    	and b.point_sq = #{pointSq}
+		    </if>
+		    
+		     <if test="searchParam != null">	     
+		    	AND 
+		        	(
+			        	b.cust_nm like '%${searchParam}%'
+				    	or b.admin_id like '%${searchParam}%'			    	
+				    	or b.addr_new like '%${searchParam}%'			    
+				    	
+			    	)
+		     </if>
+		
+		),
+		tb_all as (
+		  select '200000000'::text stat_cd, count(*) cnt from tb_t
+		),
+		tb_result as (
+		  select
+		    stat_cd, count(*) cnt
+		  from (
+		
+		    select
+		      case		        
+		        when a.index_of in (0, 6, 7, 9, 10) then '000000000'
+		        else rpad( LPAD('1', a.index_of, '0'), 9, '0' )
+		      end stat_cd
+		    from
+		      tb_t a
+		
+		  ) a
+		  group by stat_cd
+		  union all
+		  select stat_cd, cnt from tb_all
+		)
+		select
+		  stat_cd AS "statCd",
+		  cnt AS "cnt",
+		  case position('1' in stat_cd)
+		      when 1 then '통신 장애'
+		      when 2 then '계량기 장애'
+		      when 3 then 'Q4초과'
+		      when 4 then '역류'
+		      when 5 then '누수'
+		      when 8 then 'BAT'
+		      else
+		        case position('2' in stat_cd) when 1 then '전체'
+		        else '정상'
+		      end
+		    end "statCdStr"
+		from tb_result	
+		
+	</select>
+	
+	<!-- 미터기 상태이상 요약 정보 간단 표현 -->
+	<select id='statCdSumarySimple' parameterType='java.util.Map' resultType='java.util.Map'>
+	/*statCdSumarySimple*/
+	with tb_t as (
+		  select
+		    position('1' in b.stat_cd) index_of,		    
+		    b.*
+		  from		    
+		    vi_m1_sv_point_list b
+		   where 1=1
+		    and b.use_cd ='1'
+			<choose>
+				<when test="upSiteSq != null and lv != null">
+					and  b.site_sq in (
+						select site_sq from fn_prj_sites(#{upSiteSq}::integer, 1::integer)
+					)					 	
+				</when>
+				<when test="siteSq != null">
+					and  b.site_sq = #{siteSq}::integer		 	
+				</when>
+			</choose>
+			<choose>
+			<when test="upBlkSq != null and lv != null">
+				 and b.blk_sq in (
+				    select blk_sq from fn_prj_blockes(#{upBlkSq}::integer, #{lv}::integer)
+				 )					 	
+			</when>
+			<when test="blkSq != null and blkSq != -2">
+				 and b.blk_sq = #{blkSq}::integer		 	
+			</when>							
+			<when test="blkSq != null and blkSq == -2">
+				 and b.blk_sq IS NULL		 	
+			</when>
+		</choose>
+     	
+		<choose>
+			<when test="comSq != null and comSq != -2">
+			and b.company_sq = #{comSq}::integer
+			</when>
+			<when test="comSq != null and comSq == -2">
+			and b.company_sq IS NULL
+			</when>
+		</choose>	      
+	    
+	     <choose>
+			<when test="amiType != null and !amiType.equals('-2')">
+			and b.ami_type = #{amiType}
+			</when>
+			<when test="amiType != null and amiType.equals('-2')">
+			and b.ami_type IS NULL
+			</when>
+		</choose>
+		
+		 <choose>
+			<when test="readOpr != null and !readOpr.equals('-2')">
+			and b.read_opr = #{readOpr}
+			</when>
+			<when test="readOpr != null and readOpr.equals('-2')">
+			and b.read_opr IS NULL
+			</when>
+		</choose>
+		
+		<choose>
+			<when test="chkDay != null and !chkDay.equals('-2')">
+			and b.check_day = #{chkDay}
+			</when>
+			<when test="chkDay != null and chkDay.equals('-2')">
+			and b.check_day IS NULL
+			</when>
+		</choose>
+		 
+	     <choose>
+			<when test="useType != null and !useType.equals('-2')">
+			and b.use_type = #{useType}
+			</when>
+			<when test="useType != null and useType.equals('-2')">
+			and b.use_type IS NULL
+			</when>
+		</choose>
+		
+		<choose>
+			<when test="setYears != null and !setYears.equals('-2')">
+			and b.set_years = #{setYears}
+			</when>
+			<when test="setYears != null and setYears.equals('-2')">
+			and b.set_years IS NULL
+			</when>
+		</choose>
+
+	     <choose>
+			<when test="pipeDia != null and pipeDia != -2">
+			and b.pipe_dia = #{pipeDia}::numeric
+			</when>
+			<when test="pipeDia != null and pipeDia == -2">
+			and b.pipe_dia is null
+			</when>
+		</choose>
+		),
+	    tb_all as (
+		  select '200000000'::text stat_cd, index_of from tb_t
+		),
+		tb_all_normal as (
+		  select '300000000'::text as "stat_cd", index_of from tb_t where 1=1
+		),
+		tb_result as (
+		  select
+		    stat_cd, count(*) cnt, statCdStr
+		  from (
+		    select
+		      case
+		        when a.index_of = 1 then '100000000'
+		        when a.index_of = 2 then '010000000'
+				<!--
+		        when a.index_of = 3 then '001000000'
+		        when a.index_of = 4 then '000100000'
+		        when a.index_of = 5 then '000010000'
+		        when a.index_of = 6 then '000001000'
+				-->
+		        else '000000000'
+		      end stat_cd
+		      ,case
+		        when a.index_of = 1 then '통신장애'
+		        when a.index_of = 2 then '계량기장애'
+				<!--
+		        when a.index_of = 3 then 'Q3초과'
+		        when a.index_of = 4 then '역류'
+		        when a.index_of = 5 then '누수'
+		        when a.index_of = 6 then '배터리장애'
+				-->
+		        else '정상'
+		      end statCdStr
+		    from
+		      tb_all_normal a
+		   where 1=1
+		  ) a
+		  group by stat_cd, statCdStr
+		  union all
+		  select stat_cd, count(*) cnt, '전체' as "statCdStr" from tb_all group by stat_cd
+		  union all
+		  select stat_cd, count(*) cnt, '원격검침' as "statCdStr" from tb_all_normal group by stat_cd
+		)
+	select
+		  stat_cd AS "statCd",
+		  cnt AS "cnt",
+		  statCdStr AS "statCdStr"
+		from tb_result;
+
+		
+	</select>
+	
+	
+	<select id="selectComponentes" parameterType="java.util.Map" resultType="java.util.Map">
+		 
+		with tb_t as (
+
+		  select
+		    *
+		  from
+		  vi_m1_sv_point_list
+		  where
+		  	use_cd = '1'
+	
+			<choose>
+				<when test="upSiteSq != null and lv != null">
+					 and site_sq in (
+					    select site_sq from fn_prj_sites(#{upSiteSq}::integer, #{lv}::integer)
+					 )					 	
+				</when>
+				<when test="siteSq != null">
+					 and site_sq = #{siteSq}::integer		 	
+				</when>							
+			</choose>
+
+		)
+		select
+		  key as "key",
+		  sq as "sq",
+		  val as "val"
+		from (
+		select key, sq, val from (select 0 as key, set_years::character varying sq, set_years::character varying val from tb_t group by set_years order by set_years) a
+      union all
+        select key, sq, val from (select 1 as key, b.company_sq::character varying sq, b.company_nm::character varying val from tb_m1_cmap_device a join tb_m1_info_company b on a.company_sq = b.company_sq where 1=1 group by b.company_sq, b.company_nm  order by b.company_nm  ) a
+      union all
+        select key, sq, val from (select 2 as key, ami_type::character varying sq, ami_type::character varying val from tb_t group by ami_type order by ami_type) a
+      union all
+        select key, sq, val from (select 3 as key, pipe_dia::character varying sq, pipe_dia::character varying val from tb_t group by pipe_dia order by pipe_dia::numeric ) a 
+      union all
+        select key, sq, val from (select 4 as key, use_type::character varying sq, use_type::character varying val from tb_t group by use_type order by use_type) a
+      union all
+        select key, sq, val from (select 5 as key, read_opr::character varying sq, read_opr::character varying val from tb_t group by read_opr order by read_opr) a
+      union all
+        select key, sq, val from (select 6 as key, blk_sq::character varying sq, blk_name::character varying val from tb_t group by blk_sq, blk_name order by blk_sq::numeric, blk_name) a
+	  union all
+        select key, sq, val from (select 7 as key, check_day::character varying sq, check_day::character varying val from tb_t group by check_day order by check_day) a
+		) a
+		
+		<trim prefix="WHERE" prefixOverrides="AND|OR">
+	         <choose>				
+				<when test="key != null">
+					and a.key = #{key}
+				</when>
+			</choose>
+		</trim>	
+	</select>
+	
+	
+	<select id='leakSetting' parameterType='java.util.Map' resultType='java.util.Map'>
+	
+		select
+		   q1_15 as "pipeDia15",
+		   q1_20 as "pipeDia20",
+		   q1_25 as "pipeDia25",
+		   q1_32 as "pipeDia32",
+		   q1_40 as "pipeDia40",
+		   q1_50 as "pipeDia50",
+		   q1_75 as "pipeDia75",
+		   q1_100 as "pipeDia100",
+		   q1_150 as "pipeDia150",
+		   q1_200 as "pipeDia200",
+		   q1_250 as "pipeDia250",
+		   sca_coef      as "coe",
+		   calc_days     as "daysBefore",		   
+		   observe_days  as "obDays", -- 대량 누수 샘플링 데이터 기준일
+		   range_days  	 as "rDays", -- 대량 누수 연속 기준일
+		   no_use_observe_day  as "noUseObDays" -- 미량 사용자 데이터 샘플링 데이터 기준일
+		   
+		from
+			tb_m1_waterleak_setting
+		
+		<trim prefix="WHERE" prefixOverrides="AND|OR">
+         	<choose>
+	         	<when test="upSiteSq != null and lv != null">
+					 and site_sq in (
+					    select site_sq from fn_prj_sites(#{upSiteSq}::integer, #{lv}::integer)
+					 )					 			
+				</when>	
+				<when test="siteSq != null">
+					 site_sq = #{siteSq}						 				
+				</when>							
+			</choose>
+   		</trim>	
+   		
+   		<if test="limit != null">
+	  		limit #{limit}::integer
+	  	</if>	
+			
+		
+	</select>
+	
+	<update id="updateleakSetting" parameterType="java.util.Map">
+		
+		update tb_m1_waterleak_setting set
+		  <if test="noUseObDays != null">
+		  	no_use_observe_day = #{noUseObDays}
+		  </if>
+		  <if test="coe != null">
+		  	sca_coef = #{coe},
+		  </if>	
+		  <if test="daysBefore != null">
+		  	calc_days = #{daysBefore}
+		  </if>			  		  		  
+		  <if test="obDays != null">
+		  	observe_days = #{obDays},
+		  </if>	
+		  <if test="rDays != null">
+		  	range_days = #{rDays}
+		  </if>
+		  
+		  <trim prefix="WHERE" prefixOverrides="AND|OR">
+         	<choose>
+	         	<when test="upSiteSq != null and lv != null">
+					 and site_sq in (
+					    select site_sq from fn_prj_sites(#{upSiteSq}::integer, #{lv}::integer)
+					 )					 			
+				</when>	
+				<when test="siteSq != null">
+					 site_sq = #{siteSq}						 				
+				</when>							
+			</choose>
+   		</trim>			  
+		 
+	</update>
+	
+	
+	<select id='decreaseSetting' parameterType='java.util.Map' resultType='java.util.Map'>
+	
+		select
+		    sampling_week as "dWeak",
+			decrease_apply_day as "dDay"		   
+		from tb_m1_decrease_setting
+		<trim prefix="WHERE" prefixOverrides="AND|OR">
+         	<choose>
+	         	<when test="upSiteSq != null and lv != null">
+					 and site_sq in (
+					    select site_sq from fn_prj_sites(#{upSiteSq}::integer, #{lv}::integer)
+					 )					 			
+				</when>	
+				<when test="siteSq != null">
+					 site_sq = #{siteSq}						 				
+				</when>							
+			</choose>
+   		</trim>	
+   		
+   		<if test="limit != null">
+	  		limit #{limit}::integer
+	  	</if>	
+		
+	</select>
+	
+	<update id="updateDecreaseSetting" parameterType="java.util.Map">
+		  
+		update tb_m1_decrease_setting set
+			sampling_week = #{dWeak},
+			decrease_apply_day = #{dDay},					
+			upd_dt = now()
+		<trim prefix="WHERE" prefixOverrides="AND|OR">
+         	<choose>
+	         	<when test="upSiteSq != null and lv != null">
+					 and site_sq in (
+					    select site_sq from fn_prj_sites(#{upSiteSq}::integer, #{lv}::integer)
+					 )					 			
+				</when>	
+				<when test="siteSq != null">
+					 site_sq = #{siteSq}						 				
+				</when>							
+			</choose>
+   		</trim>
+		 
+	</update>
+	
+	
+
+	
+	<!-- SJH_20220523  -->
+	
+	<select id="loginList_Paging" parameterType="java.util.Map" resultType="java.util.Map">
+		  <include refid="pageHeader"/>      
+	      <include refid="loginList_sql"/>      
+	      <include refid="pageFooter"/>
+	</select>
+	
+	<select id="loginList" parameterType="java.util.Map" resultType="java.util.Map">           
+    	  <include refid="loginList_sql"/>                      
+    </select>
+  
+	
+	<sql id="loginList_sql">
+	
+		select
+		(ROW_NUMBER() OVER(order by login_dt desc)) AS "num",
+		session_id as "sessionId",
+		ip_addr as "ipAddr",
+		user_id as "userId",
+		login_dt as "loginDt",
+		agent as "Agent",
+		refer as "Refer"
+		from tb_m1_log_visite_raw order by login_dt desc
+
+	</sql>
+	
+	
+	<select id="ddcList_paging" parameterType="java.util.Map" resultType="java.util.Map">
+      <include refid="pageHeader"/>
+      <include refid="ddcList_sql"/>
+      <include refid="pageFooter"/>
+    </select>
+	
+	<select id="ddcList" parameterType="java.util.Map" resultType="java.util.Map">           
+      <include refid="ddcList_sql"/>            
+    </select>
+
+    
+
+    
+    <sql id="ddcList_sql">
+    	
+    select title1, title2, title3, title4, title5, title6, title7, title8, title9, title10
+  		from public.tb_m1_status_report
+ 			where report_dt = #{reportDt}::date
+ 			order by data_sq
+    </sql>
+    
+    
+    
+    <select id="companyList_paging" parameterType="java.util.Map" resultType="java.util.Map">
+      <include refid="pageHeader"/>
+      <include refid="companyList_sql"/>
+      <include refid="pageFooter"/>
+    </select>
+	
+	<select id="companyList" parameterType="java.util.Map" resultType="java.util.Map">           
+      <include refid="companyList_sql"/>            
+    </select>
+
+    
+
+    
+    <sql id="companyList_sql">
+    
+    select
+    company_sq as "companySq",
+    company_nm as "companyNm",
+    company_cd as "companyCd",
+    site_sq as "siteSq"
+    from
+    tb_m1_info_company
+    order by company_nm desc
+    
+    </sql>
+    
+    <update id="updateCompany" parameterType="java.util.Map">
+		update tb_m1_info_company set
+			  company_nm = #{companyNm},
+			  company_cd = #{companyCd}			  			 
+		where company_sq = #{companySq}::integer	
+	</update>
+	
+	<delete id="deleteCompany" parameterType="java.util.Map">
+		DELETE FROM tb_m1_info_company
+		WHERE company_sq = #{companySq}
+	</delete>
+	
+	<insert id="insertCompany" parameterType="java.util.Map">
+		
+		<selectKey resultType="java.util.HashMap" keyProperty="companySq" order="BEFORE">
+			SELECT nextval('tb_m1_info_company_company_seq') as "companySq"
+		</selectKey>
+		
+		insert into tb_m1_info_company (
+		  company_sq,
+		  company_nm,
+		  company_cd,
+		  site_sq		  
+		)
+		values (
+		  #{companySq}::integer,
+		  #{companyNm},
+		  #{companyCd},
+		  #{siteSq}		 
+		)
+				
+		
+	</insert>
+ 
+ 	<select id="purenMul_paging" parameterType="java.util.Map" resultType="java.util.Map">
+      <include refid="pageHeader"/>
+      <include refid="purenMul_sql"/>
+      <include refid="pageFooter"/>
+    </select>
+	
+	<select id="purenMul" parameterType="java.util.Map" resultType="java.util.Map">           
+      <include refid="purenMul_sql"/>            
+    </select>
+
+    
+
+    
+    <sql id="purenMul_sql">
+    	
+    select       
+       substr(p.admin_id,1,1) as "adminId1", --시군
+        substr(p.admin_id,3,16) as "adminId2", --수용가번호
+       to_char(end_meas_dt_t, 'yyyymmdd') as "endMeasDtT", --검침일자
+       trunc(end_accu_iv) as "endAccuIv", --당월지침
+       trunc(term_iv) as "termIv", --사용량
+      '' as "ijCd" --인정코드           
+     from
+       vi_m1_sv_point_list p
+       left join fn_tb_meas_total_month_fromto(to_date(#{fromDt},'YYYY-MM-DD'), to_date(#{toDt},'YYYY-MM-DD'))  measDay on measDay.point_sq = p.point_sq
+	   where p.use_cd = '1'
+       and to_char(end_meas_dt_t, 'YYYY-MM-DD') = #{toDt}
+      <choose>
+        <when test="upSiteSq != null and lv != null">
+           and p.site_sq in (
+            select site_sq from fn_prj_sites(#{upSiteSq}::integer, #{lv}::integer)
+           )                   
+        </when>
+        <when test="siteSq != null">
+           and p.site_sq = #{siteSq}::integer          
+        </when>                     
+      </choose>
+
+    </sql>
+    
+    <select id="suJaWon_paging" parameterType="java.util.Map" resultType="java.util.Map">
+      <include refid="pageHeader"/>
+      <include refid="suJaWon_sql"/>
+      <include refid="pageFooter"/>
+    </select>
+	
+	<select id="suJaWon" parameterType="java.util.Map" resultType="java.util.Map">           
+      <include refid="suJaWon_sql"/>            
+    </select>
+
+    <sql id="suJaWon_sql">
+    	
+    select       
+      (ROW_NUMBER() OVER()) AS "rownum",
+      p.admin_id as "adminId",
+      '상수도' as "sudo",
+       case 
+       	when end_meas_dt_t is null then '장애'
+       	else '정상'
+       	end "accuCd",             
+       to_char(end_meas_dt_t, 'yyyymmdd') as "endMeasDtT", --검침일자
+       trunc(end_accu_iv) as "endAccuIv", --당월지침
+       trunc(term_iv) as "termIv" --사용량               
+     from
+       vi_m1_sv_point_list p
+       left join fn_tb_meas_total_month_fromto(to_date(#{fromDt},'YYYY-MM-DD'), to_date(#{toDt},'YYYY-MM-DD'))  measDay on measDay.point_sq = p.point_sq
+	   where p.use_cd = '1'
+       and to_char(end_meas_dt_t, 'YYYY-MM-DD') = #{toDt}
+      <choose>
+        <when test="upSiteSq != null and lv != null">
+           and p.site_sq in (
+            select site_sq from fn_prj_sites(#{upSiteSq}::integer, #{lv}::integer)
+           )                   
+        </when>
+        <when test="siteSq != null">
+           and p.site_sq = #{siteSq}::integer          
+        </when>                     
+      </choose>
+
+    </sql>
+    
+    <!-- 2023-11-13 대전 단말등록 임포트 쿼리 -->
+    
+     <select id="ctnList" parameterType="java.util.Map" resultType="java.util.Map">
+      <include refid="ctnList_sql"/>      
+    </select>
+	
+	<select id="ctnList_paging" parameterType="java.util.Map" resultType="java.util.Map">
+      <include refid="pageHeader"/>      
+      <include refid="ctnList_sql"/>      
+      <include refid="pageFooter"/>           
+    </select>
+	
+	
+	<sql id="ctnList_sql">
+		
+		   select 
+	 (ROW_NUMBER() OVER()) AS "rownum",
+	 dev_no as "ctn",
+	 sub_dev_no as "cseId",
+	 ami_type as "amiType", 
+	 b.company_nm as "comNm",
+	 to_char(a.ins_dt,'yyyy-mm-dd') as "setDt",
+	 to_char(a.upd_dt,'yyyy-mm-dd hh24:mi:ss') as "updDt"
+	 
+	 from tb_m1_cmap_device a join tb_m1_info_company b 
+	 	on a.company_sq = b.company_sq
+     	where 1=1
+		<choose>
+			<when test="comSq != null and comSq != -2">
+			and a.company_sq = #{comSq}::integer
+			</when>
+			<when test="comSq != null and comSq == -2">
+			and a.company_sq IS NULL
+			</when>
+		</choose>	      
+	 	
+	 	<if test="searchParamList != null">
+		    <foreach collection="searchParamList" item="item" index="index" open="AND (" close=")" separator="OR ">        	
+			        	(
+				        	a.sub_dev_no like '%${item}%'
+				        	OR a.dev_no like '%${item}%'			    	
+				        	
+				    	)
+		    </foreach>
+	    </if> 
+		  
+		  
+	</sql>
+	
+	
+	<insert id="insertCtnImport" parameterType="java.util.Map">
+		
+		insert into tb_m1_ctn_import (
+			data_sq,
+			ami_type,
+			cse_id,
+			ctn,
+			company_nm,
+			set_dt,
+			token_key,
+			ins_dt,
+			master_site_sq,
+			master_site_nm			
+	    )	    
+	    values (
+	    	#{dataSq},
+			#{amiType},
+			#{cseId},
+			#{ctn},
+			#{comNm},
+			#{setDt},
+			#{tokenKey},
+			now(),
+			#{upSiteSq},
+			#{masterSiteNm}		
+	    )
+	        			
+	</insert>
+	
+	
+	<select id="importCtnResult" parameterType="java.util.Map" resultType="java.util.Map">
+		select
+			data_sq as "dataSq",
+			msg 	as "msg"
+		from
+			fn_ctn_excel_import(#{tokenKey})            
+    </select>
+	
+	
+	
+	
+	<select id="importCtnList" parameterType="java.util.Map" resultType="java.util.Map">
+      <include refid="importCtnList_sql"/>      
+    </select>
+	
+	<select id="imporCtnList_paging" parameterType="java.util.Map" resultType="java.util.Map">
+      <include refid="pageHeader"/>      
+      <include refid="importCtnList_sql"/>      
+      <include refid="pageFooter"/>           
+    </select>
+    
+	
+	<sql id="importCtnList_sql">
+	
+		select 
+			(ROW_NUMBER() OVER(order by a.ins_dt desc)) AS "rownum", 			
+			a.data_sq		as	"dataSq",			
+			a.ami_type	as	"amiType",
+			a.cse_id	as	"cseId",
+			a.ctn		as	"ctn",
+			a.company_nm	as	"comNm",
+			to_char(a.set_dt,'yyyy-mm-dd')		as	"setDt",
+			a.token_key	as	"tokenKey",
+			a.ins_dt		as	"insDt",
+			to_char(a.ins_dt, 'yyyy-mm-dd') as "insDtStr",
+			a.flag		as	"flag",
+			a.master_site_sq	as	"masterSiteSq",
+			a.master_site_nm	as	"masterSiteNm"				
+		from
+			tb_m1_ctn_import a			
+		where 
+			a.use_cd = '1'
+			and a.flag = '0'
+	     	<if test="masterSiteSq != null">
+	    		and a.master_site_sq = #{masterSiteSq}
+	    	</if>	     
+	    	
+	    	
+	</sql>
+	
+	<delete id="deleteCtn" parameterType="java.util.Map">
+		DELETE FROM tb_m1_cmap_device
+		WHERE sub_dev_no = #{cseId} and dev_no = #{ctn} 
+	</delete>
+	
+	<select id="adminList_paging" parameterType="java.util.Map" resultType="java.util.Map">
+      <include refid="pageHeader"/>      
+      <include refid="adminList_sql"/>      
+      <include refid="pageFooter"/>           
+    </select>
+    <select id="selectadminList" parameterType="java.util.Map" resultType="java.util.Map">
+      <include refid="adminList_sql"/>      
+    </select>
+	
+	
+	<sql id="adminList_sql">
+		select (ROW_NUMBER() OVER(order by c.cust_sq)) AS "rownum"
+		     , c.admin_no
+		     , c.cust_name
+		     <!-- 
+		     , com2.company_nm as "company_nm"
+		      -->
+		     , c.note
+		     , a.point_sq as "pointSq"
+		     , a.site_sq as "siteSq"
+		     , c.cust_phone 
+		     , c.addr 
+		     , c.addr_new 
+		     , c.meter_no
+		  from tb_m1_info_point a
+     LEFT JOIN tb_m1_info_customer c ON c.cust_sq = a.cust_sq
+	 LEFT JOIN tb_m1_cmap_nbiot c2 ON c2.point_sq = a.point_sq
+	 LEFT JOIN tb_m1_info_company com2 ON com2.company_sq = c2.company_sq
+	     where 1=1
+	     <if test='cust_nm != null and cust_nm != ""'>
+	       and c.cust_name like  '%' || #{cust_nm} || '%'
+	     </if>
+	     <if test='admin_no != null and admin_no != ""'>
+	       and c.admin_no like  '%' || #{admin_no} || '%'
+	     </if>
+	     <if test='tap_gb != null and tap_gb != ""'>
+	       and c.tap_gb = #{tap_gb}
+	     </if>
+	     <if test='bungu_cd != null and bungu_cd != ""'>
+	       and c.bungu_cd = #{bungu_cd}
+	     </if>
+	     <if test='meter_no != null and meter_no != ""'>
+	       and (
+			   a.sub_dev_no like '%' || #{meter_no} || '%' 
+			or a.dev_no like '%' || #{meter_no} || '%' 
+			or a.meter_no like '%' || #{meter_no} || '%' 
+		   )
+	     </if>
+	     <if test='(addr_1 != null and addr_1 != "")'>
+	       and  a.site_sq in (
+	       	  select site_sq from fn_prj_sites(#{addr_1} :: integer, '4' :: integer)
+	       )
+	     </if>
+	     <if test='addr != null and addr != ""'>
+	       and (c.addr like '%' || #{addr} || '%' 
+	        or  c.addr_new like '%' || #{addr} || '%')
+	     </if>
+	</sql>
+	
+    
+    
+    
+    <select id="newPointList" parameterType="java.util.Map" resultType="java.util.Map">
+      <include refid="newPointList_sql"/>      
+    </select>
+	
+	<select id="newPointList_paging" parameterType="java.util.Map" resultType="java.util.Map">
+      <include refid="pageHeader"/>      
+      <include refid="newPointList_sql"/>      
+      <include refid="pageFooter"/>           
+    </select>
+    
+	<sql id="newPointList_sql">
+			select
+			  (ROW_NUMBER() OVER()) AS "rownum",
+			  a.point_sq	 as "pointSq",	-- 장비 Sq
+			  a.site_sq   as "siteSq",			  
+			  s3.site_nm as "siteNm0", --지자체
+        	  s3.site_nm as "siteNm1", --사업소
+		      s3.site_nm as "siteNm2", --구
+			  s3.site_nm as "siteNm", --사이트 이름 (동)
+			  a.blk_sq	 as "blkSq",	-- 블럭 Sq
+			  c.set_years as "setYears", --수용가 대상년도
+			  a.cust_sq	 as "custSq",	-- 수용가 Sq
+			  a.use_cd	 as "useCd",	-- 사용코드 (0:점검, 1:사용중, 7:사용중지)
+			  case a.use_cd
+			    when '1' then '검침중'
+			    else '검침중지'
+			  end "useCdStr",
+			  c.check_day as "checkDay", --검침일
+			  c.admin_no	 as "adminId",	-- 검침관리코드
+			  c.cust_name	 as "custNm",	-- 수용가 이름
+			  c.addr	 as "addrOld",	-- 구주소
+			  c.addr_new	 as "addrNew",	-- 도로명주소
+			  c.meter_no	 as "meterNo",	-- 미터번호
+			  c.business_name	 as "useType",	-- 업종 (가정용/일반용/학교용)
+			  c.pipe_diameter	 as "pipeDia",	-- 관경
+			  k3.blk_nm	 as "blkNm1",	-- 상위 블럭이름
+			  k3.blk_nm	 as "blkNm2",	-- 중블럭이름
+			  k3.blk_nm as "blkNm",	-- 하위 블럭이름
+			  c.read_responsi  as "readOpr",	-- 검침원
+			  c.check_day as "chkDay", --검침일
+			  c.cust_phone as "custPhone", --전화번호
+			  a.loc_lng	 as "locLng",	-- 위도
+			  a.loc_lat	 as "locLat",	-- 경도
+			  dev.ins_dt	 as "setDt",	-- ami 설치일
+			  to_char(dev.ins_dt, 'yyyy-mm-dd') as "setDtStr",
+			  a.p_remark	 as "pointRemark",	-- 비고
+			  a.ins_dt	 as "insDt",	-- 등록일시
+			  a.upd_dt	 as "updDt",	-- 수정일시,
+			  b.meas_dt   as "measDt",
+			  to_char(b.meas_dt, 'yyyy-mm-dd hh24:mi') as "measDtStr",
+			  trunc(b.accu_iv)   as "accuIv",
+			  b.adjst_os  as "adjstV",
+			  b.stat_cd   as "statCd",
+			  b.stat_cd   as "deviceStatCd",
+			  case position('1' in b.stat_cd)			  
+			      when 1 then '통신 장애'
+			      when 2 then '계량기 장애'
+			      when 3 then 'Q4 초과'
+			      when 4 then '역류'
+			      when 5 then '누수'		      		      
+			      when 6 then '정상'
+			      when 7 then '정상'
+			      when 8 then 'BAT'
+			      else '정상'
+			  end "statCdStr",		
+			  dev.ami_type as "amiType",
+			  dev.dev_no   as "devNo",
+			  dev.sub_dev_no   as "subDevNo",
+			  b.raw_cnt_0d as "rawCnt_0d",
+			  b.term_cv_0d as "termCv_0d",
+			  b.raw_cnt_1d as "rawCnt_1d",
+			  b.term_cv_1d as "termCv_1d",
+			  b.raw_cnt_7d as "rawCnt_7d",
+			  b.term_cv_7d as "termCv_7d",
+			  b.raw_cnt_30d as "rawCnt_30d",
+			  b.term_cv_30d as "termCv_30d",
+			  b.raw_cnt_90d as "rawCnt_90d",
+			  b.term_cv_90d as "termCv_90d",
+			  b.delay_rcv as "delayRcv",
+			  b.bat2_iv as "bat2Iv",
+			  case
+		        when b.bat2_stat = '1' then '장애'
+		        when b.bat2_stat = '0' then '정상'		        
+		      end "bat2Stat",			  
+			  com1.company_sq as "comSq",
+		      com1.company_nm as "comNm",
+		      com1.company_cd as "comCd",
+			  a.inform_cd as "informCd",
+			  a.send_cd as "sendCd",
+			  a.send_dt as "sendDt",
+			  b.temperature,
+			  c.img_src_gum,
+    		  c.img_src_bf,
+    		  c.img_src_af,
+    		  c.img_src_add,
+			  c.note
+		  from
+		     tb_m1_info_point a
+		     LEFT JOIN tb_m1_info_customer c ON c.cust_sq = a.cust_sq
+		     LEFT JOIN tb_m1_info_block k3 ON k3.blk_sq = a.blk_sq
+		     LEFT JOIN vi_m1_sv_site_list s3 ON s3.site_sq = a.site_sq
+		     LEFT JOIN tb_m1_cmap_device dev ON dev.point_sq = a.point_sq
+		     LEFT JOIN tb_m1_info_company com1 ON com1.company_sq = dev.company_sq
+		     LEFT JOIN vi_m1_sv_meas_now b ON b.point_sq = a.point_sq
+		 where 1=1 
+	         <choose>
+				<when test="upSiteSq != null and lv != null">
+					 and a.site_sq in (
+					    select site_sq from fn_prj_sites(#{upSiteSq}::integer, #{lv}::integer)
+					 )					 	
+				</when>
+				<when test="siteSq != null">
+					 and a.site_sq = #{siteSq}::integer		 	
+				</when>
+			</choose>
+     	
+     	<choose>
+			<when test="upBlkSq != null and lv != null">
+				 and k3.blk_sq in (
+				    select blk_sq from fn_prj_blockes(#{upBlkSq}::integer, #{lv}::integer)
+				 )					 	
+			</when>
+			<when test="blkSq != null and blkSq != -2">
+				 and k3.blk_sq = #{blkSq}::integer		 	
+			</when>							
+			<when test="blkSq != null and blkSq == -2">
+				 and k3.blk_sq IS NULL		 	
+			</when>
+		</choose>
+     	
+		<choose>
+			<when test="comSq != null and comSq != -2">
+			and com1.company_sq = #{comSq}::integer
+			</when>
+			<when test="comSq != null and comSq == -2">
+			and com1.company_sq IS NULL
+			</when>
+		</choose>	      
+	    
+	     <choose>
+			<when test="amiType != null and !amiType.equals('-2')">
+			and dev.ami_type = #{amiType}
+			</when>
+			<when test="amiType != null and amiType.equals('-2')">
+			and dev.ami_type IS NULL
+			</when>
+		</choose>
+		
+		 <choose>
+			<when test="readOpr != null and !readOpr.equals('-2')">
+			and c.read_responsi = #{readOpr}
+			</when>
+			<when test="readOpr != null and readOpr.equals('-2')">
+			and c.read_responsi IS NULL
+			</when>
+		</choose>
+		
+		<choose>
+			<when test="chkDay != null and !chkDay.equals('-2')">
+			and c.check_day = #{chkDay}
+			</when>
+			<when test="chkDay != null and chkDay.equals('-2')">
+			and c.check_day IS NULL
+			</when>
+		</choose>
+		 
+	     <choose>
+			<when test="useType != null and !useType.equals('-2')">
+			and c.business_name = #{useType}
+			</when>
+			<when test="useType != null and useType.equals('-2')">
+			and c.business_name IS NULL
+			</when>
+		</choose>
+		
+		<choose>
+			<when test="setYears != null and !setYears.equals('-2')">
+			and c.set_years = #{setYears}
+			</when>
+			<when test="setYears != null and setYears.equals('-2')">
+			and c.set_years IS NULL
+			</when>
+		</choose>
+
+	     <choose>
+			<when test="pipeDia != null and pipeDia != -2">
+			and c.pipe_diameter = #{pipeDia}::numeric
+			</when>
+			<when test="pipeDia != null and pipeDia == -2">
+			and c.pipe_diameter is null
+			</when>
+		</choose>
+		
+	    	and a.use_cd = '1'
+		
+		<if test="statCd != null">
+	    	and position('1' in b.stat_cd) = #{statCd}::integer
+	    </if>
+		
+		<if test="pointSq != null">
+	    	and a.point_sq = #{pointSq}
+	    </if>
+	     
+	     <!--  신규 필터 -->
+	     <if test='cust_nm != null and cust_nm != ""'>
+	       and c.cust_name like  '%' || #{cust_nm} || '%'
+	     </if>
+	     <if test='admin_no != null and admin_no != ""'>
+	       and c.admin_no like  '%' || #{admin_no} || '%'
+	     </if>
+	     <if test='addr != null and addr != ""'>
+	       and (c.addr like '%' || #{addr} || '%' 
+	        or  c.addr_new like '%' || #{addr} || '%')
+	     </if>
+		 <if test='meter_no != null and meter_no != ""'>
+	       and (
+			   dev.sub_dev_no like '%' || #{meter_no} || '%' 
+			or dev.dev_no like '%' || #{meter_no} || '%' 
+			or c.meter_no like '%' || #{meter_no} || '%' 
+		   )
+	     </if>
+		 <!-- 대시보드 필터 -->
+		 <if test='searchInputP != null and searchInputP != ""'>
+	       and (c.admin_no like  '%' || #{searchInputP} || '%'
+		       or  c.cust_name like  '%' || #{searchInputP} || '%')
+	     </if>
+	</sql>
+    
+    <!-- 2024.03.25 포항 누수 변경 -->
+    <update id="insertWaterLeak_List" parameterType="java.util.Map" >
+    	/*mars.icbm.map1.insertWaterLeak_List*/
+    	insert into tb_m1_waterleak_setting2 
+    	(
+    		site_sq
+			,pipe_diameter
+			,business_name
+			,compare_term_cv
+			,compare_type
+			,calc_days
+			,calc_hour
+			,beforetime
+			,aftertime
+    	)
+    	values
+    	(   
+    	     #{masterSiteSq}
+			,#{pipe_diameter} ::numeric
+			,#{business_name}
+			,#{compare_term_cv} :: numeric
+			,#{compare_type}
+			,#{calc_days} :: integer
+			,#{calc_hour} :: integer
+			,#{beforetime} :: timestamp
+			,#{aftertime} :: timestamp
+    	)          
+    </update>
+    
+    <delete id="deleteWaterLeak_List" parameterType="java.util.Map" >
+    	/*mars.icbm.map1.deleteWaterLeak_List*/
+    	delete from tb_m1_waterleak_setting2
+    	where 1=1 
+    	  and site_sq = #{site_sq} :: integer
+    	  and pipe_diameter = #{pipe_diameter} ::numeric
+    	  and business_name =#{business_name}
+    </delete>
+    
+	<select id='leakSetting2' parameterType='java.util.Map' resultType='java.util.Map'>
+		/*mars.icbm.map1.leakSetting2*/
+		select (ROW_NUMBER() OVER(order by pipe_diameter desc)) AS "rownum",a.* from tb_m1_waterleak_setting2 a
+	</select>
+
+	<!-- 누수 제외 수용가 추가.-->
+    <update id="insertWaterLeak_hide_List" parameterType="java.util.Map" >
+    	/*mars.icbm.map1.insertWaterLeak_hide_List*/
+    	insert into tb_m1_waterleak_hide_setting (
+			point_sq,
+			admin_no,
+			ins_dt 
+		)
+		values (
+		    (select point_sq from vi_m1_sv_point_list where 1=1 and admin_id = #{admin_no}),
+		    #{admin_no},
+		    now()
+		)        
+    </update>
+	
+	<delete id="deleteWaterLeak_Hide_List" parameterType="java.util.Map" >
+    	/*mars.icbm.map1.deleteWaterLeak_Hide_List*/
+    	delete from tb_m1_waterleak_hide_setting
+    	where 1=1 
+    	  and point_sq = #{point_sq} :: integer
+    </delete>
+	
+	<select id='leakHideSetting_List' parameterType='java.util.Map' resultType='java.util.Map'>
+		/*mars.icbm.map1.leakSetting2*/
+		select (ROW_NUMBER() OVER(order by point_sq desc)) AS "rownum",a.* from tb_m1_waterleak_hide_setting a
+	</select>
+	
+	<select id='select_pipe_diameter' parameterType='java.util.Map' resultType='java.util.Map'>
+		/*mars.icbm.map1.select_pipe_diameter*/
+		select distinct '2' as "key"
+			  ,pipe_diameter as "val" 
+		  from tb_m1_info_customer 
+		 where 1=1 
+		   and pipe_diameter is not null
+		 order by pipe_diameter
+	</select>
+	
+	<select id='select_business_name' parameterType='java.util.Map' resultType='java.util.Map'>
+		/*mars.icbm.map1.select_business_name*/
+		select distinct '1' as "key"
+			 ,business_name as "val" 
+		  from tb_m1_info_customer 
+		 where 1=1 
+		   and business_name is not null 
+		   and business_name != '' 
+		 order by business_name
+	</select>
+	
+    <select id="select_waterLeakList_page" parameterType="java.util.Map" resultType="java.util.Map">
+      <include refid="pageHeader"/>      
+      <include refid="select_waterLeakList_sql"/>      
+      <include refid="pageFooter"/>           
+    </select>
+	
+	<select id='select_waterLeakList' parameterType='java.util.Map' resultType='java.util.Map'>
+		/*mars.icbm.map1.select_waterLeakList*/
+		<include refid="select_waterLeakList_sql"/>  
+	</select>
+	
+	<sql id="select_waterLeakList_sql">
+			select (ROW_NUMBER() OVER()) AS "num",aa.* from (
+	                   select 
+                        		  a.point_sq     as "pointSq"  -- 장비 Sq
+								  ,a.site_sq     as "siteSq"
+                                  ,max(c.meas_dt) :: timestamp as  "max_date"
+								  ,min(c.meas_dt) :: timestamp as "min_date"
+								  ,max(c.term_cv) as "max_term_cv"
+								  ,min(c.term_cv) as "min_term_cv"
+                                  ,max(a.compare_term_cv) as "compare_term_cv"
+                                  ,max(a.cust_name) as "cust_nm"
+                                  ,max(a.admin_no) as "admin_id"
+                                  ,max(a.business_name) as "use_type"
+                                  ,max(a.pipe_diameter) as "pipe_dia"
+                                  ,max(a.addr_new) as "addr_new"
+								  ,case when max(a.stat_cd) is not null then 'Y'
+								        else 'N'
+								    end as "stat_yn"
+                        from (
+                        select
+                                   a.point_sq  -- 장비 Sq
+								  ,a.site_sq
+                                  , b.cust_name
+                                  , b.admin_no
+                                  , b.business_name
+                                  , b.pipe_diameter
+                                  , b.addr_new
+                                  , s.compare_term_cv
+								  , s.calc_hour
+								  , n.stat_cd 
+                          from
+                            tb_m1_info_point a
+                            join tb_m1_info_customer b ON b.cust_sq = a.cust_sq
+                            join tb_m1_waterleak_setting2 s on s.pipe_diameter = b.pipe_diameter and s.business_name = b.business_name
+							left join vi_m1_sv_meas_now n on n.point_sq = a.point_sq and position('1' in n.stat_cd) = 5
+						 where 1=1
+						   and a.use_cd = '1'
+                        ) a 
+                        join (select 
+                        			a.point_sq
+                        		  , a.meas_dt
+                        		  , a.term_cv 
+                        	    from tb_m1_meas_raw a 
+                        	   where 1=1
+                        	     and a.meas_dt between to_timestamp(#{stdDate}, 'yyyy-mm-dd hh24:mi:ss') - '10 days'::interval  and to_timestamp(#{stdDate}, 'yyyy-mm-dd hh24:mi:ss')
+                        	 ) c
+                             on c.point_sq  = a.point_sq
+                        where 1=1
+                          and c.term_cv is not null
+                          and a.point_sq not in (select point_sq from tb_m1_waterleak_hide_setting)
+                          and c.meas_dt between to_timestamp(#{stdDate}, 'yyyy-mm-dd hh24:mi:ss') - make_interval(hours => a.calc_hour-1)  and to_timestamp(#{stdDate}, 'yyyy-mm-dd hh24:mi:ss')
+                        group by a.point_sq,a.site_sq
+                       ) aa
+                       where 1=1 
+                         and aa.min_term_cv >= aa.compare_term_cv
+						  <!--  신규 필터 -->
+						<if test='cust_nm != null and cust_nm != ""'>
+						and aa.cust_nm like  '%' || #{cust_nm} || '%'
+						</if>
+						<if test='admin_no != null and admin_no != ""'>
+						and aa.admin_id like  '%' || #{admin_no} || '%'
+						</if>
+						<if test='statYn != null and statYn != ""'>
+						and aa.stat_yn = #{statYn}
+						</if>
+	</sql>
+    
+    <!-- 동두천 주부 수용가 -->
+	<select id="selectChildAdminId" parameterType="java.util.Map" resultType="java.util.Map">          
+	with t_t as (
+		 select admin_no,
+				child_admin_id,
+				admin_nm,
+				child_admin_nm
+				from tb_m1_info_childAdmin
+    )
+    select
+			  (ROW_NUMBER() OVER()) AS "rownum",
+			  a.point_sq	 as "pointSq",	-- 장비 Sq
+			  a.site_sq   as "siteSq",			  
+			  a.site_nm0 as "siteNm0", --지자체
+        	  a.site_nm1 as "siteNm1", --사업소
+		      a.site_nm2 as "siteNm2", --구
+			  a.site_nm as "siteNm", --사이트 이름 (동)
+			  a.blk_sq	 as "blkSq",	-- 블럭 Sq
+			  a.set_years as "setYears", --수용가 대상년도
+			  a.cust_sq	 as "custSq",	-- 수용가 Sq
+			  a.use_cd	 as "useCd",	-- 사용코드 (0:점검, 1:사용중, 7:사용중지)
+			  case a.use_cd
+			    when '1' then '검침중'
+			    else '검침중지'
+			  end "useCdStr",
+			  a.check_day as "checkDay", --검침일
+			  a.admin_id	 as "adminId",	-- 검침관리코드
+			  a.cust_nm	 as "custNm",	-- 수용가 이름
+			  a.addr_old	 as "addrOld",	-- 구주소
+			  a.addr_new	 as "addrNew",	-- 도로명주소
+			  a.meter_no	 as "meterNo",	-- 미터번호
+			  a.use_type	 as "useType",	-- 업종 (가정용/일반용/학교용)
+			  a.pipe_dia	 as "pipeDia",	-- 관경
+			  a.blk_name1	 as "blkNm1",	-- 상위 블럭이름
+			  a.blk_name2	 as "blkNm2",	-- 중블럭이름
+			  a.blk_name as "blkNm",	-- 하위 블럭이름
+			  a.read_opr  as "readOpr",	-- 검침원
+			  a.check_day as "chkDay", --검침일
+			  a.cust_phone as "custPhone", --전화번호
+			  a.loc_lng	 as "locLng",	-- 위도
+			  a.loc_lat	 as "locLat",	-- 경도
+			  a.set_dt	 as "setDt",	-- ami 설치일
+			  to_char(a.set_dt, 'yyyy-mm-dd') as "setDtStr",
+			  a.p_remark	 as "pointRemark",	-- 비고
+			  a.ins_dt	 as "insDt",	-- 등록일시
+			  a.upd_dt	 as "updDt",	-- 수정일시,
+			  b.meas_dt   as "measDt",
+			  to_char(b.meas_dt, 'yyyy-mm-dd hh24:mi') as "measDtStr",
+			  b.accu_iv   as "accuIv",
+			  b.adjst_os  as "adjstV",
+			  b.stat_cd   as "statCd",
+			  case position('1' in a.stat_cd)			  
+			      when 1 then '통신 장애'
+			      when 2 then '계량기 장애'
+			      when 3 then 'Q4 초과'
+			      when 4 then '역류'
+			      when 5 then '누수'		      		      
+			      when 6 then '정상'
+			      when 7 then '정상'
+			      when 8 then 'BAT'
+			      else '정상'
+			  end "statCdStr",		
+			  a.ami_type as "amiType",
+			  a.dev_no   as "devNo",
+			  a.sub_dev_no   as "subDevNo",
+			  b.raw_cnt_0d as "rawCnt_0d",
+			  b.term_cv_0d as "termCv_0d",
+			  b.raw_cnt_1d as "rawCnt_1d",
+			  b.term_cv_1d as "termCv_1d",
+			  b.raw_cnt_7d as "rawCnt_7d",
+			  b.term_cv_7d as "termCv_7d",
+			  b.raw_cnt_30d as "rawCnt_30d",
+			  b.term_cv_30d as "termCv_30d",
+			  b.delay_rcv as "delayRcv",
+			  b.bat2_iv as "bat2Iv",
+			  case
+		        when b.bat2_stat = '1' then '장애'
+		        when b.bat2_stat = '0' then '정상'		        
+		      end "bat2Stat",			  
+			  a.company_sq as "comSq",
+		      a.company_nm as "comNm",
+		      a.company_cd as "comCd",
+			  a.inform_cd as "informCd",
+			  a.send_cd as "sendCd",
+			  a.send_dt as "sendDt",
+			  b.temperature,
+			  a.img_src_gum,
+    		  a.img_src_bf,
+    		  a.img_src_af,
+    		  a.img_src_add
+			  ,d.admin_no as "parentAdminId"
+			  ,d.admin_nm as "parentAdminNm"
+			  ,d.child_admin_id as "childAdminId"
+			  ,d.child_admin_nm as "childAdminNm"
+			  ,(select case when mr.itval_h > 0 then trunc(mr.term_cv / mr.itval_h, 3) else null end as "termCh" 
+			      from tb_m1_meas_raw mr 
+			     where 1=1 and mr.point_sq = a.POINT_SQ order by meas_sq desc limit 1) as "termCh"
+		  from
+		    vi_m1_sv_point_list a
+		    left outer join vi_m1_sv_meas_now b on b.POINT_SQ = a.POINT_SQ
+		    left outer join t_t d on d.child_admin_id :: varchar = a.admin_id 
+		  where 1=1 
+ 		<choose>
+			<when test="upSiteSq != null and lv != null">
+				 and a.site_sq in (
+				    select site_sq from fn_prj_sites(#{upSiteSq}::integer, #{lv}::integer)
+				 )					 	
+			</when>
+			<when test="siteSq != null">
+				 and a.site_sq = #{siteSq}::integer		 	
+			</when>							
+		</choose>
+	    	and a.use_cd = '1'
+	    	and d.admin_no in (select admin_id from vi_m1_sv_point_list where 1=1 and POINT_SQ = #{pointSq})
+    </select>
+    
+    <select id="selectAllChildAdminList_page" parameterType="java.util.Map" resultType="java.util.Map">
+      <include refid="pageHeader"/>      
+      <include refid="selectAllChildAdmin"/>      
+      <include refid="pageFooter"/>           
+    </select>
+	
+	
+	<sql id="selectAllChildAdmin">
+		select admin_no,
+		       child_admin_id,
+		       admin_nm,
+		       child_admin_nm,
+		       (ROW_NUMBER() OVER()) AS "num"
+		  from tb_m1_info_childAdmin a
+		 where 1=1
+		 <!--  신규 필터 -->
+	     <if test='cust_nm != null and cust_nm != ""'>
+	       and a.admin_nm like  '%' || #{cust_nm} || '%'
+	     </if>
+	     <if test='admin_no != null and admin_no != ""'>
+	       and a.admin_no like  '%' || #{admin_no} || '%'
+	     </if>
+	     <if test='child_admin_no != null and child_admin_no != ""'>
+	       and a.child_admin_id like  '%' || #{child_admin_no} || '%'
+	     </if>
+	     <if test='child_cust_nm != null and child_cust_nm != ""'>
+	       and a.child_admin_nm like  '%' || #{child_cust_nm} || '%'
+	     </if>
+	</sql>
+    
+    <select id="selectAllChildAdminList" parameterType="java.util.Map" resultType="java.util.Map">          
+		<include refid="selectAllChildAdmin"/>  		       
+    </select>
+    
+    <insert id="insertChildAdminList" parameterType="java.util.Map">
+	    with upsert as (
+			update tb_m1_info_childAdmin
+			   set ins_dt = now()
+			 where 1=1
+			   and admin_no = #{admin_no}
+			   and child_admin_id = #{child_admin_id}
+			 returning *
+		)
+		insert into tb_m1_info_childAdmin(
+			admin_no,
+		    child_admin_id,
+		    admin_nm,
+		    child_admin_nm,
+		    ins_dt
+		)
+		select 
+			#{admin_no} as "admin_no",
+			#{child_admin_id} as "child_admin_id",
+			#{admin_nm} as "admin_nm",
+			#{child_admin_nm} as "child_admin_nm",
+		    now() as "ins_dt"
+		where not exists (select * from upsert)
+	</insert>
+	
+	<delete id="deleteChildAdmin" parameterType="java.util.Map" >
+    	/*mars.icbm.map1.deleteChildAdmin*/
+    	delete from tb_m1_info_childAdmin
+    	where 1=1 
+    	  and admin_no = #{admin_no}
+		  and child_admin_id = #{child_admin_id}
+    </delete>
+    
+    <delete id="deleteAllChildAdmin" parameterType="java.util.Map" >
+    	/*mars.icbm.map1.deleteAllChildAdmin*/
+    	delete from tb_m1_info_childAdmin
+    	where 1=1 
+    </delete>
+    
+    <select id="importResult2" parameterType="java.util.Map" resultType="java.util.Map">
+    	/*mars.icbm.map1.importResult2*/
+		select
+			*
+		from
+			fn_excel_import2(#{tokenKey})            
+    </select>
+    
+    <select id="selectErrstatTime" parameterType="java.util.Map" resultType="java.util.Map">
+    	/*mars.icbm.map1.selectErrstatTime*/
+		select	*
+		  from tb_config_stat_error
+	     limit 1            
+    </select>
+    
+    <update id="set_errstat_time_config" parameterType="java.util.Map">
+        /* 통신장애 시간 설정 */
+		/* mars.icbm.map1.set_errstat_time_config */
+        begin;
+		delete from tb_config_stat_error where 1=1;
+		
+		insert into tb_config_stat_error (
+			config_time
+		)
+		values(
+			#{config_time} :: integer
+		);
+		
+		commit;	
+	</update>
+
+	<select id="importUpdateResult" parameterType="java.util.Map" resultType="java.util.Map">
+    	/*mars.icbm.map1.importUpdateResult*/
+		select
+			*
+		from
+			fn_excel_import_update(#{tokenKey})            
+    </select>
+	<select id="importCheckResult" parameterType="java.util.Map" resultType="java.util.Map">
+    	/*mars.icbm.map1.importCheckResult*/
+		select
+			*
+		from
+			fn_excel_import_check(#{tokenKey})            
+    </select>
+
+	<!-- 포항누수 조회조건 버전-->
+	<select id="select_waterLeakList_page2" parameterType="java.util.Map" resultType="java.util.Map">
+	/*mars.icbm.map1.select_waterLeakList_page2*/
+      <include refid="pageHeader"/>      
+      <include refid="select_waterLeakList_sql2"/>      
+      <include refid="pageFooter"/>           
+    </select>
+	
+	<select id='select_waterLeakList2' parameterType='java.util.Map' resultType='java.util.Map'>
+		/*mars.icbm.map1.select_waterLeakList2*/
+		<include refid="select_waterLeakList_sql2"/>  
+	</select>
+	
+	<sql id="select_waterLeakList_sql2">
+			select (ROW_NUMBER() OVER()) AS "num",aa.* from (
+	                   select 
+                        		  a.point_sq     as "pointSq"  -- 장비 Sq
+								  ,a.site_sq     as "siteSq"
+                                  ,max(c.meas_dt) :: timestamp as  "max_date"
+								  ,min(c.meas_dt) :: timestamp as "min_date"
+								  ,max(c.term_cv) as "max_term_cv"
+								  ,min(c.term_cv) as "min_term_cv"
+                                  ,max(a.cust_name) as "cust_nm"
+                                  ,max(a.admin_no) as "admin_id"
+                                  ,max(a.business_name) as "use_type"
+                                  ,max(a.pipe_diameter) as "pipe_dia"
+                                  ,max(a.addr_new) as "addr_new"
+								  ,case when max(a.stat_cd) is not null then 'Y'
+								        else 'N'
+								    end as "stat_yn"
+                        from (
+                        select
+                                   a.point_sq  -- 장비 Sq
+								  ,a.site_sq
+                                  , b.cust_name
+                                  , b.admin_no
+                                  , b.business_name
+                                  , b.pipe_diameter
+                                  , b.addr_new
+								  , n.stat_cd 
+                          from
+                            tb_m1_info_point a
+                            join tb_m1_info_customer b ON b.cust_sq = a.cust_sq
+							left join vi_m1_sv_meas_now n on n.point_sq = a.point_sq and position('1' in n.stat_cd) = 5
+							where 1=1
+							<if test='pipe_diameter != null and pipe_diameter != ""'>
+							  and b.pipe_diameter = #{pipe_diameter} ::integer
+							</if>
+							<if test='business_name != null and business_name != ""'>
+							  and b.business_name = #{business_name}
+							</if>
+							  and a.use_cd = '1'
+                        ) a 
+                        join (select 
+                        			a.point_sq
+                        		  , a.meas_dt
+                        		  , a.term_cv 
+                        	    from tb_m1_meas_raw a 
+                        	   where 1=1
+                        	 ) c
+                             on c.point_sq  = a.point_sq
+                        where 1=1
+                          and c.term_cv is not null
+                          and a.point_sq not in (select point_sq from tb_m1_waterleak_hide_setting)
+                          and c.meas_dt between to_timestamp(#{stdDate}, 'yyyy-mm-dd hh24:mi:ss') - make_interval(hours => (#{calc_hour}::integer)-1)  and to_timestamp(#{stdDate}, 'yyyy-mm-dd hh24:mi:ss')
+                        group by a.point_sq,a.site_sq
+                       ) aa
+                       where 1=1 
+                         and aa.min_term_cv >= #{compare_term_cv} :: numeric
+						  <!--  신규 필터 -->
+						<if test='cust_nm != null and cust_nm != ""'>
+						and aa.cust_nm like  '%' || #{cust_nm} || '%'
+						</if>
+						<if test='admin_no != null and admin_no != ""'>
+						and aa.admin_id like  '%' || #{admin_no} || '%'
+						</if>
+						<if test='statYn != null and statYn != ""'>
+						and aa.stat_yn = #{statYn}
+						</if>
+	</sql>
+
+	<select id="selectsiteInfoList" parameterType="java.util.Map" resultType="java.util.Map">
+    	/*mars.icbm.map1.selectsiteInfoList*/
+		<include refid="pageHeader"/>      
+      
+		select (ROW_NUMBER() OVER()) AS "num",a.* from tb_m1_info_site a where 1=1 and site_sq != 0  order by a.site_sq
+		<include refid="pageFooter"/>     
+    </select>
+
+	<select id="selectDbErrorLogList" parameterType="java.util.Map" resultType="java.util.Map">
+    	/*mars.icbm.map1.selectDbErrorLogList*/
+		<include refid="pageHeader"/>      
+      
+		select (ROW_NUMBER() OVER()) AS "num",a.* from tb_m1_sys_log_error a where 1=1 
+		<if test='log_mesg != null and log_mesg != ""'>
+			and a.log_mesg like  '%' || #{log_mesg} || '%'
+		</if>
+		<if test='log_name != null and log_name != ""'>
+			and a.log_name like  '%' || #{log_name} || '%'
+		</if>
+		<if test='log_attrib != null and log_attrib != ""'>
+			and a.log_attrib like  '%' || #{log_attrib} || '%'
+		</if>
+		 order by log_date desc
+		<include refid="pageFooter"/>     
+    </select>
+
+<!-- 시간대별 검침값 -->
+	<select id="use_evening_page" parameterType="java.util.Map" resultType="java.util.Map">
+      <include refid="pageHeader"/>      
+      <include refid="use_evening_sql"/>      
+      <include refid="pageFooter"/>           
+    </select>
+    
+    <select id="use_evening_info" parameterType="java.util.Map" resultType="java.util.Map">
+      <include refid="use_evening_sql"/>      
+    </select>
+	
+	
+	<sql id="use_evening_sql">
+	 select (ROW_NUMBER() OVER()) AS "num",b.*, a.* 
+	   from 
+		  ( 
+			select a.point_sq ,min(term_cv) as min_term_cv, max(term_cv) as max_term_cv,min(date_meas_dt) as min_meas_dt, max(date_meas_dt) as max_meas_dt, count(*) as cnt 
+			  from (select point_sq
+			             , meas_dt::date as date_meas_dt
+			             , min(term_cv ) as term_cv
+						 , count(*) as time_cnt 
+			          from tb_m1_meas_raw 
+			         where 1=1 
+			           and meas_dt::time between #{fromtime}::time and #{totime} :: time
+			           and term_cv > #{compare_term_cv}::numeric 
+			         group by point_sq ,meas_dt::date) a
+			 where 1=1 
+			   and a.date_meas_dt between #{toDate}::date - ((#{cntdate}::numeric -1)::text || 'days') :: interval and #{toDate}::date
+			   and time_cnt = (EXTRACT(EPOCH FROM (#{totime}::time - #{fromtime}::time)) / 3600) + 1
+			  group by a.point_sq
+			) a
+	  join vi_m1_sv_point_list b on b.point_sq = a.point_sq
+	 where 1=1 
+	   and cnt = #{cntdate}::numeric
+	   and b.use_cd = '1'
+	   <if test='cust_nm != null and cust_nm != ""'>
+		and b.cust_nm like  '%' || #{cust_nm} || '%'
+		</if>
+		<if test='admin_no != null and admin_no != ""'>
+		and b.admin_id like  '%' || #{admin_no} || '%'
+		</if>
+	</sql>
+
+
+</mapper>

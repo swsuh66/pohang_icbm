@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="mars.icbm.visitelog">
+
+ 	<insert id="openSession" parameterType="java.util.Map">
+		<selectKey keyProperty="logSq" resultType="int" order="BEFORE">
+		
+    		select nextval('tb_m1_log_visite_raw_seq')
+    		
+  		</selectKey>
+
+ 		insert into tb_m1_log_visite_raw (log_sq, user_id, state_cd, session_id, ip_addr, agent, refer, login_dt)
+ 		values (
+ 			#{logSq},
+ 			#{userId},
+ 			#{statCd},
+ 			#{ssId},
+ 			#{ipAddr},
+ 			#{agent},
+ 			#{refer},
+ 			now()
+ 		)
+ 	</insert>
+
+ 	<update id="closeSession" parameterType="java.util.Map">
+ 	
+ 		update tb_m1_log_visite_raw set
+ 			state_cd = #{statCd},
+ 			logout_dt = now()
+ 		where
+ 			log_sq = #{logSq} and state_cd = '1'
+ 			
+ 	</update>
+
+ 	<update id="cleanupSession" parameterType="java.util.Map">
+ 	
+ 		update tb_m1_log_visite_raw set
+ 			state_cd = '4'
+ 		where
+ 			state_cd = '0'
+ 			
+ 	</update>
+ 	
+</mapper>

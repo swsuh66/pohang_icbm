@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">  
+
+<mapper namespace="mars.icbm.customer">
+	
+	<insert id="insertCustomer" parameterType="java.util.Map">
+		INSERT INTO TB_M1_INFO_USER (
+			USER_SQ, SITE_SQ, USER_ID, USER_LV, USER_NM, USER_PWD, EMAIL, 
+			PHONE, ALARM_CD, PART_NM, USE_CD, REMARK,
+			INS_DT, UPT_DT)
+		VALUES (
+			sq_info_user_usersq.nextval, 
+			1, 
+			#{userId},
+			#{userLv},
+			#{userNm},
+			#{userPwd},
+			#{email},
+			#{phone},
+			#{alarmCd},
+			#{partNm},
+			'1',
+			'',
+			sysdate,
+			sysdate
+		)
+	</insert>
+	
+	<insert id="deleteCustomer" parameterType="java.util.Map">
+		DELETE FROM TB_M1_INFO_USER 
+		WHERE user_sq = #{userSq}
+	</insert>
+	
+	
+	<update id="updateCustomer" parameterType="java.util.Map">
+		UPDATE TB_M1_INFO_USER
+		  SET user_nm = #{userNm},
+		      user_id = #{userId},
+		      user_lv = #{userLv},
+		      email = #{email},
+		      phone = #{phone},
+		      part_nm = #{partNm},
+		      alarm_cd = #{alarmCd},
+		      use_cd = #{useCd},
+		      upt_dt = sysdate
+		WHERE user_sq = #{userSq}
+	</update>
+	
+	
+	<select id="selectCustomer" parameterType="java.util.Map" resultType="java.util.Map">
+		SELECT
+			ROW_NUMBER() OVER (ORDER BY cust_name) as num,	
+			cust_sq 		as "custSq",
+			admin_no 		as "adminNo",
+			cust_name 		as "custNm",
+			addr			as "addr",
+			addr_new 		as "addrNew",
+			meter_pos 		as "meterPos",
+			addr_new_detail as "addrNewDetail",
+			business_name 	as "businessNm",
+			pipe_diameter	as "pipeDiameter",
+			meter_no		as "meterNo",
+			main_meter		as "mainMeter",
+			child_meter		as "childMeter",
+			gen_number		as "genNumber",
+			read_responsi 	as "readResponsi",
+			ins_dt			as "insDt"
+		FROM 
+			tb_m1_info_customer
+		<if test="searchValue != null">
+			WHERE			
+				admin_no like '%' || #{searchValue} || '%'	
+			OR	    
+				cust_name like '%' || #{searchValue} || '%'
+		</if>
+			ORDER BY cust_name
+	</select>
+</mapper>

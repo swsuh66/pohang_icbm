@@ -1,0 +1,266 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">  
+
+<mapper namespace="mars.icbm.devSqlMapper">
+   <sql id="pageHeader">
+      <![CDATA[
+      SELECT
+            w.*
+          FROM
+            (
+              SELECT
+              ROW_NUMBER() OVER(PARTITION BY TT."pageNo") AS "rownum_",
+              TT.*,
+              COUNT(*) OVER(PARTITION BY "pageNo")        AS "totalCount"
+              FROM
+                (
+                SELECT
+                    ROW_.* ,
+                    ${rnTop} / (${rnTop} - ${rnBottom} )   AS "pageNo",
+                    ${rnTop} - ${rnBottom}                 AS "pageSize"    
+                FROM
+                    (
+      
+      ]]> 
+    </sql>
+   
+   	<sql id="pageFooter">			
+      		) ROW_
+            <if test="sortField != null">
+				order by "${sortField}" <if test="sortOrder != null"> ${sortOrder} </if>
+			</if>
+             ) TT
+          ) w
+      <![CDATA[    
+      WHERE "rownum_" <= ${rnTop} AND "rownum_" > ${rnBottom} 
+      ]]> 
+      order by "rownum_"      
+   </sql>
+
+	<select id="sqlTest" parameterType="java.util.Map" resultType="java.util.Map">           
+      ${sql}           
+    </select>
+    
+	<update id="sqlTest1" parameterType="java.util.Map">           
+      ${sql}           
+    </update>
+
+
+    <update id="img_file_reset" parameterType="java.util.Map">           
+        begin;
+
+        update tb_m1_info_customer
+          set img_src_gum = admin_no || '_gum.JPEG'
+        where 1=1
+          
+        update tb_m1_info_customer 
+          set img_src_af = admin_no || '_af.JPEG'
+        where 1=1
+          
+          update tb_m1_info_customer 
+          set img_src_bf = admin_no || '_bf.JPEG'
+        where 1=1
+          
+          update tb_m1_info_customer 
+          set img_src_add = admin_no || '_add.JPEG'
+        where 1=1
+          
+        commit;
+    </update>
+
+
+    <select id="selectServiceCdPage" parameterType="java.util.Map" resultType="java.util.Map">           
+        <include refid="pageHeader"/>      
+        <include refid="selectServiceCd"/>      
+        <include refid="pageFooter"/>  
+    </select>
+
+    <sql id="selectServiceCd">
+        select (ROW_NUMBER() OVER(order by ins_dt desc)) AS "rownum",
+               a.*
+          from tb_m1_nbiot_svc_cd a
+    </sql>
+
+    <insert id="insertServiceCd" parameterType="java.util.Map">
+        insert into tb_m1_nbiot_svc_cd(
+	        svc_cd
+          ,entityid
+          ,token_id
+          ,eki
+          ,response_binary_mode
+          ,check_date_error
+          ,mef_mode
+        )
+        values(
+          #{svc_cd}
+          ,#{entityid}
+          ,#{token_id}
+          ,#{eki}
+          ,'true'
+          ,'false'
+          ,'prod'
+        )
+    </insert>
+
+    <delete id="deleteServiceCd" parameterType="java.util.Map">
+        delete 
+           from tb_m1_nbiot_svc_cd
+          where 1=1
+            and svc_cd = #{svc_cd}
+    </delete>
+
+    <update id="deleteCustomerInfo" parameterType="java.util.Map">
+      /* deleteCustomerInfo  수용가 삭제*/
+      begin;
+
+      insert into tb_delete_cust_his(
+          point_sq,
+          blk_sq,
+          site_sq,
+          use_cd,
+          ins_dt,
+          cust_sq,
+          admin_no,
+          cust_name,
+          dev_no,
+          sub_dev_no,
+          access_key
+      )
+      select 
+          a.point_sq,
+          a.blk_sq,
+          a.site_sq,
+          a.use_cd,
+          now(),
+          a.cust_sq ,
+          a.admin_id ,
+          a.cust_nm ,
+          COALESCE(a.dev_no, '알수없음') ,
+          COALESCE(a.sub_dev_no,'알수없음') ,
+          #{acKey}
+        from vi_m1_sv_point_list a
+      where 1=1
+        and point_sq = #{pointSq};
+        
+      delete from tb_m1_cmap_device   where 1=1 and point_sq = #{pointSq};
+      delete from tb_m1_info_point    where 1=1 and point_sq = #{pointSq};
+      delete from tb_m1_info_customer where 1=1 and cust_sq = #{custSq};
+        
+      commit;
+    </update>
+
+    <update id="updateCustomerInfo" parameterType="java.util.Map">
+      /* updateCustomerInfo  수용가 간단수정*/
+      begin;
+
+      update tb_m1_info_customer set
+        cust_name  = #{custNm}
+      where
+        cust_sq = #{custSq}::integer;
+
+
+      update tb_m1_cmap_device
+        set dev_no = #{devNo}
+          , sub_dev_no = #{subDevNo}
+      where 1=1 
+        and point_sq = #{pointSq}::integer;
+        
+      commit;
+    </update>
+
+    <select id="selectdeletecode" parameterType="java.util.Map" resultType="java.util.Map">
+      select count(*) :: text as "cnt" 
+        from tb_delete_code 
+       where 1=1 
+         and delete_key = #{acKey}
+    </select>
+
+    <insert id="insertsiteSq" parameterType="java.util.Map">
+      /*insertsiteSq*/
+        insert into tb_m1_info_site(
+	        site_sq
+          ,up_site_sq
+          ,site_nm
+          ,scco_cd
+          ,ins_dt
+          ,upd_dt
+          ,use_cd
+          ,belong_cd
+        )
+        values(
+          #{site_sq}::integer
+          ,1
+          ,#{site_nm}
+          ,#{scco_cd}
+          ,now()
+          ,now()
+          , '1'
+          , '1'
+        )
+    </insert>
+
+    <delete id="deletesiteSq" parameterType="java.util.Map">
+      /*deletesiteSq*/
+       delete from tb_m1_info_site where 1=1 and site_sq =#{site_sq}
+    </delete>
+
+    <update id="updatesiteSq" parameterType="java.util.Map">
+      /*insertsiteSq*/
+        update tb_m1_info_site
+           set site_nm = #{site_nm}
+              ,scco_cd = #{scco_cd}
+         where 1=1
+           and site_sq = #{site_sq}
+    </update>
+
+    <!-- company -->
+    <select id="selectCompanyListPage" parameterType="java.util.Map" resultType="java.util.Map">           
+        <include refid="pageHeader"/>      
+        <include refid="selectComanyList"/>      
+        <include refid="pageFooter"/>  
+    </select>
+
+    <sql id="selectComanyList">
+        select (ROW_NUMBER() OVER(order by company_sq desc)) AS "rownum",
+               a.*
+          from tb_m1_info_company a
+    </sql>
+
+    <insert id="insertCompanySq" parameterType="java.util.Map">
+      /*insertsiteSq*/
+        insert into tb_m1_info_company(
+	        company_sq
+          ,company_nm
+          ,company_cd
+        )
+        values(
+          #{company_sq}::integer
+          ,#{company_nm}
+          ,#{company_cd}
+        )
+    </insert>
+
+    <delete id="deleteCompanySq" parameterType="java.util.Map">
+      /*deletesiteSq*/
+       delete from tb_m1_info_company where 1=1 and company_sq =#{company_sq}
+    </delete>
+
+    <update id="updateCompanySq" parameterType="java.util.Map">
+      /*insertsiteSq*/
+        update tb_m1_info_company
+           set company_nm = #{company_nm}
+              ,company_cd = #{company_cd}
+         where 1=1
+           and company_sq = #{company_sq}
+    </update>
+
+    <select id="selectComponentCompany" parameterType="java.util.Map" resultType="java.util.Map">
+      select 'newCompany' as "key"
+           , company_nm as "val"
+           , company_nm as "name"
+        from tb_m1_info_company 
+       where 1=1 
+    </select>
+
+    
+</mapper>

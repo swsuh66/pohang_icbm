@@ -1,0 +1,39 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "run-tomcat", // launch.json에서 사용할 task 이름.
+            "type": "shell", // task의 타입.
+            "command": "./mvnDebug -f \"./pom.xml\" -s \"./settings.xml\" tomcat7:run", // task로 실행할 명령어.
+            "group": "build", // task를 할당할 그룹. 'build' 또는 'test' 이다.
+            "isBackground": true, // task를 백그라운드에서 실행할 것인지에 대한 설정.
+            "problemMatcher": [{ // 문제를 찾기위한 설정.
+                "pattern": [{
+                    "regexp": "\\b\\B",
+                    "file": 1,
+                    "location": 2,
+                    "message": 3
+                }],
+                "background": {
+                    "activeOnStart": true,
+                    "beginsPattern": "^.*Listening for",
+                    "endsPattern": "^.*transport dt_socket at address.*"
+                }
+            }]
+        },
+        {
+            "label": "stop-tomcat",
+            "type": "shell",
+            "command": "echo ${input:terminate}}", // 하단 inputs 오브젝트 참고.
+            "problemMatcher": []
+        }
+    ],
+    "inputs": [
+        {
+            "id": "terminate",
+            "type": "command",
+            "command": "workbench.action.tasks.terminate",
+            "args": "run-tomcat"
+        }
+    ]
+}

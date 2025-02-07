@@ -1,0 +1,44 @@
+/* # start of common */
+
+/* end of common */
+
+/* # start of modal */
+
+
+.modal .modal-body .modal-body-content .input-group
+, .modal .modal-body .modal-body-content .input-group .input-group-append
+, .modal .modal-body .modal-body-content .input-group input
+, .modal .modal-body .modal-body-content .input-group .input-group-append button{
+   height : 100%;
+}
+
+.modal .table{
+   width : 100%;
+}
+
+.modal button{
+   border-radius : 12px;
+}
+
+.modal .modal-title{
+   font-size : 17px;
+   font-weight: bold;
+   border-left : 5px solid #0077ff;
+   padding-left : 5px;
+}
+/* end of modal */
+
+#dat-download-modal .modal-dialog{
+   width : 370px;
+   min-width : 370px;
+}
+
+#dat-download-modal .modal-body{
+   height : 35px;
+}
+
+#dat-download-btn{
+    width: 100px;
+    min-width: 100px;
+    margin-left : 5px;
+}

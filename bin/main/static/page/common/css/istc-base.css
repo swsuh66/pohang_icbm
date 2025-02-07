@@ -1,0 +1,271 @@
+/* 페이지 헤터 정의 */
+.page-header {
+	padding: 0px;
+}
+
+/* content 정의 */
+.page-content,
+.main-content {
+	width: 100% !important;
+	max-width: none !important;	
+}
+
+/* header 정의 */
+.sidebar .container {
+	width: 80% !important;
+	max-width: none !important;
+}
+
+/* navibar 정의 */
+.navbar-inner .container {
+	width: 100% !important;
+	max-width: none !important;
+}
+
+/* side 정의 */
+.sidebar-inner.sidebar-custom {
+    box-shadow: 0 16px 24px 2px rgba(0,0,0,0.14), 0 6px 30px 5px rgba(0,0,0,0.12), 0 8px 10px -5px rgba(0,0,0,0.2) !important;
+    /* transition: all 0.2s ease !important; */
+    /* overflow-y: scroll !important; */
+}
+
+.sidebar.collapsed {
+	width: 0px;	
+}
+
+ /* 간격 정의 */
+.mt-def {
+	margin-top: 1rem !important;
+}
+
+/* graph */
+.chartjs-render-monitor {
+	display: block;
+	width: 664px;
+}
+
+/* pie chart */
+.piechart-legends ul {
+    list-style: none;
+    margin-left: 1.5rem;
+    padding-left: 0;
+}
+
+.piechart-legends li {
+    margin-bottom: 0.25rem;
+    white-space: nowrap;
+}
+.piechart-legends span {
+    display: inline-block;
+    vertical-align: middle;
+    border-radius: 1rem;
+    width: 0.5rem;
+    height: 0.5rem;
+    margin-right: 0.5rem;
+}
+.piechart-legends-info li {
+    margin-bottom: 0.25rem;
+    white-space: nowrap;
+}
+
+
+.rtl .piechart-legends ul {
+    list-style: none;
+    margin-left: 0;
+    margin-right: 1.5rem;
+    padding-right: 0;
+}
+.rtl .piechart-legends span {
+    margin-left: 0.5rem;
+    margin-right: 0;
+}
+
+/* table */
+.jsgrid-header-cell {
+	font-weight: 600 !important;	
+	border-color: #dee2e6 !important;
+	borde: 0.5px solid #dee2e6 !important;	
+	border-bottom-width: 1px;	
+	font-size: 1.1em !important;
+}
+
+.jsgrid-cell {
+	
+	border-color: transparent !important;
+	border-width: 1px 0;
+    border-style: solid;
+    padding: 0.75rem !important;
+    vertical-align: top;
+    color: #323337 !important;
+    font-weight: 400 !important;
+      
+}
+
+/* modal */
+.modal-header {
+    /* background-color: #0d6ce1;
+    color: white !important;
+    padding: 6px;
+    text-align: center;
+    -webkit-border-top-left-radius: 5px;
+    -webkit-border-top-right-radius: 5px;
+    -moz-border-radius-topleft: 5px;
+    -moz-border-radius-topright: 5px;
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px; */
+}
+
+
+/* 카드 타이틀 */
+.card-title {
+	margin-top: 10px !important;
+}
+
+/* select 리스트 글씨 */
+.chosen-container,
+.chosen-container > .chosen-single, [class*="chosen-container"] > .chosen-single {
+	font-size: 0.8rem;
+}
+
+.main-content {
+	background-color: #f2f5f8 !important;
+}
+
+
+/* tree */
+ul.fancytree-container {
+	border: 0px !important;
+}
+
+/* nav-tabs btn*/
+.nav-tabs .btn {    
+    border-bottom-width: 1px;
+    width: inherit;
+}
+
+/* common */
+.hide {
+	display: none;
+}
+
+.full-width {
+	width: 100%;
+}
+
+.item-right {
+	float: right;
+}
+
+.no-border {
+	border: 0px;
+}
+
+.border-1p {
+	border: solid 1px #cfcfcf !important;
+}
+.show {
+	display: block;
+}
+
+.item-vertical-center {
+	margin: auto 0;
+}
+
+/* jsgrid */
+.jsgrid-grid-header, .jsgrid-grid-body {
+    font-size: 13.5px !important;
+    font-weight: normal;
+}
+
+
+/* form label */
+.form-group label.errclr {    
+    font-style: italic;
+    color: gray;
+    padding-top: 4px;
+}
+
+.form-group .error {
+    line-height: 150%;
+    text-align: left;
+    position: relative;
+    display: block;
+    /* border: 1px solid #ff0000; */
+}
+
+input.error ~ label.errclr, select.error ~ label.errclr,
+textarea.error ~ label.errclr, select.error ~ label.errclr {
+	color: #FF4500;
+}
+
+
+.dialog-100 .modal-dialog {
+    max-width: 100% !important;
+}
+
+.dialog-80 .modal-dialog {
+    max-width: 80% !important;
+}
+
+.dialog-50 .modal-dialog {
+    max-width: 50% !important;
+}
+
+ 
+.controls {	
+	position: relative;
+    display: inline-block;
+    width: 250px;
+    padding: 0px;
+    margin: 0px;
+    align: left;
+    text-align: left;	
+}
+
+.filebox.bs3-primary label {
+    color: #fff;
+    background-color: #337ab7;
+    border-color: #2e6da4;
+    margin-bottom: 0px !important;
+}
+
+.filebox .upload-name.upload-sm {
+    width: 185px;
+}
+
+.filebox .upload-name {
+    width: 330px;
+    border: 1px solid #e2e2e2;
+    display: inline-block !important;
+    padding: .5em .75em;
+    font-size: inherit;
+    font-family: inherit;
+    line-height: normal;
+    vertical-align: middle;
+    background-color: #f5f5f5;
+    border: 1px solid #ebebeb;
+    border-bottom-color: #e2e2e2;
+    border-radius: .25em;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+}
+
+.filebox label {
+    display: inline-block;
+    padding: .5em .75em;
+    color: #999;
+    font-size: inherit;
+    line-height: normal;
+    vertical-align: middle;
+    background-color: #fdfdfd;
+    cursor: pointer;
+    border: 1px solid #ebebeb;
+    border-bottom-color: #e2e2e2;
+    border-radius: .25em;
+}
+ 
+ 
+.asteriskField {
+	color: red;
+}

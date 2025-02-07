@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">  
+
+<mapper namespace="rts.mapper">
+
+	<select id="selectList" parameterType="hashmap" resultType="hashmap">
+		SELECT 
+		   idx, 
+		   url_name, 
+		   url_desc, 
+		   TO_CHAR(reg_date,'YYYY-mm-dd HH24:MI:SS') reg_date, 
+		   TO_CHAR(upd_date,'YYYY-mm-dd HH24:MI:SS') upd_date
+		FROM z_tb_url_list
+
+		ORDER BY reg_date DESC
+		OFFSET #{firstPage} limit #{pageSize}
+	</select>
+	
+	<select id="count" parameterType="hashmap" resultType="int">
+		SELECT COUNT(*) FROM z_tb_url_list
+	</select>		
+	
+	<insert id='insert' parameterType="hashmap" >
+		INSERT INTO 
+			z_tb_url_list (idx, url_name, url_desc, reg_date, upd_date)  
+		VALUES (
+			#{idx},
+			#{url_name},
+			#{url_desc},
+			now(),
+			null
+		)
+	</insert>	
+	
+	<update id='update' parameterType="hashmap" >
+		UPDATE  z_tb_url_list  SET
+		<if test="url_name != null and url_name != '' ">
+			url_name = #{url_name},		
+		</if>
+		<if test="url_desc != null and url_desc != '' ">
+			url_desc = #{url_desc},
+		</if>				
+			upd_date = now()
+		WHERE idx = #{idx}
+	</update>
+	
+	<delete id='delete' parameterType="hashmap" >
+		DELETE FROM  z_tb_url_list  WHERE idx = #{idx}
+	</delete>
+		
+		
+		
+	<sql id="commonQuery">
+		where 1 = 1	
+		AND ami_type LIKE '%nb%'
+		<if test="search_data != null and search_data != '' ">
+			AND (
+				dev_no LIKE '%' || #{search_data} || '%'
+				OR
+				sub_dev_no LIKE '%' || #{search_data} || '%'
+			)
+		</if>	
+		<if test="search_data2 != null and search_data2 != '' ">
+			AND stat_cd = #{search_data2}
+		</if>			
+	</sql>  			
+		
+	<select id="selectNbiotList" parameterType="hashmap" resultType="hashmap">
+		SELECT admin_id, cust_nm, sub_dev_no, dev_no,
+			(SELECT stat_cd FROM  vi_m1_sv_meas_now bbb WHERE bbb.point_sq=vi_m1_sv_point_list.point_sq) status,
+			(SELECT meas_dt FROM  vi_m1_sv_meas_now bbb WHERE bbb.point_sq=vi_m1_sv_point_list.point_sq) meas_dt
+		FROM  vi_m1_sv_point_list 
+		<include refid="commonQuery"></include>
+		ORDER BY ins_dt DESC
+		OFFSET #{firstPage} limit #{pageSize}
+	</select>
+	
+	<select id="countNbiot" parameterType="hashmap" resultType="int">
+		SELECT COUNT(*)  FROM  vi_m1_sv_point_list
+		<include refid="commonQuery"></include>
+	</select>		
+		
+		
+		
+	<insert id='insertHistory' parameterType="hashmap" >
+		INSERT INTO 
+			z_tb_url_send_history (idx, url_name, reg_date, working_status, url_desc, user_ip, user_id)  
+		VALUES (
+			#{idx},
+			#{url_name},
+			now(),
+			'WORKING',
+			#{url_desc},
+			#{user_ip},
+			#{user_id}
+		)
+	</insert>	
+	
+	<insert id='insertHistoryItem' parameterType="hashmap" >
+		INSERT INTO 
+			z_tb_url_send_history_item (history_idx, idx, url_name, reg_date, working_result)  
+		VALUES (
+			#{history_idx},
+			#{idx},
+			#{url_name},
+			now(),
+			#{working_result}
+		)
+	</insert>	
+	
+	<update id='updateHistory' parameterType="hashmap" >
+		UPDATE  z_tb_url_send_history  SET
+		working_status = #{working_status}
+		WHERE idx = #{idx}
+	</update>		
+	
+	<select id="selectHistory10List" parameterType="hashmap" resultType="hashmap">
+		SELECT *,
+			(SELECT COUNT(*) FROM z_tb_url_send_history_item b WHERE b.history_idx=a.idx) AS size
+		FROM z_tb_url_send_history a 
+		ORDER BY a.reg_date desc
+		limit 10
+	</select>	
+	
+
+	
+	<select id="selectHistoryList" parameterType="hashmap" resultType="hashmap">
+		SELECT *,
+			(SELECT COUNT(*) FROM z_tb_url_send_history_item b WHERE b.history_idx=a.idx) AS size
+		FROM  z_tb_url_send_history a
+		ORDER BY a.reg_date DESC
+		OFFSET #{firstPage} limit #{pageSize}
+	</select>
+	
+	<select id="countHistory" parameterType="hashmap" resultType="int">
+		SELECT COUNT(*)  FROM  z_tb_url_send_history
+	</select>		
+			
+
+	<select id="selectHistoryItemList" parameterType="hashmap" resultType="hashmap">
+		SELECT 
+			*
+		FROM  z_tb_url_send_history_item 
+		WHERE history_idx = #{history_idx}
+		ORDER BY reg_date DESC
+		OFFSET #{firstPage} limit #{pageSize}
+	</select>
+	
+	<select id="countHistoryItem" parameterType="hashmap" resultType="int">
+		SELECT COUNT(*)  FROM  z_tb_url_send_history_item
+		WHERE history_idx = #{history_idx}
+	</select>					
+	
+</mapper>

@@ -1,0 +1,21 @@
+{
+    "configurations": [
+      {
+        "type": "java",
+        "name": "spring",
+        "request": "launch",
+        "mainClass": "${file}",
+        "projectName": "ICBM"
+      },
+      {
+        "type": "java",
+        "name": "Spring Boot-SpringBootRunApplication<CommonICBM_new>",
+        "request": "launch",
+        "cwd": "${workspaceFolder}",
+        "mainClass": "com.istec.SpringBootRunApplication",
+        "projectName": "CommonICBM_new",
+        "args": "",
+        "envFile": "${workspaceFolder}/.env"
+      }
+    ]
+  }
