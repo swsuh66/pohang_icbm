@@ -7,4 +7,7 @@
 # jenv shell corretto64-1.8.0.402
 # export JAVA_HOME=$(/usr/libexec/java_home -v 1.8)
 # gradle bootwar
+# gradle bootRun
+
+# 아래는 에러 발생
 # java -Dport=8080 -jar build/libs/CommonICBM_new-1.0.0.war
