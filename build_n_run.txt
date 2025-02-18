@@ -4,10 +4,12 @@
 # docker run -d -p 9600:8080 --name {container_name} -e TZ=Asia/Seoul --restart=always -v $(pwd)/webapps:/usr/local/tomcat/webapps -v $(pwd)/logs:/usr/local/tomcat/logs tomcat:9.0.80-jdk8-corretto
 
 # run locally
+# when using mulitple java versions (optional)
 # jenv shell corretto64-1.8.0.402
 # export JAVA_HOME=$(/usr/libexec/java_home -v 1.8)
+
+# build and run in local
 # gradle bootwar
 # gradle bootRun
 
-# 아래는 에러 발생
-# java -Dport=8080 -jar build/libs/CommonICBM_new-1.0.0.war
+# localhost:8080 in browser

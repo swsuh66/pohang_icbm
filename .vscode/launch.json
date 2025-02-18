@@ -1,11 +1,17 @@
 {
     "configurations": [
+      
       {
         "type": "java",
         "name": "spring",
         "request": "launch",
         "mainClass": "${file}",
-        "projectName": "ICBM"
+        "projectName": "ICBM",
+        // add for spring boot dashboard
+        "classPaths": [
+          "${workspaceFolder}/build/classes/java/main",
+          "${workspaceFolder}/build/resources/main"
+        ]        
       },
       {
         "type": "java",
@@ -15,7 +21,27 @@
         "mainClass": "com.istec.SpringBootRunApplication",
         "projectName": "CommonICBM_new",
         "args": "",
-        "envFile": "${workspaceFolder}/.env"
+        "envFile": "${workspaceFolder}/.env",
+        // add for spring boot dashboard
+        "classPaths": [
+          "${workspaceFolder}/build/classes/java/main",
+          "${workspaceFolder}/build/resources/main"
+        ]              
+      },
+      {
+        "type": "java",
+        "name": "Spring Boot-SpringBootRunApplication<CommonICBM_new-Common_Icbm_boot>",
+        "request": "launch",
+        "cwd": "${workspaceFolder}",
+        "mainClass": "com.istec.SpringBootRunApplication",
+        "projectName": "CommonICBM_new-Common_Icbm_boot",
+        "args": "",
+        "envFile": "${workspaceFolder}/.env",
+        // add for spring boot dashboard
+        "classPaths": [
+          "${workspaceFolder}/build/classes/java/main",
+          "${workspaceFolder}/build/resources/main"
+        ]              
       }
     ]
   }
