@@ -917,12 +917,12 @@
 		function refreshComponent(result, bCallback) {
 			if (result.length != 0) {
 				var key = result[0].key;
+				var el = $('<option>').attr('value', "").text("전체");
+				$('.form-control[name="' + key + '"]').append(el);
 				result.forEach(function(item, idx) {
 					var el = $('<option>').attr('value', item.val).text(item.val);
 					$('.form-control[name="' + key + '"]').append(el);
 				});
-				var el = $('<option>').attr('value', "").text("전체");
-				$('.form-control[name="' + key + '"]').append(el);
 			}
 		};	
 		
