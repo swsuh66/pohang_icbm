@@ -61,7 +61,7 @@
 		*/
 		cookie = new CookieManager();
 		$('#stdDate').val(kutil.dateFormat(new Date(), 'yyyy-mm-dd'));
-		$('#stdTime').val('00:00:00');
+		$('#stdTime').val(kutil.dateFormat( new Date(), 'HH:MM:00'));
 		
 		settingGrid = initGrid('settingGrid', settingFields);
 		hideSettingGrid = initGrid('hideSettingGrid', hideSettingFields);

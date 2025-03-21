@@ -7,7 +7,7 @@
 <head>
 
     <%@include file="/resources/inc/meta.inc" %>
-    <title>스마트수도미터원격검침시스템</title>
+    <title>스마트수도미터원격검침시스템</title> 
 
     <%@include file="/resources/inc/base.inc" %>
     <%@include file="/resources/inc/jsgrid.inc" %>
@@ -81,7 +81,7 @@
                 /* main grid layout */
                 layoutSize();
 
-            });
+            }).off('resize');
 
             /* main grid layout */
             layoutSize();
@@ -368,52 +368,6 @@
                     },
 
                     {
-                        name: "rawCnt_0d",
-                        title: "당일",
-                        type: "number",
-                        align: "center",
-                        width: 80,
-                        itemTemplate: colfnc,
-                        hasGroup: true,
-                        group: groups[3]
-                    },
-                    {
-                        name: "rawCnt_1d",
-                        title: "전일",
-                        type: "number",
-                        align: "center",
-                        width: 80,
-                        itemTemplate: colfnc,
-                        hasGroup: true
-                    },
-                    {
-                        name: "rawCnt_7d",
-                        title: "직전7일",
-                        type: "number",
-                        align: "center",
-                        width: 80,
-                        itemTemplate: colfnc,
-                        hasGroup: true
-                    },
-                    {
-                        name: "rawCnt_30d",
-                        title: "직전30일",
-                        type: "number",
-                        align: "center",
-                        width: 80,
-                        itemTemplate: colfnc,
-                        hasGroup: true
-                    },
-                    {
-                        name: "rawCnt_90d",
-                        title: "직전90일",
-                        type: "number",
-                        align: "center",
-                        width: 80,
-                        itemTemplate: colfnc,
-                        hasGroup: true
-                    },
-                    {
                         name: "termCv_0d",
                         title: "당일",
                         type: "number",
@@ -421,7 +375,7 @@
                         width: 80,
                         itemTemplate: colfnc,
                         hasGroup: true,
-                        group: groups[4]
+                        group: groups[3]
                     },
                     {
                         name: "termCv_1d",
@@ -452,6 +406,52 @@
                     },
                     {
                         name: "termCv_90d",
+                        title: "직전90일",
+                        type: "number",
+                        align: "center",
+                        width: 80,
+                        itemTemplate: colfnc,
+                        hasGroup: true
+                    },
+                    {
+                        name: "rawCnt_0d",
+                        title: "당일",
+                        type: "number",
+                        align: "center",
+                        width: 80,
+                        itemTemplate: colfnc,
+                        hasGroup: true,
+                        group: groups[4]
+                    },
+                    {
+                        name: "rawCnt_1d",
+                        title: "전일",
+                        type: "number",
+                        align: "center",
+                        width: 80,
+                        itemTemplate: colfnc,
+                        hasGroup: true
+                    },
+                    {
+                        name: "rawCnt_7d",
+                        title: "직전7일",
+                        type: "number",
+                        align: "center",
+                        width: 80,
+                        itemTemplate: colfnc,
+                        hasGroup: true
+                    },
+                    {
+                        name: "rawCnt_30d",
+                        title: "직전30일",
+                        type: "number",
+                        align: "center",
+                        width: 80,
+                        itemTemplate: colfnc,
+                        hasGroup: true
+                    },
+                    {
+                        name: "rawCnt_90d",
                         title: "직전90일",
                         type: "number",
                         align: "center",
@@ -509,8 +509,8 @@
             {title: '구분', columns: 1, align: "center"},
             {title: '수용가', columns: 6, align: "center"},
             {title: '최종 검침', columns: 4, align: "center"},
-            {title: '일간(이동평균) 검침수 (건/일)', columns: 5, align: "center"},
             {title: '일간(이동평균) 사용량 (㎥/일)', columns: 5, align: "center"},
+            {title: '일간(이동평균) 검침수 (건/일)', columns: 5, align: "center"},
             {title: '계량기 배터리', columns: 2, align: "center"}
             /* {title : '기온', columns : 1, align : "center"}, */  ////////////// 2022-11-30
         ];
