@@ -511,7 +511,7 @@
             {title: '최종 검침', columns: 4, align: "center"},
             {title: '일간(이동평균) 사용량 (㎥/일)', columns: 5, align: "center"},
             {title: '일간(이동평균) 검침수 (건/일)', columns: 5, align: "center"},
-            {title: '계량기 배터리', columns: 2, align: "center"}
+            {title: '단말기 배터리', columns: 2, align: "center"}
             /* {title : '기온', columns : 1, align : "center"}, */  ////////////// 2022-11-30
         ];
 
