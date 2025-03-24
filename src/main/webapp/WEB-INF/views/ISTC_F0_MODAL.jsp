@@ -719,8 +719,8 @@ function dataDownload() {
                             </div>
                             <div class="row">
                                 <div class="col-md-no-padding col-md-6">
-                                    <label class="labelItem" for="statCdStr">검침상태</label>
-                                    <input type="text" class="form-control" id="statCdStr" disabled>
+                                    <label class="labelItem" for="setDt">최초설치일</label>
+                                    <input type="text" class="form-control" id="setDt" disabled>
                                 </div>
                                 <div class="col-md-no-padding col-md-6">
                                     <label class="labelItem" for="accuIv">최종검침값(㎥)</label>
