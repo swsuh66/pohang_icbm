@@ -88,7 +88,9 @@ function valueFieldFunction(id, value, data) {
 
         case 'measDt':
             return (value ? kutil.dateFormat(val, 'yyyy-mm-dd HH:MM:ss') : '-');
-
+        
+        case 'setDt':
+            return (value ? kutil.dateFormat(val, 'yyyy-mm-dd HH:MM:ss') : '-');
     }
 
     return (val ? val : '-');
@@ -205,7 +207,7 @@ function dataDownload() {
             "measDt": function (value) {
                 if (!value) return;
                 return kutil.dateFormat(value, 'yyyy-mm-dd HH:MM');
-            },
+            },            
             "statCd": function (value) {
 
                 if (value) {
@@ -242,7 +244,7 @@ function dataDownload() {
             "measDt": function (value) {
                 if (!value) return;
                 return kutil.dateFormat(value, 'yyyy-mm-dd');
-            },
+            },            
             "lastDt": function (value) {
                 if (!value) return;
                 return kutil.dateFormat(value, 'yyyy-mm-dd HH:MM');
