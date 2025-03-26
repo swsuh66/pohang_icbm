@@ -371,7 +371,7 @@
 			  case position('1' in a.stat_cd)			  
 			      when 1 then '통신 장애'
 			      when 2 then '계량기 장애'
-			      when 3 then 'Q4 초과'
+			      when 3 then 'Q3 초과'
 			      when 4 then '역류'
 			      when 5 then '누수'		      		      
 			      when 6 then '정상'
@@ -1960,7 +1960,7 @@
 			case position('1' in a.stat_cd)			  
 		      when 1 then '통신 장애'
 		      when 2 then '계량기 장애'
-		      when 3 then 'Q4 초과'
+		      when 3 then 'Q3 초과'
 		      when 4 then '역류'
 		      when 5 then '누수'		      		      
 		      when 6 then '정상'
@@ -2535,7 +2535,7 @@
          case position('1' in p.stat_cd)			  
 		      when 1 then '통신 장애'
 		      when 2 then '계량기 장애'
-		      when 3 then 'Q4 초과'
+		      when 3 then 'Q3 초과'
 		      when 4 then '역류'
 		      when 5 then '누수'		      		      
 		      when 6 then '정상'
@@ -3880,7 +3880,7 @@
 			  case position('1' in b.stat_cd)			  
 			      when 1 then '통신 장애'
 			      when 2 then '계량기 장애'
-			      when 3 then 'Q4 초과'
+			      when 3 then 'Q3 초과'
 			      when 4 then '역류'
 			      when 5 then '누수'		      		      
 			      when 6 then '정상'
@@ -4274,7 +4274,7 @@
 			  case position('1' in a.stat_cd)			  
 			      when 1 then '통신 장애'
 			      when 2 then '계량기 장애'
-			      when 3 then 'Q4 초과'
+			      when 3 then 'Q3 초과'
 			      when 4 then '역류'
 			      when 5 then '누수'		      		      
 			      when 6 then '정상'
