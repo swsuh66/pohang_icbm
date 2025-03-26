@@ -1623,6 +1623,7 @@
 		  b.dev_no		 as "devNo",
 		  b.meter_no	 as "meterNo",
 		  a.f_m			 as "flowMinPoint",
+		  a.call_check   as "call_check",
   	      a.iv_d1	     as "D01",
 	      a.iv_d2	     as "D02",
 	      a.iv_d3	     as "D03",
