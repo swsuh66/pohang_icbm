@@ -4541,6 +4541,13 @@
 						</if>
 	</sql>
 
+	<update id="updateCallCheck" parameterType="java.util.Map">
+		update tb_m1_meas_raw set
+		call_check = #{callCheck}
+		where
+		meas_sq = #{measSq}
+	</update>
+
 	<select id="selectsiteInfoList" parameterType="java.util.Map" resultType="java.util.Map">
     	/*mars.icbm.map1.selectsiteInfoList*/
 		<include refid="pageHeader"/>      

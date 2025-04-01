@@ -300,15 +300,34 @@
  				kutil.dateFormat(dt, 'HH:MM');
 		case 'stat_yn':
 			if (value == 'Y') {
-				return '계량기누수'
+				return '계량기누수';
 			}
 			else {
-				return '정상'
-			}		
+				return '정상';
+			}
+		case 'call_check':
+    	    var adminId = "'" + item.admin_id + "'";
+            return '<input type="checkbox" name="callChecktext" onchange="gridChecked('+ item.meas_sq +', '+ adminId +', this)" '+ (value == 1 ? "checked" : "") + '>';
 		}
 		
 
 		return (value||value==0)?value:'-';
+	};
+
+	// 그리드 체크 변경
+	function gridChecked(meas_sq, adminId, checkInput) {
+		if (confirm("수용가번호 : " + adminId + " 통화여부를 변경하시겠습니까? ") == false ) {
+			mainGrid.search();
+			return;
+		}
+
+		var params = {};
+		params['measSq']  = meas_sq;
+        params['callCheck'] = checkInput.checked ? "1" : "0";
+
+		getAjax('mars.icbm.map1.updateCallCheck', params, false, function (result) {
+			mainGrid.search();
+		}, null);
 	};
 
 	var colfncSMS = function(value, item, c, d, e) {
@@ -493,7 +512,8 @@
 	    { name: "min_date",       title: "최소시간", 	 type: "text",          width: 40, itemTemplate:colfnc, hasGroup:false},	    
 	    { name: "max_term_cv",       title: "최고사용량", 	 type: "text",      width: 40, itemTemplate:colfnc, hasGroup:false},	    
 	    { name: "min_term_cv",       title: "최소사용량", 	 type: "text",      width: 40, itemTemplate:colfnc, hasGroup:false},
-		{ name: "stat_yn",        title: "계량기누수여부", 	 type: "text",      width: 40, itemTemplate:colfnc, hasGroup:false}	    
+		{ name: "stat_yn",        title: "계량기누수여부", 	 type: "text",      width: 40, itemTemplate:colfnc, hasGroup:false},
+		{ name: "call_check",        title: "통화여부",     type: "checkbox",      width: 20, itemTemplate:colfnc, hasGroup:false}
 	];
 
 
