@@ -4486,7 +4486,7 @@
 								  ,case when max(a.stat_cd) is not null then 'Y'
 								        else 'N'
 								    end as "stat_yn"
-								 ,c.call_check as "call_check"
+								 ,max(c.call_check) as "call_check"
                         from (
                         select
                                    a.point_sq  -- 장비 Sq
@@ -4514,7 +4514,7 @@
                         			a.point_sq
                         		  , a.meas_dt
                         		  , a.term_cv 
-								  ,a.call_check
+								  , a.call_check
                         	    from tb_m1_meas_raw a 
                         	   where 1=1
                         	 ) c
