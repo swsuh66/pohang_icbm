@@ -4486,6 +4486,7 @@
 								  ,case when max(a.stat_cd) is not null then 'Y'
 								        else 'N'
 								    end as "stat_yn"
+								 ,max(c.meas_sq) as "meas_sq"
 								 ,max(c.call_check) as "call_check"
                         from (
                         select
@@ -4511,7 +4512,8 @@
 							  and a.use_cd = '1'
                         ) a 
                         join (select 
-                        			a.point_sq
+									a.meas_sq
+                        		  , a.point_sq
                         		  , a.meas_dt
                         		  , a.term_cv 
 								  , a.call_check
