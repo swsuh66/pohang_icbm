@@ -306,29 +306,39 @@
 				return '정상';
 			}
 		case 'call_check':
-    	    var adminId = "'" + item.admin_id + "'";
-            return '<input type="checkbox" name="callChecktext" onchange="gridChecked('+ item.meas_sq +', '+ adminId +', this)" '+ (value == 1 ? "checked" : "") + '>';
+            return callCheckTemplate(value, item, c);
 		}
 		
 
 		return (value||value==0)?value:'-';
 	};
 
-	// 그리드 체크 변경
-	function gridChecked(meas_sq, adminId, checkInput) {
-		if (confirm("수용가번호 : " + adminId + " 통화여부를 변경하시겠습니까? ") == false ) {
-			mainGrid.search();
-			return;
-		}
+    //통화여부
+    function callCheckTemplate(value, item, c) {
+        var $_returnData = $('<div>');
+        var $_spanTxt = $('<span>').text(value);
+        var $_inputTxt = $('<input>').attr('type','text').attr('maxlength', '10').css('width','60%').val(value);
+        var $_editBtn = $('<button>').addClass('jsgrid-button jsgrid-edit-button');
+        var $_saveBtn = $('<button>').addClass('jsgrid-button jsgrid-update-button');
+        var $_cancelBtn = $('<button>').addClass('jsgrid-button jsgrid-cancel-button');
 
-		var params = {};
-		params['measSq']  = meas_sq;
-        params['callCheck'] = checkInput.checked ? "1" : "0";
+        $_editBtn.on('click', function(){   //수정 버튼 클릭
+            return $_returnData.empty().append($_inputTxt, $_saveBtn, $_cancelBtn);
+        });
+        $_saveBtn.on('click', function(){   //저장 버튼 클릭
+            var params = {};
+            params['measSq']  = item.meas_sq;
+            params['callCheck'] = $_inputTxt.val();
+            getAjax('mars.icbm.map1.updateCallCheck', params, false, function (result) {
+                mainGrid.search();
+            }, null);
+        });
+        $_cancelBtn.on('click', function(){ //취소 버튼 클릭
+            mainGrid.search();
+        });
 
-		getAjax('mars.icbm.map1.updateCallCheck', params, false, function (result) {
-			mainGrid.search();
-		}, null);
-	};
+        return $_returnData.empty().append($_editBtn, $_spanTxt);   //default
+    }
 
 	var colfncSMS = function(value, item, c, d, e) {
 		
@@ -513,7 +523,7 @@
 	    { name: "max_term_cv",       title: "최고사용량", 	 type: "text",      width: 40, itemTemplate:colfnc, hasGroup:false},	    
 	    { name: "min_term_cv",       title: "최소사용량", 	 type: "text",      width: 40, itemTemplate:colfnc, hasGroup:false},
 		{ name: "stat_yn",        title: "계량기누수여부", 	 type: "text",      width: 40, itemTemplate:colfnc, hasGroup:false},
-		{ name: "call_check",        title: "통화여부",     type: "checkbox",      width: 20, itemTemplate:colfnc, hasGroup:false}
+		{ name: "call_check",        title: "통화여부",     type: "text",      width: 60, itemTemplate:colfnc, hasGroup:false}
 	];
 
 

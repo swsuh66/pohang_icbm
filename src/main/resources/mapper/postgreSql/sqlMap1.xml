@@ -4487,7 +4487,7 @@
 								        else 'N'
 								    end as "stat_yn"
 								 ,max(c.meas_sq) as "meas_sq"
-								 ,max(c.call_check) as "call_check"
+								 ,(select call_check from tb_m1_meas_raw where meas_sq = max(c.meas_sq)) as "call_check"
                         from (
                         select
                                    a.point_sq  -- 장비 Sq

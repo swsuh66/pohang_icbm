@@ -1841,7 +1841,15 @@
 		<col>
 			<name>min_term_cv</name>
 			<title>최소사용량</title>
-		</col>	
+		</col>
+	   <col>
+		   <name>stat_yn</name>
+		   <title>계량기누수여부</title>
+	   </col>
+	   <col>
+		   <name>call_check</name>
+		   <title>통화여부</title>
+	   </col>
 	</map>
 
 	<map id="f13-export" meta-sql="f13-export" refer-sql="mars.icbm.map1.use_evening_info">
