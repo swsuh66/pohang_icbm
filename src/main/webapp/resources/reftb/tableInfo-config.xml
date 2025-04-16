@@ -1847,6 +1847,10 @@
 		   <title>계량기누수여부</title>
 	   </col>
 	   <col>
+			<name>read_responsi</name>
+			<title>검침원</title>
+		</col>
+	   <col>
 		   <name>call_check</name>
 		   <title>통화여부</title>
 	   </col>
@@ -1897,5 +1901,3 @@
 
 	
 </importmeta>
-
-

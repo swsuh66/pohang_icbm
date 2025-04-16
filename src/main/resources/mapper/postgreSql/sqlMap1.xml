@@ -4487,6 +4487,7 @@
 								        else 'N'
 								    end as "stat_yn"
 								 ,max(c.meas_sq) as "meas_sq"
+								 ,max(a.read_responsi) as "read_responsi"
 								 ,(select call_check from tb_m1_meas_raw where meas_sq = max(c.meas_sq)) as "call_check"
                         from (
                         select
@@ -4497,6 +4498,7 @@
                                   , b.business_name
                                   , b.pipe_diameter
                                   , b.addr_new
+								  , b.read_responsi
 								  , n.stat_cd 
                           from
                             tb_m1_info_point a
