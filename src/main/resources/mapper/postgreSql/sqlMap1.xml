@@ -4511,6 +4511,9 @@
 							<if test='business_name != null and business_name != ""'>
 							  and b.business_name = #{business_name}
 							</if>
+							<if test='read_responsi != null and read_responsi != ""'>
+								and b.read_responsi like  '%' || #{read_responsi} || '%'
+							</if>
 							  and a.use_cd = '1'
                         ) a 
                         join (select 

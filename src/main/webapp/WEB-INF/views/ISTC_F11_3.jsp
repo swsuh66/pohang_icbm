@@ -478,7 +478,7 @@
 				{ name: 'max_term_cv', title: '최고사용량', type: 'text', width: 40, itemTemplate: colfnc, hasGroup: false },
 				{ name: 'min_term_cv', title: '최소사용량', type: 'text', width: 40, itemTemplate: colfnc, hasGroup: false },
 				{ name: 'stat_yn', title: '계량기누수여부', type: 'text', width: 40, itemTemplate: colfnc, hasGroup: false },
-				{ name: 'read_responsi', title: '검침원원', type: 'text', width: 40, itemTemplate: colfnc, hasGroup: false },
+				{ name: 'read_responsi', title: '검침원', type: 'text', width: 40, itemTemplate: colfnc, hasGroup: false },
 				{ name: 'call_check', title: '통화여부', type: 'text', width: 60, itemTemplate: colfnc, hasGroup: false },
 			];
 
@@ -605,7 +605,7 @@
 				params['business_name'] = $('#business_name').val();
 				params['compare_term_cv'] = $('#compare_term_cv').val();
 				params['statYn'] = $('#statYn').val();
-
+				params['read_responsi'] = $('#read_responsi').val();
 				return params;
 			}
 
