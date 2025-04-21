@@ -470,7 +470,7 @@ function dataDownload() {
         /*
          * 그리드 초기화
          */
-        function initGrid(container, fields) {
+        function initGrid(container, fields, _extendOpt) {
 
             var opt = {
 
@@ -481,6 +481,7 @@ function dataDownload() {
 
                 pageLoading: true,
                 paging: true,
+                //pageIndex: 1,
                 pageSize: 50,
                 pageButtonCount: 5, 	// 페이지 버튼 개수
                 pagerFormat: "{first} {prev} {pages} {next} {last}    {pageIndex} of {pageCount}",
@@ -501,6 +502,10 @@ function dataDownload() {
                 rowDoubleClick: function (evt) {
 
                 },
+                onPageChanged: function(args){
+                    //console.log("현재 페이지:", args.pageIndex);
+                    loadModalData(false, args);
+                },
                  onRefreshed: function (args) {
 				$.each(args.grid._headerGrid[0].rows[0].cells, function (i, obj) {
 					$(args.grid._bodyGrid[0].rows[0].cells[i]).css("width", $(obj).css("width"));
@@ -515,6 +520,10 @@ function dataDownload() {
    			 }
 
             };
+
+            if(_extendOpt){
+                $.extend(opt, _extendOpt);
+            }
 
             return new DataGrid(container, opt);
         };
@@ -554,7 +563,11 @@ function dataDownload() {
 
             return new DataGrid(container, opt);
         };
-        
+
+        function searchModalData(){
+            useGrid = initGrid('useGrid', rawField, {pageIndex:1});
+            loadModalData(false, _params);
+        }
         /* 수용가 정보, 검침 그래프와 표 */
         function loadModalData(useGparams, item) {
         	$('#infoModal').modal('show'); //infoModal
@@ -906,7 +919,7 @@ function dataDownload() {
                                                         <div style="display: flex; gap: 8px;">
                                                             <a href="#none" title="검색"
                                                                     class="btn dj-btn-primary btn-sm"
-                                                                    onclick="loadModalData(false, _params);">검색</a>
+                                                                    onclick="searchModalData();">검색</a>
                                                         </div>
                                                     </div>
                                                 </div>
