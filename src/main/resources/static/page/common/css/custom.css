@@ -272,6 +272,7 @@ iframe {
 	position: relative;
 	width: 260px;
 	z-index: 2;
+	overflow-y: auto;
 }
 
 .btn-toggle-sidebar {
