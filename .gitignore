@@ -2,6 +2,10 @@
 .svn
 .git
 .gradle
+.classpath
+.project
+
+.settings/
 /build
 /bin
 /.idea
