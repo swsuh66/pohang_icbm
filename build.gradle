@@ -6,7 +6,15 @@ plugins {
 }
 
 group = 'com.istec'
-version = '1.0.0'
+version = '1.0.1'
+
+war {
+    manifest {
+        attributes(
+            'Implementation-Version': version
+        )
+    }
+}
 
 repositories {
     mavenCentral()

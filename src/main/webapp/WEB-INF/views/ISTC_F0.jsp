@@ -666,7 +666,7 @@
                 <li>${user.getUserNm()}님</li>
                 <li><a href="logout">로그아웃</a></li>
             </ul>
-            <h6 class="header-user-name"></h6>
+            <span class="system-version">버전 ${systemVersion}</span>
         </header>
 
         <div class="main-container" id="main-container">
