@@ -2133,7 +2133,10 @@
 					
 			<if test="begDate != null and endDate !=null">			
 				<![CDATA[
-				AND (a.meas_dt >= ( to_date(#{begDate}, 'yyyy-mm-dd') + 1) and (a.meas_dt < to_date(#{endDate}, 'yyyy-mm-dd') + 1))
+                    AND (
+                        a.meas_dt >= #{begDate}::date
+                        AND a.meas_dt < (#{endDate}::date + INTERVAL '1 day')
+                    )
 				]]>				
 			</if>
 			
