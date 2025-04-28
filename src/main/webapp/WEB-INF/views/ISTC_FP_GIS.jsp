@@ -1012,7 +1012,7 @@
 					</div>
 				</div>
 
-				<div class="box-list chart-group">
+				<div class="box-list chart-group" style="display: none">
 					<div class="accordion-item">
 						<h6 class="accordion-header">수용가</h6>
 						<div class="accordion-content">
