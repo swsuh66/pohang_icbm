@@ -572,24 +572,12 @@
 
 	            var params = new Object();
 	            var type = $('#typeSelect', window.parent.document).val();
+				var begDate = $('#fromDate', window.parent.document).val();
 	            var endDate = $('#toDate', window.parent.document).val();
-
-	            var originalDate = $('#fromDate', window.parent.document).val();
-	            var begDate = "";
-
-	               if (originalDate) {
-	                   var date = new Date(originalDate);
-	                   date.setDate(date.getDate() - 1); // 하루 전
-
-	                   var yyyy = date.getFullYear();
-	                   var mm = String(date.getMonth() + 1).padStart(2, '0');
-	                   var dd = String(date.getDate()).padStart(2, '0');
-
-	                   begDate = yyyy + '-' + mm + '-' + dd;
-	               }
 
 	            params.endDate = endDate;
 	            params.begDate = begDate;
+
 	            $.extend(params, useGrid.loadParams());
 	            if (!endDate || endDate.length == 0) {
 	                /* 날짜 초기화 */
