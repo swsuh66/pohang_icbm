@@ -571,7 +571,7 @@
 
 	        function searchModalData(){
 	            useGrid = initGrid('useGrid', rawField, {pageIndex:1});
-	            loadModalData(false, _params);
+	            loadModalData(false, {});
 	        }
 	        /* 수용가 정보, 검침 그래프와 표 */
 	        function loadModalData(useGparams, item) {
