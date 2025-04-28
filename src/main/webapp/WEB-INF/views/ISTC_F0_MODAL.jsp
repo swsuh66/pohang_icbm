@@ -343,8 +343,15 @@
 	                case 'rawCnt':
 	                    return value;
 	                case 'lastDt':
-	                    return (value ? kutil.dateFormat(new Date(item.lastDt),
-	                        'yy-mm-dd HH:MM') : '-');
+						if (!value) return '-';
+
+						// measDt의 년월일 + lastDt의 시분초를 합치기
+						const measDate = item.measDt;
+						const lastTime = item.lastDt ? item.lastDt.substring(11) : '00:00:00'; // "HH:MM:SS"
+
+						const combinedDateTime = `${measDate} ${lastTime}`;
+
+						return kutil.dateFormat(new Date(combinedDateTime), 'yy-MM-dd HH:mm');
 	                case 'accuIv':
 	                    value = kutil.v2n(value, 3);
 	                    if (item.adjstV && Math.abs(item.adjstV) >= 1)
