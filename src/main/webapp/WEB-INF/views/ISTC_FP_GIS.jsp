@@ -982,7 +982,7 @@
 							</div>
 						</div>
 					</div>
-					<div class="accordion-item">
+					<div class="accordion-item" hidden>
 						<h6 class="accordion-header">사용량 추이</h6>
 						<div class="accordion-content">
 							<div class="bcard meter-stat-chart chart-area">
@@ -1012,7 +1012,7 @@
 					</div>
 				</div>
 
-				<div class="box-list chart-group" style="display: none">
+				<div class="box-list chart-group" hidden>
 					<div class="accordion-item">
 						<h6 class="accordion-header">수용가</h6>
 						<div class="accordion-content">
