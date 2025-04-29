@@ -959,7 +959,7 @@
 			        	switch (idx) {
 							case 1: return '통신 장애';
 							case 2: return '계량기 장애';
-							case 3: return 'Q4초과';
+							case 3: return 'Q3초과';
 							case 4: return '역류';
 							case 5: return '누수';
 							case 6: return '정상';
@@ -993,7 +993,7 @@
 			        	switch (idx) {
 							case 1: return '통신 장애';
 							case 2: return '계량기 장애';
-							case 3: return 'Q4초과';
+							case 3: return 'Q3초과';
 							case 4: return '역류';
 							case 5: return '누수';
 							case 6: return '정상';
