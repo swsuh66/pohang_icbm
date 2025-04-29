@@ -509,7 +509,9 @@
 	                },
 	                onPageChanged: function(args){
 	                    //console.log("현재 페이지:", args.pageIndex);
-	                    loadModalData(false, args);
+	                    args.pointSq = _params.pointSq;
+	                    args.siteSq = _params.siteSq;
+                        loadModalData(false, args);
 	                },
 	                 onRefreshed: function (args) {
 					$.each(args.grid._headerGrid[0].rows[0].cells, function (i, obj) {
@@ -571,7 +573,7 @@
 
 	        function searchModalData(){
 	            useGrid = initGrid('useGrid', rawField, {pageIndex:1});
-	            loadModalData(false, {});
+	            loadModalData(false, _params);
 	        }
 	        /* 수용가 정보, 검침 그래프와 표 */
 	        function loadModalData(useGparams, item) {
