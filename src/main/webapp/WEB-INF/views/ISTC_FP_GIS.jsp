@@ -365,7 +365,7 @@
 			                dataOrder[-1] = {order: 0}; //정상
 			                dataOrder[0] = {order: 1}; //통신 장애
 			                dataOrder[1] = {order: 2}; //계량기 장애
-			                dataOrder[2] = {order: 3}; //Q4초과
+			                dataOrder[2] = {order: 3}; //Q3초과
 			                dataOrder[3] = {order: 4}; //역류
 			                dataOrder[4] = {order: 5}; //누수
 			                dataOrder[7] = {order: 6}; //베터리

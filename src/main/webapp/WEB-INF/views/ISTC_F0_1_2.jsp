@@ -202,8 +202,8 @@
                         <option value="-1" selected>전체</option>
                         <option value="0">정상</option>
                         <option value="1">통신 장애</option>
-                        <option value="2">계량기 장애</option>
-                        <option value="3">Q4초과</option>
+                        <option value="2">계4량기 장애</option>
+                        <option value="3">Q3초과</option>
                         <option value="4">역류</option>
                         <option value="5">누수</option>
                         <option value="8">배터리 장애</option>
