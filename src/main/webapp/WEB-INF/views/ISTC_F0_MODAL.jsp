@@ -195,44 +195,50 @@
 	};
 
 	function dataDownload() {
-	    var qType = $('#typeSelect').val();
+	    var qType = $('#typeSelect').val(); //0(수집)/1(일간)/2(??)
 
 	    var transforms;
 
 	    if (qType == '0') {
-
 	        transforms = {
 	            "measDt": function (value) {
 	                if (!value) return;
 	                return kutil.dateFormat(value, 'yyyy-mm-dd HH:MM');
 	            },
 	            "statCd": function (value) {
-
-	                if (value) {
-	                    var idx = value.indexOf('1') + 1;
-
-	                    switch (idx) {
-	                        case 1:
-	                            return '통신 장애';
-	                        case 2:
-	                            return '계량기 장애';
-	                        case 3:
-	                            return 'Q4초과';
-	                        case 4:
-	                            return '역류';
-	                        case 5:
-	                            return '누수';
-	                        case 6:
-	                            return '정상';
-	                        case 7:
-	                            return '정상';
-	                        case 8:
-	                            return 'BAT';
-	                        default:
-	                            return '정상';
-	                    }
-	                }
-
+	                return meterStatCd.getStr(value);
+	            },
+	            "accuIv": function (value) {
+	                if (value != 0 && !value) return '-';
+                    return value;
+	            },
+	            "termCh": function (value) {
+	                if (value != 0 && !value) return '-';
+                    return value;
+	            },
+	            "termCv": function (value) {
+	                if (value != 0 && !value) return '-';
+                    return value;
+	            },
+	            "rssiV": function (value) {
+	                if (value != 0 && !value) return '-';
+                    return value;
+	            },
+	            "snrV": function (value) {
+	                if (value != 0 && !value) return '-';
+                    return value;
+	            },
+	            "temperature": function (value) {
+                    if (!value) return '';
+                    return value + '℃';
+                },
+	            "rsrqV": function (value) {
+                    if (value != 0 && !value) return '-';
+                    return value * -1;
+	            },
+	            "rsrpV": function (value) {
+                    if (value != 0 && !value) return '-';
+                    return value * -1;
 	            }
 	        };
 
@@ -240,48 +246,59 @@
 
 	        transforms = {
 	            "measDt": function (value) {
-	                if (!value) return;
+	                if (!value) return '-';
 	                return kutil.dateFormat(value, 'yyyy-mm-dd');
 	            },
+	            "statCd": function (value) {
+	                return meterStatCd.getStr(value);
+	            },
+	            "rawCnt": function (value) {
+	                if (value != 0 && !value) return '';
+                    return value;
+	            },
 	            "lastDt": function (value) {
-	                if (!value) return;
+	                if (!value) return '-';
 	                return kutil.dateFormat(value, 'yyyy-mm-dd HH:MM');
 	            },
-	            "statCd": function (value) {
-
-	                if (value) {
-	                    var idx = value.indexOf('1') + 1;
-
-	                    switch (idx) {
-	                        case 1:
-	                            return '통신 장애';
-	                        case 2:
-	                            return '계량기 장애';
-	                        case 3:
-	                            return 'Q4초과';
-	                        case 4:
-	                            return '역류';
-	                        case 5:
-	                            return '누수';
-	                        case 6:
-	                            return '정상';
-	                        case 7:
-	                            return '정상';
-	                        case 8:
-	                            return 'BAT';
-	                        default:
-	                            return '정상';
-	                    }
-	                }
-
-
-	            }
+	            "accuIv": function (value) {
+	                if (value != 0 && !value) return '-';
+                    return value;
+	            },
+	            "temperature": function (value) {
+                    if (!value) return '';
+                    return value + '℃';
+	            },
+	            "termCv": function (value) {
+	                if (value != 0 && !value) return '-';
+                    return value;
+	            },
+	            "termCv_1d": function (value) {
+	                if (value != 0 && !value) return '-';
+                    return value;
+	            },
+	            "termCv_7d": function (value) {
+	                if (value != 0 && !value) return '-';
+                    return value;
+	            },
+	            "termCv_30d": function (value) {
+	                if (value != 0 && !value) return '-';
+                    return value;
+                }
 	        };
 
 	    }
 
-	    if (transforms)
-	        jgexp.download(useGrid, transforms);
+        getAjax((qType == '0' ? 'pointHisdataRaw' : 'pointHisdata'), _params, function() {
+            $('#infoModal').aceWidget('startLoading');
+        }, function(result) {
+	        jgexp.download2(useGrid, transforms, result);   //페이징 기준 없이 그리드 전체 내용 다운로드
+            $('#infoModal').aceWidget('stopLoading');
+        }, function() {
+            $('#infoModal').aceWidget('stopLoading');
+        });
+
+	    //if (transforms)
+	    //    jgexp.download(useGrid, transforms);    //페이징 기준으로 현 그리드 내용만 다운로드
 
 	};
 

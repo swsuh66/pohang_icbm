@@ -49,10 +49,53 @@ jgexp.table2csv = function(jsgrid, transforms) {
 	});
 }
 
-jgexp.download = function(jsgrid, transforms, filename, fileType) {
-	//var csv = this.json2csv(objArray);
-	var csv = this.table2csv(jsgrid, transforms);
-	
+jgexp.data2csv = function(jsgrid, transforms, data){
+    var fields = jsgrid.jsGrid("option", "fields");
+    var titleArray = typeof fields != 'object' ? JSON.parse(fields) : fields;
+    //console.log(titleArray);
+    var str = '';
+
+    var line = '';
+    for (var i = 0; i < titleArray.length; i++) {
+        line += titleArray[i]['title'] + ',';
+    }
+
+    str += line.substring(0,line.length-1) + '\r\n';
+    //console.log(str);
+
+    var dataArray = typeof data != 'object' ? JSON.parse(data) : data;
+    //console.log(dataArray);
+    for (var j = 0; j < dataArray.length; j++) {
+        var tmpLine = '';
+        for (var i = 0; i < titleArray.length; i++) {
+            var titleName = titleArray[i]['name'];
+            var dataOne = dataArray[j][titleName];
+            if (transforms.hasOwnProperty(titleName)){
+                tmpLine += transforms[titleName](dataOne) + ',';
+            }else{
+                tmpLine += ((dataOne == 0 || dataOne) ? dataOne : '-') + ',';
+            }
+        }
+        str += tmpLine.substring(0,tmpLine.length-1) + '\r\n';
+    }
+    //console.log(str);
+    return str;
+}
+
+jgexp.download2 = function(jsgrid, transforms, data, filename, fileType){
+    var csv = this.data2csv(jsgrid, transforms, data);
+    jgexp.download(jsgrid, transforms, csv, filename, fileType);
+}
+
+jgexp.download = function(jsgrid, transforms, inCsv, filename, fileType) {
+	var csv = "";
+	if(inCsv){
+        csv = inCsv;
+	}else{
+        //var csv = this.json2csv(objArray);
+        csv = this.table2csv(jsgrid, transforms);
+    }
+    //console.log("csv", csv);
 	if(!filename)
 		filename = "report_"+ kutil.dateFormat( new Date(), 'yymmddHHMMss');
 
@@ -60,7 +103,7 @@ jgexp.download = function(jsgrid, transforms, filename, fileType) {
 	var br =  info[0];
 	var ver =  info[1];
 
-	 if (br == 'IE' && ver < 11) {
+    if (br == 'IE' && ver < 11) {
 		alert('구버전 Internet Explore에서는 지원되지 않는 기능입니다.');
 		return;
 	}
@@ -314,7 +357,11 @@ function DataGrid(container, opt) {
 
 	this.command = function(cmd, key, value) {
 		return _grid.jsGrid(cmd, key, value);
-	};
+	}
+
+    this.jsGrid = function(cmd, key) {
+        return _grid.jsGrid(cmd, key);
+    };
 	
 	this.showNodata = function() {
 		_grid.jsGrid("option", "container").find(".jsgrid-nodata-row").find("td.jsgrid-cell")
