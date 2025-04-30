@@ -487,6 +487,7 @@
                 },
                 rowDoubleClick: function (evt) {
                     parent.loadModalData(false, evt.item);
+                    parent.loadChartData(false, evt.item);
                 },
                   onRefreshed: function (args) {
 				$.each(args.grid._headerGrid[0].rows[0].cells, function (i, obj) {

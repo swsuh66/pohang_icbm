@@ -97,7 +97,7 @@
 	/* 모달 요소 refresh */
 	function refreshModalMain(result) {
 
-	    var preLayoutSetting = function () {
+		 var preLayoutSetting = function () {
 
 	        /* modal usegrid layout */
 	        layoutSize('infoModal', 'modalGridContainer', 100);
@@ -158,7 +158,8 @@
 
 	    refreshGrid(result);
 
-	    useChart.setDataSource(result);
+		// Brad : 2024.04.30 차트데이터 전체데이터 반영을 위해 주석처리
+		//useChart.setDataSource(result);
 
 	};
 
@@ -210,35 +211,35 @@
 	            },
 	            "accuIv": function (value) {
 	                if (value != 0 && !value) return '-';
-                    return value;
+	                   return value;
 	            },
 	            "termCh": function (value) {
 	                if (value != 0 && !value) return '-';
-                    return value;
+	                   return value;
 	            },
 	            "termCv": function (value) {
 	                if (value != 0 && !value) return '-';
-                    return value;
+	                   return value;
 	            },
 	            "rssiV": function (value) {
 	                if (value != 0 && !value) return '-';
-                    return value;
+	                   return value;
 	            },
 	            "snrV": function (value) {
 	                if (value != 0 && !value) return '-';
-                    return value;
+	                   return value;
 	            },
 	            "temperature": function (value) {
-                    if (!value) return '';
-                    return value + '℃';
-                },
+	                   if (!value) return '';
+	                   return value + '℃';
+	               },
 	            "rsrqV": function (value) {
-                    if (value != 0 && !value) return '-';
-                    return value * -1;
+	                   if (value != 0 && !value) return '-';
+	                   return value * -1;
 	            },
 	            "rsrpV": function (value) {
-                    if (value != 0 && !value) return '-';
-                    return value * -1;
+	                   if (value != 0 && !value) return '-';
+	                   return value * -1;
 	            }
 	        };
 
@@ -254,7 +255,7 @@
 	            },
 	            "rawCnt": function (value) {
 	                if (value != 0 && !value) return '';
-                    return value;
+	                   return value;
 	            },
 	            "lastDt": function (value) {
 	                if (!value) return '-';
@@ -262,40 +263,41 @@
 	            },
 	            "accuIv": function (value) {
 	                if (value != 0 && !value) return '-';
-                    return value;
+	                   return value;
 	            },
 	            "temperature": function (value) {
-                    if (!value) return '';
-                    return value + '℃';
+	                   if (!value) return '';
+	                   return value + '℃';
 	            },
 	            "termCv": function (value) {
 	                if (value != 0 && !value) return '-';
-                    return value;
+	                   return value;
 	            },
 	            "termCv_1d": function (value) {
 	                if (value != 0 && !value) return '-';
-                    return value;
+	                   return value;
 	            },
 	            "termCv_7d": function (value) {
 	                if (value != 0 && !value) return '-';
-                    return value;
+	                   return value;
 	            },
 	            "termCv_30d": function (value) {
 	                if (value != 0 && !value) return '-';
-                    return value;
-                }
+	                   return value;
+	               }
 	        };
 
 	    }
 
-        getAjax((qType == '0' ? 'pointHisdataRaw' : 'pointHisdata'), _params, function() {
-            $('#infoModal').aceWidget('startLoading');
-        }, function(result) {
-	        jgexp.download2(useGrid, transforms, result);   //페이징 기준 없이 그리드 전체 내용 다운로드
-            $('#infoModal').aceWidget('stopLoading');
-        }, function() {
-            $('#infoModal').aceWidget('stopLoading');
-        });
+	       getAjax((qType == '0' ? 'pointHisdataRaw' : 'pointHisdata'), _params, function() {
+	           $('#infoModal').aceWidget('startLoading');
+	       }, function(result) {
+	           useChart.setDataSource(result);
+	            jgexp.download2(useGrid, transforms, result);   //페이징 기준 없이 그리드 전체 내용 다운로드
+	            $('#infoModal').aceWidget('stopLoading');
+	       }, function() {
+	           $('#infoModal').aceWidget('stopLoading');
+	       });
 
 	    //if (transforms)
 	    //    jgexp.download(useGrid, transforms);    //페이징 기준으로 현 그리드 내용만 다운로드
@@ -525,10 +527,11 @@
 
 	                },
 	                onPageChanged: function(args){
-	                    //console.log("현재 페이지:", args.pageIndex);
+	                    console.log("onPageChanged:", args.pageIndex, _params);;
 	                    args.pointSq = _params.pointSq;
 	                    args.siteSq = _params.siteSq;
-                        loadModalData(false, args);
+
+						loadModalData(false, args);
 	                },
 	                 onRefreshed: function (args) {
 					$.each(args.grid._headerGrid[0].rows[0].cells, function (i, obj) {
@@ -567,7 +570,7 @@
 	                    return new CustomPageLoadingStrategy(this, null);
 	                },
 	                rowDoubleClick: function (evt) {
-	                    _bfParams = _params; // 부 수용가 검색 전 수용가데이터
+						_bfParams = _params; // 부 수용가 검색 전 수용가데이터
 	                    loadModalData(false, evt.item);
 	                },
 	                onRefreshed: function (args) {
@@ -589,11 +592,54 @@
 	        };
 
 	        function searchModalData(){
-	            useGrid = initGrid('useGrid', rawField, {pageIndex:1});
-	            loadModalData(false, _params);
+				useGrid = initGrid('useGrid', rawField, {pageIndex:1});
+				loadModalData(false, _params);
+				loadChartData(false, _params);
 	        }
-	        /* 수용가 정보, 검침 그래프와 표 */
+
+			/* 수용가 정보, 검침 그래프와  */
+	        function loadChartData(useGparams, item) {
+				$('#infoModal').modal('show'); //infoModal
+
+	            var params = new Object();
+	            var type = $('#typeSelect', window.parent.document).val();
+				var begDate = $('#fromDate', window.parent.document).val();
+	            var endDate = $('#toDate', window.parent.document).val();
+
+	            params.endDate = endDate;
+	            params.begDate = begDate;
+
+	            $.extend(params, useGrid.loadParams());
+	            if (!endDate || endDate.length == 0) {
+	                /* 날짜 초기화 */
+	                //$('#fromDate', window.parent.document).val(kutil.dateFormat(new Date(), 'yyyy-mm-dd'));
+	                //var endDate = kutil.dateFormat(new Date(), 'yyyy-mm-dd');
+	            }
+
+	            if (useGparams)
+	                params = _params;
+	            else {
+	                if (item) {
+	                    params.pointSq = item.pointSq;
+	                    params.siteSq = item.siteSq;
+	                }
+	            }
+
+	            // 그래프 데이터 생성
+				const query_id = type == '0' ? 'pointHisdataRaw' : 'pointHisdata';
+				getAjax(query_id, params, function() {
+					 $('#infoModal').aceWidget('startLoading');
+				}, function(result) {
+					useChart.setDataSource(result);
+				}, function() {
+					$('#infoModal').aceWidget('stopLoading');
+				});
+	            _params = params;
+			}
+
+	        /* 수용가 정보, 검침 그리드 데이터 로드 */
 	        function loadModalData(useGparams, item) {
+				console.log("loadModalData", useGparams, item);
 	        	$('#infoModal').modal('show'); //infoModal
 
 	            var params = new Object();
@@ -620,8 +666,6 @@
 	                }
 	            }
 
-
-
 	            loadPointData(params);
 	            loadModalChildAdminId(params);
 
@@ -631,22 +675,16 @@
 	        };
 
 	        /* 수용가 검침데이터 이력정보 */
-	    	function loadRawData(qid, params) {
-	    		/* 검침값 조회 */
+	    	function loadRawData(qid,  params) {
+	            /* 검침값 조회 */
 	    		getAjax(qid, params, function() {
-
 	    			$('#infoModal').aceWidget('startLoading');
-
 	    		}, function(result) {
-
-	    			refreshModalMain(result);
-
+					refreshModalMain(result);
 	    		}, function() {
-
 	    			$('#infoModal').aceWidget('stopLoading');
-
 	    		});
-	    	};
+	       };
 
 	    	/* 수용가 정보 */
 	        function loadPointData(params) {
@@ -672,7 +710,8 @@
 
 	        /* 이전 수용가 불러오기 */
 	        function beforeData() {
-	        	loadModalData(false, _bfParams);
+				loadModalData(false, _bfParams);
+				loadChartData(false, _bfParams);
 	        };
 
 	        // 모달창에서
