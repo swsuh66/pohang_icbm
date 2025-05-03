@@ -133,28 +133,25 @@
 	    };
 
 	    var preChartSetting = function (result) {
-
+			// console.log("preChartSetting", result);
 	        var type = $('#typeSelect').val();
 
 	        if (type == '0') { //수집
 
 	            useChart = new rawStockchart('useChart');
 	            useChart.initChart('useChart');
-
 	        } else {
 
 	            useChart = new dayStockchart('useChart');
 	            useChart.initChart('useChart');
-
 	        }
-
 	    };
 
 	    preLayoutSetting();
 
 	    preGridSetting(result);
 
-	    preChartSetting(result);
+	    // preChartSetting(result);
 
 	    refreshGrid(result);
 
@@ -292,7 +289,6 @@
 	       getAjax((qType == '0' ? 'pointHisdataRaw' : 'pointHisdata'), _params, function() {
 	           $('#infoModal').aceWidget('startLoading');
 	       }, function(result) {
-	           useChart.setDataSource(result);
 	            jgexp.download2(useGrid, transforms, result);   //페이징 기준 없이 그리드 전체 내용 다운로드
 	            $('#infoModal').aceWidget('stopLoading');
 	       }, function() {
@@ -597,11 +593,29 @@
 				loadChartData(false, _params);
 	        }
 
+			var preChartSetting = function (result) {
+				console.log("preChartSetting", result);
+				var type = $('#typeSelect').val();
+
+				if (type == '0') { //수집
+
+					useChart = new rawStockchart('useChart');
+					useChart.initChart('useChart');
+
+				} else {
+
+					useChart = new dayStockchart('useChart');
+					useChart.initChart('useChart');
+
+				}
+
+			};
+
 			/* 수용가 정보, 검침 그래프와  */
 	        function loadChartData(useGparams, item) {
 				$('#infoModal').modal('show'); //infoModal
 
-	            var params = new Object();
+				var params = new Object();
 	            var type = $('#typeSelect', window.parent.document).val();
 				var begDate = $('#fromDate', window.parent.document).val();
 	            var endDate = $('#toDate', window.parent.document).val();
@@ -630,6 +644,9 @@
 				getAjax(query_id, params, function() {
 					 $('#infoModal').aceWidget('startLoading');
 				}, function(result) {
+					// console.log("loadChartData", result);
+					layoutSize('infoModal', 'useChart', 100);
+					preChartSetting(result);
 					useChart.setDataSource(result);
 				}, function() {
 					$('#infoModal').aceWidget('stopLoading');
