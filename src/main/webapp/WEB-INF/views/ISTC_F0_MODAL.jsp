@@ -594,7 +594,6 @@
 	        }
 
 			var preChartSetting = function (result) {
-				console.log("preChartSetting", result);
 				var type = $('#typeSelect').val();
 
 				if (type == '0') { //수집
@@ -647,7 +646,7 @@
 					// console.log("loadChartData", result);
 					layoutSize('infoModal', 'useChart', 100);
 					preChartSetting(result);
-					useChart.setDataSource(result);
+					useChart.setDataSourceNew(result, begDate, endDate);;
 				}, function() {
 					$('#infoModal').aceWidget('stopLoading');
 				});
