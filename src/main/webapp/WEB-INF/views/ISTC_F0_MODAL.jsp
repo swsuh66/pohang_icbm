@@ -587,7 +587,31 @@
 	            return new DataGrid(container, opt);
 	        };
 
+			// 검색기간 제한한
+			function validateDateRange() {
+				var begDate = $('#fromDate').val();
+				var endDate = $('#toDate').val();
+
+				var today = moment().format('YYYY-MM-DD');
+				if (endDate > today) {
+					alert("조회 종료일은 오늘을 넘을 수 없습니다.");
+					$('#toDate').val(today);
+					return false;
+				}
+
+				var diff = moment(endDate).diff(moment(begDate), 'days');
+				if (diff > 365) {
+					alert("조회 기간은 최대 1년 이내여야 합니다.");
+					return false;
+				}
+
+				return true;
+			}
+
 	        function searchModalData(){
+				if (!validateDateRange()) {
+					return;
+				}
 				useGrid = initGrid('useGrid', rawField, {pageIndex:1});
 				loadModalData(false, _params);
 				loadChartData(false, _params);
