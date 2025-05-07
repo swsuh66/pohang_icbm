@@ -89,6 +89,9 @@
 
 	        case 'setDt':
 	            return (value ? kutil.dateFormat(val, 'yyyy-mm-dd HH:MM:ss') : '-');
+
+			case 'custPhone':
+				return (value ? val : '-');
 	    }
 
 	    return (val ? val : '-');
@@ -846,7 +849,7 @@
                                         <label class="labelItem" for="siteNm1">사업소</label>
                                         <input type="text" class="form-control" id="siteNm1" disabled>
                                         -->
-								<label class="labelItem" for="custNm">전화번호</label>
+								<label class="labelItem" for="custPhone">전화번호</label>
 								<input type="text" class="form-control" id="custPhone" disabled />
 							</div>
 							<div class="col-md-no-padding col-md-4">
