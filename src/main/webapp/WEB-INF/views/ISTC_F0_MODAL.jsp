@@ -670,7 +670,7 @@
 				getAjax(query_id, params, function() {
 					 $('#infoModal').aceWidget('startLoading');
 				}, function(result) {
-					console.log("loadChartData", result);
+					// console.log("loadChartData", result);
 					layoutSize('infoModal', 'useChart', 100);
 					preChartSetting(result);
 					if (type == '0') {

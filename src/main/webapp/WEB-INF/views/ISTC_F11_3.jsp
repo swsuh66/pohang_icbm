@@ -71,7 +71,7 @@
 
 				loadComponent('select_business_name');
 
-				//mainGrid.search();
+				mainGrid.search();
 			});
 
 			/*
@@ -812,14 +812,25 @@
 			}
 
 			function refreshComponent(result, bCallback) {
-				if (result.length != 0) {
+				console.log('refreshComponent: ', result);
+				if (result.length !== 0) {
 					var key = result[0].key;
+					var $select = $('.form-control[name="' + key + '"]');
+					$select.empty(); // 기존 옵션 제거
+
+					// "전체" 옵션 추가
 					var el = $('<option>').attr('value', '').text('전체');
-					$('.form-control[name="' + key + '"]').append(el);
+					$select.append(el);
+
 					result.forEach(function (item, idx) {
 						var el = $('<option>').attr('value', item.val).text(item.val);
-						$('.form-control[name="' + key + '"]').append(el);
+						$select.append(el);
 					});
+
+					// 구경값만  15로 설정
+					if (key == 2 && result.length > 1) {
+						$select.val(result[0].val);
+					}
 				}
 			}
 
