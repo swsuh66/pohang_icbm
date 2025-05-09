@@ -670,10 +670,15 @@
 				getAjax(query_id, params, function() {
 					 $('#infoModal').aceWidget('startLoading');
 				}, function(result) {
-					// console.log("loadChartData", result);
+					console.log("loadChartData", result);
 					layoutSize('infoModal', 'useChart', 100);
 					preChartSetting(result);
-					useChart.setDataSourceNew(result, begDate, endDate);;
+					if (type == '0') {
+						useChart.setDataSourceNew(result, begDate, endDate);
+					} else {
+						useChart.setDataSource(result);
+					}
+
 				}, function() {
 					$('#infoModal').aceWidget('stopLoading');
 				});
