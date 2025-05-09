@@ -329,6 +329,7 @@
                         itemTemplate: colfnc,
                         hasGroup: true
                     },
+                    
                     {
                         name: "statCd",
                         title: "계량기 상태",
@@ -366,7 +367,7 @@
                         itemTemplate: colfnc,
                         hasGroup: true
                     },
-
+                    /*Brad : 필요없는 정보 제거
                     {
                         name: "termCv_0d",
                         title: "당일",
@@ -477,7 +478,7 @@
                         width: 80,
                         itemTemplate: colfnc,
                         hasGroup: true
-                    }
+                    }*/
                 ],
 
                 loadStrategy: function () {
@@ -508,11 +509,13 @@
 
         var groups = [
             {title: '구분', columns: 1, align: "center"},
-            {title: '수용가', columns: 6, align: "center"},
+            {title: '수용가', columns: 6, align: "center"},            
             {title: '최종 검침', columns: 4, align: "center"},
+            /* Brad : 필요없는 정보 제거
             {title: '일간(이동평균) 사용량 (㎥/일)', columns: 5, align: "center"},
             {title: '일간(이동평균) 검침수 (건/일)', columns: 5, align: "center"},
             {title: '단말기 배터리', columns: 2, align: "center"}
+            */
             /* {title : '기온', columns : 1, align : "center"}, */  ////////////// 2022-11-30
         ];
 
