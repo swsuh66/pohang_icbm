@@ -172,7 +172,7 @@
 				<div class="col-12 col-sm-6 col-md-4 col-lg-3 col-xl-2">
 					<div class="dj-input-group">
 						<span class="info componentsFont">설정 구경</span>
-						<select data-placeholder="선택" class="form-control" name="2" id="pipe_diameter" data-component="pipe_diameter">
+						<select data-placeholder="선택" class="form-control" name="2" id="pipe_diameter" data-component="pipe_diameter" onchange="onSelectionChange()">
 							<!-- <option value="" selected>15</option> -->
 						</select>
 					</div>
@@ -180,7 +180,7 @@
 				<div class="col-12 col-sm-6 col-md-4 col-lg-3 col-xl-2">
 					<div class="dj-input-group">
 						<span class="info componentsFont">설정 업종</span>
-						<select data-placeholder="선택" class="form-control" name="1" id="business_name" data-component="pipe_diameter">
+						<select data-placeholder="선택" class="form-control" name="1" id="business_name" data-component="business_name" onchange="onSelectionChange()">
 							<!--
                         <option value="" selected>전체</option>							
                         --></select>

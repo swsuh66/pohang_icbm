@@ -812,7 +812,7 @@
 			}
 
 			function refreshComponent(result, bCallback) {
-				console.log('refreshComponent: ', result);
+				// console.log('refreshComponent: ', result);
 				if (result.length !== 0) {
 					var key = result[0].key;
 					var $select = $('.form-control[name="' + key + '"]');
@@ -890,6 +890,121 @@
 						jAlert.error('오류', msg);
 					},
 				});
+			}
+
+			const leakStandards = [
+				{ type: '가정용', diameter: 15, flow: 0.1 },
+				{ type: '가정용', diameter: 20, flow: 0.156 },
+				{ type: '가정용', diameter: 25, flow: 0.25 },
+				{ type: '가정용', diameter: 30, flow: 0.394 },
+				{ type: '가정용', diameter: 40, flow: 0.625 },
+				{ type: '가정용', diameter: 50, flow: 1.0 },
+				{ type: '가정용', diameter: 80, flow: 6.25 },
+				{ type: '가정용', diameter: 100, flow: 10.0 },
+				{ type: '가정용', diameter: 150, flow: 15.625 },
+				{ type: '가정용', diameter: 200, flow: 25.0 },
+				{ type: '가정용', diameter: 250, flow: 39.375 },
+				{ type: '가정용', diameter: 300, flow: 62.5 },
+
+				{ type: '일반용', diameter: 15, flow: 0.1 },
+				{ type: '일반용', diameter: 20, flow: 0.156 },
+				{ type: '일반용', diameter: 25, flow: 0.25 },
+				{ type: '일반용', diameter: 30, flow: 0.394 },
+				{ type: '일반용', diameter: 40, flow: 0.625 },
+				{ type: '일반용', diameter: 50, flow: 1.0 },
+				{ type: '일반용', diameter: 80, flow: 6.25 },
+				{ type: '일반용', diameter: 100, flow: 10.0 },
+				{ type: '일반용', diameter: 150, flow: 15.625 },
+				{ type: '일반용', diameter: 200, flow: 25.0 },
+				{ type: '일반용', diameter: 250, flow: 39.375 },
+				{ type: '일반용', diameter: 300, flow: 62.5 },
+
+				{ type: '일반용1', diameter: 15, flow: 0.1 },
+				{ type: '일반용1', diameter: 20, flow: 0.156 },
+				{ type: '일반용1', diameter: 25, flow: 0.25 },
+				{ type: '일반용1', diameter: 30, flow: 0.394 },
+				{ type: '일반용1', diameter: 40, flow: 0.625 },
+				{ type: '일반용1', diameter: 50, flow: 1.0 },
+				{ type: '일반용1', diameter: 80, flow: 6.25 },
+				{ type: '일반용1', diameter: 100, flow: 10.0 },
+				{ type: '일반용1', diameter: 150, flow: 15.625 },
+				{ type: '일반용1', diameter: 200, flow: 25.0 },
+				{ type: '일반용1', diameter: 250, flow: 39.375 },
+				{ type: '일반용1', diameter: 300, flow: 62.5 },
+
+				{ type: '일반겸업', diameter: 15, flow: 0.1 },
+				{ type: '일반겸업', diameter: 20, flow: 0.156 },
+				{ type: '일반겸업', diameter: 25, flow: 0.25 },
+				{ type: '일반겸업', diameter: 30, flow: 0.394 },
+				{ type: '일반겸업', diameter: 40, flow: 0.625 },
+				{ type: '일반겸업', diameter: 50, flow: 1.0 },
+				{ type: '일반겸업', diameter: 80, flow: 6.25 },
+				{ type: '일반겸업', diameter: 100, flow: 10.0 },
+				{ type: '일반겸업', diameter: 150, flow: 15.625 },
+				{ type: '일반겸업', diameter: 200, flow: 25.0 },
+				{ type: '일반겸업', diameter: 250, flow: 39.375 },
+				{ type: '일반겸업', diameter: 300, flow: 62.5 },
+
+				{ type: '공업용', diameter: 20, flow: 0.156 },
+				{ type: '공업용', diameter: 25, flow: 0.25 },
+				{ type: '공업용', diameter: 30, flow: 0.394 },
+				{ type: '공업용', diameter: 40, flow: 0.625 },
+				{ type: '공업용', diameter: 50, flow: 1.0 },
+				{ type: '공업용', diameter: 80, flow: 6.25 },
+				{ type: '공업용', diameter: 100, flow: 10.0 },
+				{ type: '공업용', diameter: 150, flow: 15.625 },
+				{ type: '공업용', diameter: 200, flow: 25.0 },
+				{ type: '공업용', diameter: 250, flow: 39.375 },
+				{ type: '공업용', diameter: 300, flow: 62.5 },
+
+				{ type: '대중탕용', diameter: 15, flow: 0.1 },
+				{ type: '대중탕용', diameter: 20, flow: 0.156 },
+				{ type: '대중탕용', diameter: 25, flow: 0.25 },
+				{ type: '대중탕용', diameter: 30, flow: 0.394 },
+				{ type: '대중탕용', diameter: 40, flow: 0.625 },
+				{ type: '대중탕용', diameter: 50, flow: 1.0 },
+				{ type: '대중탕용', diameter: 80, flow: 6.25 },
+				{ type: '대중탕용', diameter: 100, flow: 10.0 },
+				{ type: '대중탕용', diameter: 150, flow: 15.625 },
+				{ type: '대중탕용', diameter: 200, flow: 25.0 },
+				{ type: '대중탕용', diameter: 250, flow: 39.375 },
+				{ type: '대중탕용', diameter: 300, flow: 62.5 },
+
+				{ type: '기타', diameter: 15, flow: 0.1 },
+				{ type: '기타', diameter: 20, flow: 0.156 },
+				{ type: '기타', diameter: 25, flow: 0.25 },
+				{ type: '기타', diameter: 30, flow: 0.394 },
+				{ type: '기타', diameter: 40, flow: 0.625 },
+				{ type: '기타', diameter: 50, flow: 1.0 },
+				{ type: '기타', diameter: 80, flow: 6.25 },
+				{ type: '기타', diameter: 100, flow: 10.0 },
+				{ type: '기타', diameter: 150, flow: 15.625 },
+				{ type: '기타', diameter: 200, flow: 25.0 },
+				{ type: '기타', diameter: 250, flow: 39.375 },
+				{ type: '기타', diameter: 300, flow: 62.5 },
+			];
+
+			// 기준유량 조회 함수
+			function getStandardFlow(type, diameter) {
+				const item = leakStandards.find((entry) => entry.type === type && entry.diameter === diameter);
+				return item ? item.flow : null;
+			}
+
+			function onSelectionChange() {
+				const type = document.getElementById('business_name').value;
+				const diameter = parseInt(document.getElementById('pipe_diameter').value);
+
+				//console.log('Selected type:', type);
+				//console.log('Selected diameter:', diameter);
+
+				const match = leakStandards.find((entry) => entry.type === type && entry.diameter === diameter);
+				//console.log('Matching entry:', match);
+				const resultEl = document.getElementById('compare_term_cv');
+				if (match) {
+					resultEl.value = match.flow.toString();
+				} else {
+					resultEl.value = '0.05';
+				}
 			}
 		</script>
 
