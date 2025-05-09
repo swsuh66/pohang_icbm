@@ -563,7 +563,7 @@
             </li>
             <li class="nav-item" id="ISTC_F13">
                 <a href="javascript:void(0);" onclick="reloadFrame('ISTC_F11_3', this);" class="nav-link">
-                    <i class="ico i-meter-reading"></i>
+                    <i class="ico i_leak"></i>
                     <span>누수의심검출</span>
                 </a>
 
