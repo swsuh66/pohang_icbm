@@ -561,7 +561,14 @@
                 </a>
 
             </li>
-			<li class="nav-item " id="ISTC_WATERWEEK_GRP">
+            <li class="nav-item" id="ISTC_F13">
+                <a href="javascript:void(0);" onclick="reloadFrame('ISTC_F11_3', this);" class="nav-link">
+                    <i class="ico i-meter-reading"></i>
+                    <span>누수의심검출</span>
+                </a>
+
+            </li>
+			<!-- <li class="nav-item " id="ISTC_WATERWEEK_GRP">
                <a href="javascript:void(0);" onclick="" class="nav-link">
                    <i class="ico i_leak"></i>
                    <span id="istc_f0_menu6">누수검출기능</span>
@@ -579,7 +586,7 @@
                            class="nav-link">누수검출-설정</a>
                         </li>
                     </ul>
-            </li>
+            </li> -->
                 <li class="nav-item " id="SETTING_GRP">
                     <a href="#" class="nav-link">
                         <i class="ico i-set"></i>
