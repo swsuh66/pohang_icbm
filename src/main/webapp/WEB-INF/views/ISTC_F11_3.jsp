@@ -510,6 +510,7 @@
 					},
 					rowDoubleClick: function (evt) {
 						parent.loadModalData(false, evt.item);
+						parent.loadChartData(false, evt.item);
 					},
 				};
 
