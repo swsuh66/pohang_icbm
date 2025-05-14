@@ -660,6 +660,7 @@
 			},
  			rowDoubleClick: function(evt) {
 				parent.loadModalData(false, evt.item);
+				parent.loadChartData(false, evt.item);
 			},
 			deleteItem: function(item) {
 				var delRow = this.rowByItem(item);
