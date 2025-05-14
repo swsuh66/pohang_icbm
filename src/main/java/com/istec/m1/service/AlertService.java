@@ -2,9 +2,12 @@ package com.istec.m1.service;
 
 import java.util.List;
 
+import org.springframework.stereotype.Service;
+
 import com.istec.m1.dto.AlertDto;
 import com.istec.m1.mapper.AlertMapper;
 
+@Service
 public class AlertService {
 
     private final AlertMapper alertMapper;
