@@ -327,9 +327,9 @@
 
 	var groups = [
 		{title : '구분', columns : 1,align : "center"},
-		{title : '수용가', columns : 5, align : "center"},
+		{title : '수용가', columns : 6, align : "center"},
 		{title : '계량기', columns : 2, align : "center"},
-	    {title : '단말기', columns : 4, align : "center"} ,
+	    {title : '단말기', columns : 3, align : "center"} ,
 	    {title : '동작', columns : 2, align : "center"}
 	];
 
@@ -519,13 +519,15 @@
          { name: "adminId",      title: "수용가 번호", 	 type: "text",   width: 150, itemTemplate:colfnc,editing: false, hasGroup:true},
          { name: "custNm",       title: "이름", 		 type: "text",   width: 200, itemTemplate:colfnc, hasGroup:true},
          { name: "useType",      title: "업종", 		 type: "text",   width: 70,  itemTemplate:colfnc,editing: false, hasGroup:true},
-         { name: "blkNm",        title: "블록", 		 type: "text",   width: 100, itemTemplate:colfnc,editing: false, hasGroup:true},
-         { name: "pipeDia",      title: "관경(mm)", 	 type: "text",   width: 100,  itemTemplate:colfnc,editing: false, hasGroup:true , group:groups[2]},
-         { name: "phoneNo",      title: "전화번호", 	 type: "text",   width: 100,  itemTemplate:colfnc,editing: false, hasGroup:true , group:groups[2]},
+         { name: "blkNm",        title: "블록", 		 type: "text",   width: 100, itemTemplate:colfnc,editing: false, hasGroup:true},        
+         { name: "custPhone",      title: "전화번호", 	 type: "text",   width: 100,  itemTemplate:colfnc,editing: false, hasGroup:true},
+
+		 // 계량기
+		 { name: "pipeDia",      title: "관경(mm)", 	 type: "text",   width: 100,  itemTemplate:colfnc,editing: false, hasGroup:true , group:groups[2]},
          { name: "meterNo",      title: "번호", 	 type: "text",   width: 150,  itemTemplate:colfnc,editing: false, hasGroup:true},
 
-
-         { name: "amiType",   title: "통신", 	 type: "text",   width: 80, itemTemplate:colfnc,editing: false, hasGroup:true, group:groups[3]},
+		// 단말기
+        { name: "amiType",   title: "통신", 	 type: "text",   width: 80, itemTemplate:colfnc,editing: false, hasGroup:true, group:groups[3]},
         { name: "devNo",      title: "주번호", 	 type: "text",   width: 140,  itemTemplate:colfnc,editing: true, hasGroup:true},
         { name: "subDevNo",   title: "부번호", 	 type: "text",   width: 200,  itemTemplate:colfnc,editing: true, hasGroup:true},
         { name: "comNm",      title: "제조회사", 	 type: "text",   width: 100,  itemTemplate:colfnc,editing: false, hasGroup:true},
@@ -600,7 +602,7 @@
 			                     $('#new_sub_dev_no').val(item.subDevNo);
 			                     $('#new_dev_no').val(item.devNo);
 			                     $('#new_pipe').val(item.pipeDia);
-			                     $('#phoneNumber').val(item.phoneNo);
+			                     $('#custPhone').val(item.custPhone);
 			                     $('#new_use_type').val(item.useType);
 			                     $('#new_read_opr').val(item.readOpr);
 			                     $('#new_check_day').val(item.chkDay);
@@ -1270,42 +1272,42 @@
 	};
 
 	function formatPhoneNumber(input) {
-		let phoneNumber = input.value.replace(/\D/g, ''); // 숫자만 남기기
+		let custPhone = input.value.replace(/\D/g, ''); // 숫자만 남기기
 		let formattedNumber = '';
 
 		// 휴대폰 번호 형식 (010-xxxx-xxxx)
-		if (phoneNumber.startsWith('010')) {
-			if (phoneNumber.length > 3 && phoneNumber.length <= 7) {
-				formattedNumber = phoneNumber.replace(/(\d{3})(\d{1,4})/, '$1-$2');
-			} else if (phoneNumber.length > 7) {
-				formattedNumber = phoneNumber.replace(/(\d{3})(\d{4})(\d{1,4})/, '$1-$2-$3');
+		if (custPhone.startsWith('010')) {
+			if (custPhone.length > 3 && custPhone.length <= 7) {
+				formattedNumber = custPhone.replace(/(\d{3})(\d{1,4})/, '$1-$2');
+			} else if (custPhone.length > 7) {
+				formattedNumber = custPhone.replace(/(\d{3})(\d{4})(\d{1,4})/, '$1-$2-$3');
 			} else {
-				formattedNumber = phoneNumber;
+				formattedNumber = custPhone;
 			}
 		} 
 		// 일반 전화번호 형식 (02-xxxx-xxxx)
-		else if (phoneNumber.startsWith('02')) {
-			if (phoneNumber.length > 2 && phoneNumber.length <= 6) {
-				formattedNumber = phoneNumber.replace(/(\d{2})(\d{1,4})/, '$1-$2');
-			} else if (phoneNumber.length > 6) {
-				formattedNumber = phoneNumber.replace(/(\d{2})(\d{4})(\d{1,4})/, '$1-$2-$3');
+		else if (custPhone.startsWith('02')) {
+			if (custPhone.length > 2 && custPhone.length <= 6) {
+				formattedNumber = custPhone.replace(/(\d{2})(\d{1,4})/, '$1-$2');
+			} else if (custPhone.length > 6) {
+				formattedNumber = custPhone.replace(/(\d{2})(\d{4})(\d{1,4})/, '$1-$2-$3');
 			} else {
-				formattedNumber = phoneNumber;
+				formattedNumber = custPhone;
 			}
 		} 
 		// 기타 지역번호 (0xx-xxxx-xxxx)
-		else if (phoneNumber.startsWith('0')) {
-			if (phoneNumber.length > 3 && phoneNumber.length <= 7) {
-				formattedNumber = phoneNumber.replace(/(\d{3})(\d{1,4})/, '$1-$2');
-			} else if (phoneNumber.length > 7) {
-				formattedNumber = phoneNumber.replace(/(\d{3})(\d{4})(\d{1,4})/, '$1-$2-$3');
+		else if (custPhone.startsWith('0')) {
+			if (custPhone.length > 3 && custPhone.length <= 7) {
+				formattedNumber = custPhone.replace(/(\d{3})(\d{1,4})/, '$1-$2');
+			} else if (custPhone.length > 7) {
+				formattedNumber = custPhone.replace(/(\d{3})(\d{4})(\d{1,4})/, '$1-$2-$3');
 			} else {
-				formattedNumber = phoneNumber;
+				formattedNumber = custPhone;
 			}
 		} 
 		// 하이픈을 포함하지 않는 경우
 		else {
-			formattedNumber = phoneNumber;
+			formattedNumber = custPhone;
 		}
 
 		// 백스페이스 시 하이픈 자동 삭제 처리
@@ -1626,13 +1628,13 @@
 						<div class="col-sm-12">
 							<div class="form-group row">
 								<div class="col-sm-3 col-form-label text-sm-right pr-0">
-									<label for="phoneNumber" class="mb-0">
+									<label for="custPhone" class="mb-0">
 										전화번호
 									</label>
 								</div>
 
 								<div class="col-sm-9">
-									<input class="form-control" name="phoneNumber" id="phoneNumber" type="text" onkeydown="filterInput(event)" oninput="formatPhoneNumber(this)" maxlength="13" />
+									<input class="form-control" name="custPhone" id="custPhone" type="text" onkeydown="filterInput(event)" oninput="formatPhoneNumber(this)" maxlength="13" />
 								</div>
 							</div>
 						</div>
