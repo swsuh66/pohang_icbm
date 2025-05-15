@@ -411,6 +411,7 @@
     		  a.img_src_bf,
     		  a.img_src_af,
     		  a.img_src_add,
+			  a.remark,
 			  a.note
 		  from
 		    vi_m1_sv_point_list a
@@ -1204,6 +1205,12 @@
 		commit;
 	</update>
 	
+	<update id="updateRemark" parameterType="java.util.Map">
+		update tb_m1_info_customer set
+			remark  = #{remark}			
+		where
+			cust_sq = #{custSq}::integer;
+	</update>
 	
 	<select id="noUseList" parameterType="java.util.Map" resultType="java.util.Map">           
       <include refid="noUse_sql"/>            
