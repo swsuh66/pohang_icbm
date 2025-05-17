@@ -17,7 +17,7 @@
 				statCd: null,
 				useType: null,
 				blkSq: null,
-				readOpr: null,
+				custPhone: null,
 				setYears: null,
 				comSq: null,
 				amiType: null,
@@ -76,7 +76,7 @@
 					statCd: null,
 					useType: null,
 					blkSq: null,
-					readOpr: null,
+					custPhone: null,
 					setYears: null,
 					comSq: null,
 					amiType: null,
@@ -98,7 +98,7 @@
 				params.key = 4;
 				baseComponent('mars.icbm.map1.selectComponentes', 'useType', params);
 				params.key = 5;
-				baseComponent('mars.icbm.map1.selectComponentes', 'readOpr', params);
+				baseComponent('mars.icbm.map1.selectComponentes', 'custPhone', params);
 				params.key = 6;
 				baseComponent('mars.icbm.map1.selectComponentes', 'blkSq', params);
 			}
@@ -212,7 +212,7 @@
 				<div class="col-12 col-sm-6 col-md-4 col-lg-3 col-xl-2">
 					<div class="dj-input-group">
 						<span class="info componentsFont">검침원</span>
-						<input type="text" class="componentsSelect" id="read_responsi" onKeypress="javascript:if(event.keyCode == 13) { parent.searchGrid(); }" />
+						<input type="text" class="componentsSelect" id="cust_phone" onKeypress="javascript:if(event.keyCode == 13) { parent.searchGrid(); }" />
 					</div>
 				</div>
 				<div class="col-12 col-sm-6 col-md-8 col-lg-12 col-xl-12">
