@@ -411,6 +411,7 @@
     		  a.img_src_bf,
     		  a.img_src_af,
     		  a.img_src_add,
+			  a.remark,
 			  a.note
 		  from
 		    vi_m1_sv_point_list a
@@ -1204,6 +1205,12 @@
 		commit;
 	</update>
 	
+	<update id="updateRemark" parameterType="java.util.Map">
+		update tb_m1_info_customer set
+			remark  = #{remark}			
+		where
+			cust_sq = #{custSq}::integer;
+	</update>
 	
 	<select id="noUseList" parameterType="java.util.Map" resultType="java.util.Map">           
       <include refid="noUse_sql"/>            
@@ -4491,6 +4498,7 @@
 								    end as "stat_yn"
 								 ,max(c.meas_sq) as "meas_sq"
 								 ,max(a.read_responsi) as "read_responsi"
+								 ,max(a.cust_phone) as "cust_phone"
 								 ,(select call_check from tb_m1_meas_raw where meas_sq = max(c.meas_sq)) as "call_check"
                         from (
                         select
@@ -4503,6 +4511,7 @@
                                   , b.addr_new
 								  , b.read_responsi
 								  , n.stat_cd 
+								  , cust_phone
                           from
                             tb_m1_info_point a
                             join tb_m1_info_customer b ON b.cust_sq = a.cust_sq

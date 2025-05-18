@@ -242,11 +242,11 @@
 					case 'sendDt':
 					case 'leakMeasDt':
 					/*
-		case 'measDt':
-			if(!value)
-				return '-';
-			var dt = new Date(value);		
-			return '<small>' + kutil.dateFormat(dt, 'yy.mm.dd') +' </small> ' + kutil.dateFormat(dt, 'HH:MM');*/
+			case 'measDt':
+				if(!value)
+					return '-';
+				var dt = new Date(value);
+				return '<small>' + kutil.dateFormat(dt, 'yy.mm.dd') +' </small> ' + kutil.dateFormat(dt, 'HH:MM');*/
 					case 'max_date':
 					case 'min_date':
 						if (!value) return '-';
@@ -269,7 +269,7 @@
 			function callCheckTemplate(value, item, c) {
 				var $_returnData = $('<div>');
 				var $_spanTxt = $('<span>').text(value);
-				var $_inputTxt = $('<input>').attr('type', 'text').attr('maxlength', '10').css('width', '60%').val(value);
+				var $_inputTxt = $('<input>').attr('type', 'text').attr('maxlength', '60').css('width', '60%').val(value);
 				var $_editBtn = $('<button>').addClass('jsgrid-button jsgrid-edit-button');
 				var $_saveBtn = $('<button>').addClass('jsgrid-button jsgrid-update-button');
 				var $_cancelBtn = $('<button>').addClass('jsgrid-button jsgrid-cancel-button');
@@ -478,7 +478,7 @@
 				{ name: 'max_term_cv', title: '최고사용량', type: 'text', width: 40, itemTemplate: colfnc, hasGroup: false },
 				{ name: 'min_term_cv', title: '최소사용량', type: 'text', width: 40, itemTemplate: colfnc, hasGroup: false },
 				{ name: 'stat_yn', title: '계량기누수여부', type: 'text', width: 40, itemTemplate: colfnc, hasGroup: false },
-				{ name: 'read_responsi', title: '검침원', type: 'text', width: 40, itemTemplate: colfnc, hasGroup: false },
+				{ name: 'cust_phone', title: '전화번호호', type: 'text', width: 40, itemTemplate: colfnc, hasGroup: false },
 				{ name: 'call_check', title: '통화여부', type: 'text', width: 60, itemTemplate: colfnc, hasGroup: false },
 			];
 
@@ -606,7 +606,7 @@
 				params['business_name'] = $('#business_name').val();
 				params['compare_term_cv'] = $('#compare_term_cv').val();
 				params['statYn'] = $('#statYn').val();
-				params['read_responsi'] = $('#read_responsi').val();
+				params['cust_phone'] = $('#cust_phone').val();
 				return params;
 			}
 
@@ -640,13 +640,13 @@
 				var params = new Object();
 				//var inList = $(e).find('input');
 				/*
-		$.each(inList, function(i, item) {
-			
-			var id = $(item).attr('id');
-			params[id] = Number($(item).val());
-						
-		});
-		*/
+			$.each(inList, function(i, item) {
+
+				var id = $(item).attr('id');
+				params[id] = Number($(item).val());
+
+			});
+			*/
 
 				$.extend(params, parent.searchComponentes);
 				params.pipe_diameter = $('#pipe_diameter').val();

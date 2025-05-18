@@ -58,9 +58,10 @@
 	    document.getElementById('img_src_af').src = imgContextPath + '' + data[0]['img_src_af']; // 교체후
 	    document.getElementById('img_src_add').src = imgContextPath + '' +data[0]['img_src_add'];  //
 
-	    document.getElementById('note_bigo').value = data[0]['note'];
-	    if(document.getElementById('note_bigo').value == 'undefined') {
-	        document.getElementById('note_bigo').value = '';
+	    document.getElementById('remark').value = data[0]['remark'];
+		console.log ("remark", data[0]['remark']);
+	    if(document.getElementById('remark').value == 'undefined') {
+	        document.getElementById('remark').value = '';
 	    }
 
 	};
@@ -766,15 +767,21 @@
 	        function bigoUpdate() {
 	            param = {};
 	            param.custSq = document.getElementById('custSq').value;
-	            param.note_bigo = document.getElementById('note_bigo').value;
+	            param.remark = document.getElementById('remark').value.trim();
 
-	            if (document.getElementById('note_bigo').value.length > 60)
+				if (document.getElementById('remark').value.trim().length == 0)
+	            {
+	                jAlert.error('경고', '비고를 입력하세요');
+	                return;
+	            }
+
+	            if (document.getElementById('remark').value.length > 60)
 	            {
 	                jAlert.error('경고', '비고는 60자를 넘을수 없습니다');
 	                return;
 	            }
 
-	            getAjax('mars.icbm.devSqlMapper.saveBigo', param, false, function (result) {
+	            getAjax('mars.icbm.map1.updateRemark', param, false, function (result) {
 	                jAlert.info('정보', '저장 완료');    }, null);
 
 	        };
@@ -1092,7 +1099,7 @@
 									<div class="tab-pane text-95 px-25" id="profile19" role="tabpanel" aria-labelledby="profile19-tab-btn">
 										<div class="">
 											<div class="data-list containerBorder" style="width: 100%; height: 100%">
-												<textarea id="note_bigo" style="width: 100%; height: 100%"></textarea>
+												<textarea id="remark" style="width: 100%; height: 100%"></textarea>
 											</div>
 											<div class="dj-btn-group">
 												<a class="btn dj-btn-primary btn-sm" onclick="bigoUpdate();"> 저장 </a>

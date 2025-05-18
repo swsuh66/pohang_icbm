@@ -602,7 +602,7 @@
 			                     $('#new_sub_dev_no').val(item.subDevNo);
 			                     $('#new_dev_no').val(item.devNo);
 			                     $('#new_pipe').val(item.pipeDia);
-			                     $('#custPhone').val(item.custPhone);
+			                     $('#phoneNumber').val(item.custPhone);
 			                     $('#new_use_type').val(item.useType);
 			                     $('#new_read_opr').val(item.readOpr);
 			                     $('#new_check_day').val(item.chkDay);
@@ -1272,42 +1272,42 @@
 	};
 
 	function formatPhoneNumber(input) {
-		let custPhone = input.value.replace(/\D/g, ''); // 숫자만 남기기
+		let phoneNumber = input.value.replace(/\D/g, ''); // 숫자만 남기기
 		let formattedNumber = '';
 
 		// 휴대폰 번호 형식 (010-xxxx-xxxx)
-		if (custPhone.startsWith('010')) {
-			if (custPhone.length > 3 && custPhone.length <= 7) {
-				formattedNumber = custPhone.replace(/(\d{3})(\d{1,4})/, '$1-$2');
-			} else if (custPhone.length > 7) {
-				formattedNumber = custPhone.replace(/(\d{3})(\d{4})(\d{1,4})/, '$1-$2-$3');
+		if (phoneNumber.startsWith('010')) {
+			if (phoneNumber.length > 3 && phoneNumber.length <= 7) {
+				formattedNumber = phoneNumber.replace(/(\d{3})(\d{1,4})/, '$1-$2');
+			} else if (phoneNumber.length > 7) {
+				formattedNumber = phoneNumber.replace(/(\d{3})(\d{4})(\d{1,4})/, '$1-$2-$3');
 			} else {
-				formattedNumber = custPhone;
+				formattedNumber = phoneNumber;
 			}
 		} 
 		// 일반 전화번호 형식 (02-xxxx-xxxx)
-		else if (custPhone.startsWith('02')) {
-			if (custPhone.length > 2 && custPhone.length <= 6) {
-				formattedNumber = custPhone.replace(/(\d{2})(\d{1,4})/, '$1-$2');
-			} else if (custPhone.length > 6) {
-				formattedNumber = custPhone.replace(/(\d{2})(\d{4})(\d{1,4})/, '$1-$2-$3');
+		else if (phoneNumber.startsWith('02')) {
+			if (phoneNumber.length > 2 && phoneNumber.length <= 6) {
+				formattedNumber = phoneNumber.replace(/(\d{2})(\d{1,4})/, '$1-$2');
+			} else if (phoneNumber.length > 6) {
+				formattedNumber = phoneNumber.replace(/(\d{2})(\d{4})(\d{1,4})/, '$1-$2-$3');
 			} else {
-				formattedNumber = custPhone;
+				formattedNumber = phoneNumber;
 			}
 		} 
 		// 기타 지역번호 (0xx-xxxx-xxxx)
-		else if (custPhone.startsWith('0')) {
-			if (custPhone.length > 3 && custPhone.length <= 7) {
-				formattedNumber = custPhone.replace(/(\d{3})(\d{1,4})/, '$1-$2');
-			} else if (custPhone.length > 7) {
-				formattedNumber = custPhone.replace(/(\d{3})(\d{4})(\d{1,4})/, '$1-$2-$3');
+		else if (phoneNumber.startsWith('0')) {
+			if (phoneNumber.length > 3 && phoneNumber.length <= 7) {
+				formattedNumber = phoneNumber.replace(/(\d{3})(\d{1,4})/, '$1-$2');
+			} else if (phoneNumber.length > 7) {
+				formattedNumber = phoneNumber.replace(/(\d{3})(\d{4})(\d{1,4})/, '$1-$2-$3');
 			} else {
-				formattedNumber = custPhone;
+				formattedNumber = phoneNumber;
 			}
 		} 
 		// 하이픈을 포함하지 않는 경우
 		else {
-			formattedNumber = custPhone;
+			formattedNumber = phoneNumber;
 		}
 
 		// 백스페이스 시 하이픈 자동 삭제 처리
@@ -1628,13 +1628,13 @@
 						<div class="col-sm-12">
 							<div class="form-group row">
 								<div class="col-sm-3 col-form-label text-sm-right pr-0">
-									<label for="custPhone" class="mb-0">
+									<label for="phoneNumber" class="mb-0">
 										전화번호
 									</label>
 								</div>
 
 								<div class="col-sm-9">
-									<input class="form-control" name="custPhone" id="custPhone" type="text" onkeydown="filterInput(event)" oninput="formatPhoneNumber(this)" maxlength="13" />
+									<input class="form-control" name="phoneNumber" id="phoneNumber" type="text" onkeydown="filterInput(event)" oninput="formatPhoneNumber(this)" maxlength="13" />
 								</div>
 							</div>
 						</div>
