@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.istec.m1.mapper.SuspectedLeakMapper">
+
+  <select id="suspectedLeaks" parameterType="java.util.Map" resultType="java.util.Map">
+    SELECT
+      cust_sq    AS "custSq",
+      cust_name  AS "custName",
+      cust_phone AS "custPhone"
+    FROM tb_m1_info_customer
+    <where>
+      <if test="custName != null and custName != ''">
+        AND cust_name LIKE '%' || #{custName} || '%'
+      </if>
+      <if test="custPhone != null and custPhone != ''">
+        AND cust_phone LIKE '%' || #{custPhone} || '%'
+      </if>
+    </where>
+    ORDER BY cust_sq DESC
+  </select>
+
+    <update id="agreeReceive" parameterType="com.istec.m1.dto.SuspectedLeakDto">
+        UPDATE tb_m1_info_customer
+        SET 
+            receive_consent = #{receiveConsent},
+            consent_dt = NOW()
+        WHERE cust_phone = #{custPhone}
+    </update>
+</mapper>
