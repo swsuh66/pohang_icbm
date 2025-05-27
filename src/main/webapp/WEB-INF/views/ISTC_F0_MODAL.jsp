@@ -853,6 +853,12 @@
 								<input type="text" class="form-control" id="accuIv" disabled />
 							</div>
 						</div>
+						<div class="row">
+							<div class="col-md-no-padding col-md-6">
+								<label class="labelItem" for="statCdStr">검침상태</label>
+								<input type="text" class="form-control" id="statCdStr" disabled />
+							</div>
+						</div>
 					</div>
 					<div class="col-md-no-padding col-md-6 filedBlock">
 						<div class="row">
