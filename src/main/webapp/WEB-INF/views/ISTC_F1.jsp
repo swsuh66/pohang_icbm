@@ -369,7 +369,7 @@
 		}
 		loadModalPointData(false, params, function(result) {
 			if(result.length == 0) {
-	 			//jAlert.info('정보', '해당 수용가는 존재하지 않습니다.');
+	 			jAlert.info('정보', '해당 수용가는 존재하지 않습니다.');
 	 			return;
 	 		}
 			if(result.length > 10) {
