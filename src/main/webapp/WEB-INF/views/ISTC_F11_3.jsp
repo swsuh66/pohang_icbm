@@ -123,7 +123,9 @@
 						$('.bcard.point-grid').aceWidget('startLoading');
 					},
 					function (result) {
+						// console.log('loadData', params, result);
 						if (callback) {
+							$('.bcard.point-grid').aceWidget('stopLoading');
 							callback(result);
 							return;
 						}
@@ -260,6 +262,12 @@
 						}
 					case 'call_check':
 						return callCheckTemplate(value, item, c);
+					case 'receive_consent':
+						if (value) {
+							return '동의';
+						} else {
+							return '거부';
+						}
 				}
 
 				return value || value == 0 ? value : '-';
@@ -469,16 +477,17 @@
 
 			var mainFields = [
 				{ name: 'num', title: '순번', type: 'text', align: 'center', width: 20, sortingDisabled: true },
-				{ name: 'cust_nm', title: '이름', type: 'text', align: 'left', width: 40, itemTemplate: colfnc, hasGroup: false, group: groups[0] },
-				{ name: 'admin_id', title: '수용가번호', type: 'text', width: 80, itemTemplate: colfnc, hasGroup: false },
+				{ name: 'cust_nm', title: '이름', type: 'text', align: 'left', width: 50, itemTemplate: colfnc, hasGroup: false, group: groups[0] },
+				{ name: 'admin_id', title: '수용가번호', type: 'text', width: 40, itemTemplate: colfnc, hasGroup: false },
+				{ name: 'receive_consent', title: '수신동의', type: 'text', width: 25, itemTemplate: colfnc, hasGroup: false },
 				{ name: 'use_type', title: '업종', type: 'text', width: 40, itemTemplate: colfnc, hasGroup: false },
 				{ name: 'pipe_dia', title: '구경', type: 'text', width: 40, itemTemplate: colfnc, hasGroup: false },
-				{ name: 'max_date', title: '최대시간', type: 'text', width: 40, itemTemplate: colfnc, hasGroup: false },
-				{ name: 'min_date', title: '최소시간', type: 'text', width: 40, itemTemplate: colfnc, hasGroup: false },
-				{ name: 'max_term_cv', title: '최고사용량', type: 'text', width: 40, itemTemplate: colfnc, hasGroup: false },
-				{ name: 'min_term_cv', title: '최소사용량', type: 'text', width: 40, itemTemplate: colfnc, hasGroup: false },
+				{ name: 'max_date', title: '최대시간', type: 'text', width: 50, itemTemplate: colfnc, hasGroup: false },
+				{ name: 'min_date', title: '최소시간', type: 'text', width: 50, itemTemplate: colfnc, hasGroup: false },
+				{ name: 'max_term_cv', title: '최고사용량', type: 'text', width: 30, itemTemplate: colfnc, hasGroup: false },
+				{ name: 'min_term_cv', title: '최소사용량', type: 'text', width: 30, itemTemplate: colfnc, hasGroup: false },
 				{ name: 'stat_yn', title: '계량기누수여부', type: 'text', width: 40, itemTemplate: colfnc, hasGroup: false },
-				{ name: 'cust_phone', title: '전화번호호', type: 'text', width: 40, itemTemplate: colfnc, hasGroup: false },
+				{ name: 'cust_phone', title: '전화번호호', type: 'text', width: 45, itemTemplate: colfnc, hasGroup: false },
 				{ name: 'call_check', title: '통화여부', type: 'text', width: 60, itemTemplate: colfnc, hasGroup: false },
 			];
 
@@ -573,7 +582,29 @@
 				}
 			}
 
-			function sendSMS(e) {}
+			function sendNusuAlrimTalk() {
+				const url = 'http://localhost:8088/api/v1/message/send';
+
+				const params = makeParams();
+				loadData('mars.icbm.map1.select_waterLeakList_page2', params, function (data) {
+					// console.log('sendNusuAlrimTalk data', data);
+					// display(data);
+					let params = [];
+					for (let i = 0; i < data.length; i++) {
+						if (!data[i].receive_consent) continue;
+						params.push({
+							title: '누수안내',
+							msgContent: '홍길동님, 누수가 의심됩니다.',
+							tgtNm: data[i].cust_nm,
+							phoneNum: data[i].cust_phone,
+							templateCd: '1001',
+						});
+					}
+					//console.log('params', params);
+					ajaxPost('http://localhost:8088/api/v1/message/send', params, null);
+					return;
+				});
+			}
 
 			function ajaxPost(url, params, callback) {
 				//return;

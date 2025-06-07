@@ -146,6 +146,11 @@
 						}
 
 						return str;
+					case 'receive_consent':
+						var selected = item.receive_consent;
+
+						return '<input type="checkbox" name="useCdtext"' + selected + '>';
+						return value ? "<i class='ico i-check'></i>" : "<i class='ico i-uncheck'></i>";
 				}
 
 				return value == 0 || value ? value : '-';
@@ -189,6 +194,15 @@
 						type: 'text',
 						align: 'center',
 						width: 120,
+						itemTemplate: colfnc,
+						hasGroup: false,
+					},
+					{
+						name: 'receive_consent',
+						title: '수신동의',
+						type: 'checkbox',
+						align: 'center',
+						width: 50,
 						itemTemplate: colfnc,
 						hasGroup: false,
 					},

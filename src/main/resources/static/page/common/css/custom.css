@@ -173,6 +173,12 @@ iframe {
 	width: 20px;
 }
 
+.i-kakao {
+	background: url(../../../img/ico/i-kakao.png);
+	height: 20px;
+	width: 20px;
+}
+
 .i-toggle-sidebar {
 	background: url(../../../img/ico/i-toggle-sidebar.png);
 	height: 20px;

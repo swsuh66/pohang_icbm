@@ -561,13 +561,13 @@
                 </a>
 
             </li>
-            <li class="nav-item" id="ISTC_F13">
+            <!-- <li class="nav-item" id="ISTC_F13">
                 <a href="javascript:void(0);" onclick="reloadFrame('ISTC_F11_3', this);" class="nav-link">
                     <i class="ico i_leak"></i>
                     <span>누수의심검출</span>
                 </a>
 
-            </li>
+            </li> -->
 			<!-- <li class="nav-item " id="ISTC_WATERWEEK_GRP">
                <a href="javascript:void(0);" onclick="" class="nav-link">
                    <i class="ico i_leak"></i>
@@ -587,82 +587,99 @@
                         </li>
                     </ul>
             </li> -->
-                <li class="nav-item " id="SETTING_GRP">
-                    <a href="#" class="nav-link">
-                        <i class="ico i-set"></i>
-                        <span>설정</span>
-                        <b class="ico i-arrow-down"></b>
-                    </a>
-                    <ul class="nav custom-nav custom-nav-navbar">
+            <li class="nav-item " id="ISTC_WATERWEEK_GRP">
+               <a href="javascript:void(0);" onclick="" class="nav-link">
+                   <i class="ico i_leak"></i>
+                   <span id="istc_f0_menu6">누수</span>
+                       <b class="ico i-arrow-down"></b>
+               </a>
+               <ul class="nav custom-nav custom-nav-navbar" >
+                    <li class="nav-item" id="ISTC_F11_3">
+                        <a href="javascript:void(0);" onclick="reloadFrame('ISTC_F11_3', this);"
+                           class="nav-link">누수의심검출</a>
+                    </li>
+                    <li class="nav-item" id="ISTC_F11_4">
+                        <a href="javascript:void(0);" onclick="reloadFrame('ISTC_F11_4', this);"
+                            class="nav-link">누수알림조회</span>
+                        </a>
+                   </li>
+                </ul>
+            </li>
+            <li class="nav-item " id="SETTING_GRP">
+                <a href="#" class="nav-link">
+                    <i class="ico i-set"></i>
+                    <span>설정</span>
+                    <b class="ico i-arrow-down"></b>
+                </a>
+                <ul class="nav custom-nav custom-nav-navbar">
 
-                        <li class="nav-item" id="ISTC_F5_4" hidden>
-                            <a href="javascript:void(0);" onclick="reloadFrame('ISTC_F5_4', this);"
-                               class="nav-link">단말등록 관리</a>
-                        </li>
-                        
-                        <li class="nav-item"  id="ISTC_F5_5" hidden>
-                            <a href="javascript:void(0);" onclick="reloadFrame('ISTC_F5_5', this);"
-                               class="nav-link">단말설치 관리</a>
-                        </li>
+                    <li class="nav-item" id="ISTC_F5_4" hidden>
+                        <a href="javascript:void(0);" onclick="reloadFrame('ISTC_F5_4', this);"
+                            class="nav-link">단말등록 관리</a>
+                    </li>
+                    
+                    <li class="nav-item"  id="ISTC_F5_5" hidden>
+                        <a href="javascript:void(0);" onclick="reloadFrame('ISTC_F5_5', this);"
+                            class="nav-link">단말설치 관리</a>
+                    </li>
 
-                        <li class="nav-item" id="ISTC_F5_2" >
-                            <a href="javascript:void(0);" onclick="reloadFrame('ISTC_F5_2', this);"
-                               class="nav-link">종합등록 관리</a>
-                        </li>
-                        <li class="nav-item" id="ISTC_F5_1_1">
-                            <a href="javascript:void(0);" onclick="reloadFrame('ISTC_F5_1_1', this);"
-                               class="nav-link">사용자 관리</span>
-                            </a>
-                        </li>
-                        <li class="nav-item" id="ISTC_F5_SVC_LIST" >
-                            <a href="javascript:void(0);" onclick="reloadFrame('ISTC_F5_SVC_LIST', this);"
-                               class="nav-link">LG 서비스코드 관리</a>
-                        </li>
+                    <li class="nav-item" id="ISTC_F5_2" >
+                        <a href="javascript:void(0);" onclick="reloadFrame('ISTC_F5_2', this);"
+                            class="nav-link">종합등록 관리</a>
+                    </li>
+                    <li class="nav-item" id="ISTC_F5_1_1">
+                        <a href="javascript:void(0);" onclick="reloadFrame('ISTC_F5_1_1', this);"
+                            class="nav-link">사용자 관리</span>
+                        </a>
+                    </li>
+                    <li class="nav-item" id="ISTC_F5_SVC_LIST" >
+                        <a href="javascript:void(0);" onclick="reloadFrame('ISTC_F5_SVC_LIST', this);"
+                            class="nav-link">LG 서비스코드 관리</a>
+                    </li>
 
-                        <li class="nav-item" id="ISTC_F5_6" >
-                            <a href="javascript:void(0);" onclick="reloadFrame('ISTC_F5_6', this);"
-                               class="nav-link">부수용가 등록</a>
-                        </li>
-                    </ul>
-                </li>
+                    <li class="nav-item" id="ISTC_F5_6" >
+                        <a href="javascript:void(0);" onclick="reloadFrame('ISTC_F5_6', this);"
+                            class="nav-link">부수용가 등록</a>
+                    </li>
+                </ul>
+            </li>
 
-                <li class="nav-item " id="SM_GRP">
-                    <a href="#" class="nav-link">
-                        <i class="ico i_writeaccu"></i>
-                        <span>유지보수</span>
-                        <b class="ico i-arrow-down"></b>
-                    </a>
-                    <ul class="nav custom-nav custom-nav-navbar">
-                        <li class="nav-item" id="ISTC_F5_1">
-                            <a href="javascript:void(0);" onclick="reloadFrame('ISTC_F5_1', this);"
-                               class="nav-link">사용자 관리 - 마스터</span>
-                            </a>
-                        </li>
-                        <li class="nav-item" id="ISTC_F12" >
-                            <a href="javascript:void(0);" onclick="reloadFrame('ISTC_F12', this);"
-                               class="nav-link">DB 에러로그</a>
-                        </li>
-                        <!-- 2022-11-28 -->
-                        <li class="nav-item" id="ISTC_F5_URL_RTS" >
-                            <a href="javascript:void(0);" onclick="reloadFrame('ISTC_F5_URL_RTS', this);"
-                               class="nav-link">하향URL 관리</a>
-                        </li>
+            <li class="nav-item " id="SM_GRP">
+                <a href="#" class="nav-link">
+                    <i class="ico i_writeaccu"></i>
+                    <span>유지보수</span>
+                    <b class="ico i-arrow-down"></b>
+                </a>
+                <ul class="nav custom-nav custom-nav-navbar">
+                    <li class="nav-item" id="ISTC_F5_1">
+                        <a href="javascript:void(0);" onclick="reloadFrame('ISTC_F5_1', this);"
+                            class="nav-link">사용자 관리 - 마스터</span>
+                        </a>
+                    </li>
+                    <li class="nav-item" id="ISTC_F12" >
+                        <a href="javascript:void(0);" onclick="reloadFrame('ISTC_F12', this);"
+                            class="nav-link">DB 에러로그</a>
+                    </li>
+                    <!-- 2022-11-28 -->
+                    <li class="nav-item" id="ISTC_F5_URL_RTS" >
+                        <a href="javascript:void(0);" onclick="reloadFrame('ISTC_F5_URL_RTS', this);"
+                            class="nav-link">하향URL 관리</a>
+                    </li>
 
-                        <!-- 2022-11-28 -->
-                        <li class="nav-item" id="ISTC_F5_SEND_RTS" >
-                            <a href="javascript:void(0);" onclick="reloadFrame('ISTC_F5_SEND_RTS', this);"
-                               class="nav-link">장비 설정
-                            </a>
-                        </li>
-                        <!-- 2022-11-28 -->
-                        <li class="nav-item" id="ISTC_F5_SEND_RTS_HISTORY" >
-                            <a href="javascript:void(0);"
-                               onclick="reloadFrame('ISTC_F5_SEND_RTS_HISTORY', this);" class="nav-link">명령
-                                이력</a>
-                        </li>
-                    </ul>
-                </li>
-            
+                    <!-- 2022-11-28 -->
+                    <li class="nav-item" id="ISTC_F5_SEND_RTS" >
+                        <a href="javascript:void(0);" onclick="reloadFrame('ISTC_F5_SEND_RTS', this);"
+                            class="nav-link">장비 설정
+                        </a>
+                    </li>
+                    <!-- 2022-11-28 -->
+                    <li class="nav-item" id="ISTC_F5_SEND_RTS_HISTORY" >
+                        <a href="javascript:void(0);"
+                            onclick="reloadFrame('ISTC_F5_SEND_RTS_HISTORY', this);" class="nav-link">명령
+                            이력</a>
+                    </li>
+                </ul>
+            </li>            
         </ul>
 
     </aside>

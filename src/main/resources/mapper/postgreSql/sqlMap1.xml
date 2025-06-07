@@ -3796,6 +3796,7 @@
 		     , c.addr 
 		     , c.addr_new 
 		     , c.meter_no
+			 , c.receive_consent
 		  from tb_m1_info_point a
      LEFT JOIN tb_m1_info_customer c ON c.cust_sq = a.cust_sq
 	 LEFT JOIN tb_m1_cmap_nbiot c2 ON c2.point_sq = a.point_sq
@@ -4493,6 +4494,7 @@
                                   ,max(a.business_name) as "use_type"
                                   ,max(a.pipe_diameter) as "pipe_dia"
                                   ,max(a.addr_new) as "addr_new"
+								  ,bool_or(a.receive_consent) as receive_consent
 								  ,case when max(a.stat_cd) is not null then 'Y'
 								        else 'N'
 								    end as "stat_yn"
@@ -4510,6 +4512,7 @@
                                   , b.pipe_diameter
                                   , b.addr_new
 								  , b.read_responsi
+								  , b.receive_consent
 								  , n.stat_cd 
 								  , cust_phone
                           from
@@ -4518,10 +4521,10 @@
 							left join vi_m1_sv_meas_now n on n.point_sq = a.point_sq and position('1' in n.stat_cd) = 5
 							where 1=1
 							<if test='pipe_diameter != null and pipe_diameter != ""'>
-							  and b.pipe_diameter = #{pipe_diameter} ::integer
+							  	and b.pipe_diameter = #{pipe_diameter} ::integer
 							</if>
 							<if test='business_name != null and business_name != ""'>
-							  and b.business_name = #{business_name}
+							  	and b.business_name = #{business_name}
 							</if>
 							<if test='read_responsi != null and read_responsi != ""'>
 								and b.read_responsi like  '%' || #{read_responsi} || '%'
