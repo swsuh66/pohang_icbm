@@ -413,8 +413,8 @@ function rawStockchart(container, data) {
 		var seriesData = [[], [], [], []];
 
 		// 날짜 범위를 밀리초 단위로 설정
-		var beginTime = new Date(beginDate + ' 00:00:00').getTime();
-		var endTime = new Date(endDate + ' 23:59:59').getTime();
+		var beginTime = new Date(`${beginDate} 00:00:00`).getTime();
+		var endTime = new Date(`${endDate} 23:59:59`).getTime();
 
 		// 날짜별 데이터 맵 생성
 		var dataMap = {};
@@ -439,24 +439,25 @@ function rawStockchart(container, data) {
 				utcDate.getUTCMinutes(),
 				utcDate.getUTCSeconds()
 			);
+			const kctTimestamp = utcTimestamp + 9 * 60 * 60 * 1000; // KCT로 변환
 
-			var d = dataMap[utcTimestamp];
+			var d = dataMap[kctTimestamp];
 			if (d && d.pointSq) {
-				seriesData[0].push([utcTimestamp, d.termCv / d.intavlH]);
-				seriesData[1].push([utcTimestamp, d.accuIv]);
+				seriesData[0].push([kctTimestamp, d.termCv / d.intavlH]);
+				seriesData[1].push([kctTimestamp, d.accuIv]);
 				if (_amiType && _amiType === 'lora') {
-					seriesData[2].push([utcTimestamp, d.rssiV]);
-					seriesData[3].push([utcTimestamp, d.snrV]);
+					seriesData[2].push([kctTimestamp, d.rssiV]);
+					seriesData[3].push([kctTimestamp, d.snrV]);
 				} else {
-					seriesData[2].push([utcTimestamp, d.rsrpV]);
-					seriesData[3].push([utcTimestamp, d.rsrqV]);
+					seriesData[2].push([kctTimestamp, d.rsrpV]);
+					seriesData[3].push([kctTimestamp, d.rsrqV]);
 				}
 			} else {
 				// 데이터 없을 때 null 채움 (X축에만 표시)
-				seriesData[0].push([utcTimestamp, null]);
-				seriesData[1].push([utcTimestamp, null]);
-				seriesData[2].push([utcTimestamp, null]);
-				seriesData[3].push([utcTimestamp, null]);
+				seriesData[0].push([kctTimestamp, null]);
+				seriesData[1].push([kctTimestamp, null]);
+				seriesData[2].push([kctTimestamp, null]);
+				seriesData[3].push([kctTimestamp, null]);
 			}
 		}
 

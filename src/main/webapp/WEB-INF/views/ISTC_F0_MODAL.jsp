@@ -647,7 +647,7 @@
 				var begDate = $('#fromDate', window.parent.document).val();
 	            var endDate = $('#toDate', window.parent.document).val();
 
-	            params.endDate = endDate;
+				params.endDate = endDate;
 	            params.begDate = begDate;
 
 	            $.extend(params, useGrid.loadParams());
@@ -671,7 +671,6 @@
 				getAjax(query_id, params, function() {
 					 $('#infoModal').aceWidget('startLoading');
 				}, function(result) {
-					// console.log("loadChartData", result);
 					layoutSize('infoModal', 'useChart', 100);
 					preChartSetting(result);
 					if (type == '0') {
