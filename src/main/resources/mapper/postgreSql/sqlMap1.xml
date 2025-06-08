@@ -506,6 +506,11 @@
 			and a.pipe_dia is null
 			</when>
 		</choose>
+
+		<if test='useCd != null and useCd != ""'>
+			and a.use_cd = #{useCd}
+		</if>
+
 		<if test="statCd != null">
 	    	and position('1' in a.stat_cd) = #{statCd}::integer
 	    </if>
@@ -516,11 +521,33 @@
 	    
 	    <if test="searchParamList != null">
 		    <foreach collection="searchParamList" item="item" index="index" open="AND (" close=")" separator="OR ">
-		    	(
-		    		a.cust_nm like '%${item}%'
-			    	OR a.admin_id like '%${item}%'
-			    	OR a.addr_new like '%${item}%'
-		    	)
+				<choose>
+					<when test="searchOption != null and searchOption == 0">
+
+						(
+							a.cust_nm like '%${item}%'
+							OR a.admin_id like '%${item}%'
+							OR a.addr_new like '%${item}%'
+						)
+					</when>
+					<when test="searchOption == null and item != null">
+
+						(
+							a.cust_nm like '%${item}%'
+							OR a.admin_id like '%${item}%'
+							OR a.addr_new like '%${item}%'
+						)
+					</when>
+					<when test="searchOption != null and searchOption == 1">
+
+						(
+							a.dev_no like '%${item}%'
+							OR a.sub_dev_no like '%${item}%'
+							OR a.meter_no like '%${item}%'
+						)
+					</when>
+				</choose>
+
 		    </foreach>
 	    </if>
 	     <if test="leakFg != null">
@@ -530,6 +557,26 @@
 	     <if test="sendCd != null">
 	    	AND a.send_cd = #{sendCd}
 	     </if>
+
+		<!--  신규 필터 -->
+		<if test='cust_nm != null and cust_nm != ""'>
+			and a.cust_nm like  '%' || #{cust_nm} || '%'
+		</if>
+		<if test='admin_no != null and admin_no != ""'>
+			and a.admin_id like  '%' || #{admin_no} || '%'
+		</if>
+		<if test='addr != null and addr != ""'>
+			and (a.addr_old like '%' || #{addr} || '%'
+			or  a.addr_new like '%' || #{addr} || '%')
+		</if>
+		<if test='meter_no != null and meter_no != ""'>
+			and (
+			a.sub_dev_no like '%' || #{meter_no} || '%'
+			or a.dev_no like '%' || #{meter_no} || '%'
+			or a.meter_no like '%' || #{meter_no} || '%'
+			)
+		</if>
+
 	</sql>
 	
 	
