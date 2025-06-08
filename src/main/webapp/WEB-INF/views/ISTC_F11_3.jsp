@@ -582,6 +582,16 @@
 				}
 			}
 
+			function sendResult(data, status, xhr) {
+				// console.log('sendResult', data, status, xhr);
+
+				if (xhr.status == 200) {
+					jAlert.info('알림', '누수안내톡 전송이 완료되었습니다.');
+				} else {
+					jAlert.error('오류', '누수안내톡 전송에 실패하였습니다.<br><br>' + (data.error ? data.error.statusText : '서버에서 오류가 발생하였습니다.'));
+				}
+			}
+
 			function sendNusuAlrimTalk() {
 				const url = 'http://localhost:8088/api/v1/message/send';
 
@@ -601,7 +611,7 @@
 						});
 					}
 					//console.log('params', params);
-					ajaxPost('http://localhost:8088/api/v1/message/send', params, null);
+					ajaxPost('http://localhost:8088/api/v1/message/send', params, sendResult);
 					return;
 				});
 			}
@@ -613,6 +623,7 @@
 					data: JSON.stringify(params),
 					type: 'POST',
 					contentType: 'application/json;charset=UTF-8',
+					dataType: 'text',
 					async: true,
 					success: function (data, status, xhr) {
 						if (callback) callback(data, status, xhr);
