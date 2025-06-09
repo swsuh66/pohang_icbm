@@ -1898,6 +1898,36 @@
 			<title>기준일</title>
 		</col>
 	</map>
-
+	<map id="f11-4" meta-sql="f11-4" after-sql="mars.icbm.map1.importcustResult" excute-sql="mars.icbm.map1.insertcustImport" refer-sql="mars.icbm.reftb.importcustList">								
+		<col>
+			<name>rownum</name>
+			<title>순번</title>
+		</col>										
+				
+		<col>
+			<name>tgt_nm</name>
+			<title>수신자</title>
+		</col>			
+		<col>
+			<name>phone_num</name>
+			<title>수신번호</title>
+		</col>
+		<col>
+			<name>title</name>
+			<title>제목</title>
+		</col>		
+		<col>
+			<name>msg_content</name>
+			<title>내용</title>
+		</col>		
+		<col>
+			<name>reg_dttm</name>
+			<title>발신일</title>
+		</col>	
+		<col>
+			<name>state_msg</name>
+			<title>상태</title>
+		</col>	
+	</map>
 	
 </importmeta>

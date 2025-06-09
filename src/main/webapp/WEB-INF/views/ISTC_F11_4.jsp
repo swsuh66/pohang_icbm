@@ -16,7 +16,7 @@
 
 			var mainGrid;
 
-			var dbParamsTb = 'f8-export-deajeon';
+			var dbParamsTb = 'f11-4';
 
 			var dbParams;
 
@@ -370,12 +370,12 @@
 			/* 메인 gird 로드  */
 			function loadData() {
 				const params = makeParams();
-				const queryString = new URLSearchParams(params).toString();
-				const url = 'http://localhost:8088/api/v1/message/history?' + queryString;
+				//const queryString = new URLSearchParams(params).toString();
+				const url = 'http://localhost:8088/api/v1/message/history';
 				/* 수용가 조회 */
 				getAjax(
 					url,
-					null,
+					params,
 					function () {
 						/* 로딩 시작 */
 						$('.bcard.point-grid').aceWidget('startLoading');
@@ -508,6 +508,9 @@
 			         */
 
 				$.extend(params, tParams);
+
+				console.log('params', params);
+				//return;
 
 				templetDownLoad(params, null, null, function () {
 					jAlert.error('오류', '다운로드에 실패했습니다.');
