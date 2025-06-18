@@ -1819,6 +1819,10 @@
 			<title>수용가번호</title>
 		</col>
 		<col>
+			<name>receive_consent</name>
+			<title>수신동의</title>
+		</col>
+		<col>
 			<name>use_type</name>
 			<title>업종</title>
 		</col>

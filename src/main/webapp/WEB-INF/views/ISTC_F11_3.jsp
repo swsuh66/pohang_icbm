@@ -592,12 +592,12 @@
 				}
 			}
 
-			function sendNusuAlrimTalk() {
+			function sendAlrimTok() {
 				const url = 'http://localhost:8088/api/v1/message/send';
 
 				const params = makeParams();
 				loadData('mars.icbm.map1.select_waterLeakList_page2', params, function (data) {
-					// console.log('sendNusuAlrimTalk data', data);
+					// console.log('sendNusuAlrimTok data', data);
 					// display(data);
 					let params = [];
 					for (let i = 0; i < data.length; i++) {

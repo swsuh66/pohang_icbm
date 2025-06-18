@@ -53,6 +53,7 @@ public class Define {
 		public final static String LOGIN_INFO 					 = "userLoginInfo" ;
 		public final static String CONTEXT_PATH 				 = "contextPath"   ;				
 		public final static String QID 							 = "qid"   		   ;
+		public final static String URL	 						 = "url"   		   ;
 		public final static String FILE_NAME 					 = "downloadFileName"   		   ;
 		public final static String LENGTH 						 = "length"   		   ;
 		

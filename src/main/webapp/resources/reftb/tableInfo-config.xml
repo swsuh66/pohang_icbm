@@ -1898,7 +1898,10 @@
 			<title>기준일</title>
 		</col>
 	</map>
-	<map id="f11-4" meta-sql="f11-4" after-sql="mars.icbm.map1.importcustResult" excute-sql="mars.icbm.map1.insertcustImport" refer-sql="mars.icbm.reftb.importcustList">								
+	<map id="f11-4" meta-sql="f11-4" 
+		after-sql="mars.icbm.map1.importcustResult" 
+		excute-sql="http://localhost:8088/api/v1/message/history"
+		refer-sql="mars.icbm.reftb.importcustList">								
 		<col>
 			<name>rownum</name>
 			<title>순번</title>

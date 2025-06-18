@@ -114,7 +114,7 @@
 			 * 그리드 갱신
 			 */
 			function refreshGrid(data) {
-				mainGrid = initGrid('mainGrid');
+				//mainGrid = initGrid('mainGrid');
 
 				if (data) {
 					mainGrid.finishLoad(data || []);
@@ -265,10 +265,12 @@
 						return new CustomPageLoadingStrategy(this, loadData);
 					},
 					rowDoubleClick: function (evt) {
+						/*
 						$('#infoModal', window.parent.document).modal('show'); //infoModal
 
 						parent.loadModalData(false, evt.item);
 						parent.loadChartData(false, evt.item);
+						*/
 					},
 					onRefreshed: function (args) {
 						$.each(args.grid._headerGrid[0].rows[0].cells, function (i, obj) {
@@ -372,7 +374,7 @@
 				const params = makeParams();
 				//const queryString = new URLSearchParams(params).toString();
 				const url = 'http://localhost:8088/api/v1/message/history';
-				/* 수용가 조회 */
+				/* 알림톡 발신 리스트 조회 */
 				getAjax(
 					url,
 					params,
@@ -396,6 +398,7 @@
 						if (beforesend) beforesend();
 					},
 					success: function (result) {
+						//console.log('getAjax result', result);
 						if (callback) callback(result);
 					},
 					error: function (error) {
@@ -488,31 +491,20 @@
 
 				var params = new Object();
 
-				params.qid = dbParams[dbParamsTb]['refer-sql'];
+				params.qid = null; // dbParams[dbParamsTb]['refer-sql'];
+				params.url = 'http://localhost:8088/api/v1/message/history';
 				params.colMapping = dbParams[dbParamsTb]['cols'];
 				params.length = params.colMapping.length;
 
-				params.downloadFileName = 'Admin' + kutil.dateFormat(new Date(), 'yymmddHHMMss');
+				params.downloadFileName = 'AlimTok_' + kutil.dateFormat(new Date(), 'yymmddHHMMss');
 
 				var tParams = makeParams();
-
-				/*
-			         var fromDate = $('#fromDate').val();
-			         if(!fromDate || fromDate.length == 0) {
-
-			             $('#fromDate').val(kutil.dateFormat(new Date(Date.now()), 'yyyy-mm'));
-			              fromDate = kutil.dateFormat(new Date(Date.now()), 'yyyy-mm');
-			         }
-
-			         tParams.fromDate = fromDate + '-01';
-			         */
+				tParams.pageIndex = null;
+				tParams.pageSize = null;
 
 				$.extend(params, tParams);
 
-				console.log('params', params);
-				//return;
-
-				templetDownLoad(params, null, null, function () {
+				alrimtokDownLoad(params, null, null, function () {
 					jAlert.error('오류', '다운로드에 실패했습니다.');
 				});
 			}

@@ -19,6 +19,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -31,6 +32,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.istec.m1.auth.CustomUserDetails;
@@ -255,8 +257,8 @@ public class FileController {
 	//@RequestMapping(value = "/**/file/templeteSXSSF", method= RequestMethod.POST)
 	@RequestMapping(value = "/file/templeteSXSSF", method= RequestMethod.POST)
 	public void execelTempletSXSSF(Map<String,Object> modelMap , 
-			HttpServletRequest request, HttpServletResponse response) throws 
-				IOException, EncryptedDocumentException, InvalidFormatException {
+			HttpServletRequest request, HttpServletResponse response) throws IOException, EncryptedDocumentException, InvalidFormatException {
+
 		List<Object> mappingList = new ArrayList<Object>();
 		List<HashMap<String, Object>> data = null;
 		Map<String, Object> mappingInfo = null;		
@@ -264,6 +266,10 @@ public class FileController {
 		String fileName = (String)selMap.get(Define.Key.FILE_NAME);
 		String length = (String)selMap.get(Define.Key.LENGTH);
 		String qid = (String)selMap.get(Define.Key.QID);		
+		String url = (String)selMap.get(Define.Key.URL);
+		
+		
+
 		for(int i = 0 ; i < Integer.parseInt(length); i++) {
 			mappingInfo = new HashMap<>();
 			String value = (String)selMap.get("colMapping[" + i + "][name]");
@@ -273,6 +279,67 @@ public class FileController {
 			mappingList.add(mappingInfo);
 		}
 		data = queryService.select(qid, selMap);		
+		// data = url != null && !url.isEmpty() ?  getAlrimTokData(selMap, url) : queryService.select(qid, selMap);
+
+		fileService.excelCreateSXSSF(response, mappingList, data, fileName);
+	}
+
+	public List<HashMap<String, Object>> getAlrimTokData(Map<String, Object> params, String url) {
+        System.out.println("getAlrimTokData url : " + url);
+
+        RestTemplate restTemplate = new RestTemplate();
+
+        // 요청 파라미터를 URL 쿼리 스트링으로 만들기 (GET 방식)
+        StringBuilder queryString = new StringBuilder("?");
+        for (Map.Entry<String, Object> entry : params.entrySet()) {
+            queryString.append(entry.getKey()).append("=")
+                       .append(entry.getValue()).append("&");
+        }
+
+        // 쿼리 스트링에서 마지막 & 제거
+        if (queryString.length() > 1) {
+            queryString.setLength(queryString.length() - 1);
+        }
+
+        String finalUrl = url + queryString;
+
+        ResponseEntity<List> response = restTemplate.exchange(
+            finalUrl,
+            HttpMethod.GET,
+            null,
+            List.class
+        );
+
+        return response.getBody(); // JSON 배열을 List로 받음
+    }
+
+	@RequestMapping(value = "/file/templateAlrimTok", method= RequestMethod.POST)
+	public void execelTemplateAlrimTok(
+		Map<String,Object> modelMap , 
+		HttpServletRequest request, HttpServletResponse response) throws 
+		IOException, EncryptedDocumentException, InvalidFormatException {			
+
+		List<Object> mappingList = new ArrayList<Object>();
+		List<HashMap<String, Object>> data = null;
+		Map<String, Object> mappingInfo = null;		
+		Map<String, Object> selMap = makeParames(request);
+		String fileName = (String)selMap.get(Define.Key.FILE_NAME);
+		String length = (String)selMap.get(Define.Key.LENGTH);
+		// String qid = (String)selMap.get(Define.Key.QID);		
+		String url = (String)selMap.get(Define.Key.URL);
+		
+		System.out.println(url);
+
+		data = getAlrimTokData(selMap, url);
+
+		for (int i = 0 ; i < Integer.parseInt(length); i++) {
+			mappingInfo = new HashMap<>();
+			String value = (String)selMap.get("colMapping[" + i + "][name]");
+			String title = (String)selMap.get("colMapping[" + i + "][title]");
+			mappingInfo.put("name", value);
+			mappingInfo.put("title", title);
+			mappingList.add(mappingInfo);
+		}
 		fileService.excelCreateSXSSF(response, mappingList, data, fileName);
 	}
 	
