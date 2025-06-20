@@ -173,7 +173,7 @@
 					<div class="dj-input-group">
 						<span class="info componentsFont">설정 구경</span>
 						<select data-placeholder="선택" class="form-control" name="2" id="pipe_diameter" data-component="pipe_diameter" onchange="onSelectionChange()">
-							<!-- <option value="" selected>15</option> -->
+							<!-- <option value="" selected>전체</option> -->
 						</select>
 					</div>
 				</div>
