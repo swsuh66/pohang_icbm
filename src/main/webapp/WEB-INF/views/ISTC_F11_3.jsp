@@ -828,10 +828,10 @@
 						$select.append(el);
 					});
 
-					// 구경값만  15로 설정
-					if (key == 2 && result.length > 1) {
-						$select.val(result[0].val);
-					}
+					//// 구경값만  15로 설정
+					//if (key == 2 && result.length > 1) {
+					//	$select.val(result[0].val);
+					//}
 				}
 			}
 

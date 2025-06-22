@@ -511,6 +511,11 @@
 			and a.use_cd = #{useCd}
 		</if>
 
+
+		<if test='useCd != null and useCd != ""'>
+			and a.use_cd = #{useCd}
+		</if>
+
 		<if test="statCd != null">
 	    	and position('1' in a.stat_cd) = #{statCd}::integer
 	    </if>
@@ -557,6 +562,26 @@
 	     <if test="sendCd != null">
 	    	AND a.send_cd = #{sendCd}
 	     </if>
+
+		<!--  신규 필터 -->
+		<if test='cust_nm != null and cust_nm != ""'>
+			and a.cust_nm like  '%' || #{cust_nm} || '%'
+		</if>
+		<if test='admin_no != null and admin_no != ""'>
+			and a.admin_id like  '%' || #{admin_no} || '%'
+		</if>
+		<if test='addr != null and addr != ""'>
+			and (a.addr_old like '%' || #{addr} || '%'
+			or  a.addr_new like '%' || #{addr} || '%')
+		</if>
+		<if test='meter_no != null and meter_no != ""'>
+			and (
+			a.sub_dev_no like '%' || #{meter_no} || '%'
+			or a.dev_no like '%' || #{meter_no} || '%'
+			or a.meter_no like '%' || #{meter_no} || '%'
+			)
+		</if>
+
 
 		<!--  신규 필터 -->
 		<if test='cust_nm != null and cust_nm != ""'>
