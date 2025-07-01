@@ -256,7 +256,7 @@
 				<div class="dj-btn-group">
 					<a class="btn dj-btn-primary btn-sm" onclick="submit2();"> 신규 </a>
 					<a class="btn dj-btn-green btn-sm" onclick="updateSubmit();"> 수정 </a>
-					<a class="btn dj-btn-outline-green btn-sm" onclick="checkSubmit();"> 체크 </a>
+					<!-- <a class="btn dj-btn-outline-green btn-sm" onclick="checkSubmit();"> 체크 </a> -->
 					<a class="btn dj-btn-outline-red btn-sm" onclick="closeModal();"> 닫기 </a>
 				</div>
 			</form>

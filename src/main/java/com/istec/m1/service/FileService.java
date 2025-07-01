@@ -58,10 +58,12 @@ import org.xml.sax.SAXException;
 import com.istec.m1.devController;
 import com.istec.m1.common.ExcelReader;
 import com.istec.m1.defines.Define;
+import com.istec.m1.defines.StatusCode;
 import com.istec.m1.mapper.TbM1CmapDeviceMapper;
 import com.istec.m1.mapper.TbM1InfoCustomerMapper;
 import com.istec.m1.mapper.TbM1InfoImportMapper;
 import com.istec.m1.mapper.TbM1InfoPointMapper;
+import com.istec.m1.exception.ExcelProcessingException;
 
 @Service
 public class FileService {
@@ -609,8 +611,9 @@ public class FileService {
 					
 					tbM1CmapDeviceMapper.insertDevice(deviceMap);					
 					
-				} catch (Exception e) {
-					throw new Exception("엑셀 " + (i + 1) + "행" + j + " 열 처리 중 오류" + System.lineSeparator() + e.getMessage());
+				} catch (Exception  e) {
+					throw new ExcelProcessingException(i + 1, j, e.getMessage());
+					//throw new Exception("엑셀 " + (i + 1) + "행" + j + " 열 처리 중 오류" + System.lineSeparator() + e.getMessage());
 				}
 			}
 
