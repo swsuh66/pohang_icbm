@@ -14,12 +14,14 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
@@ -27,6 +29,8 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
+import org.apache.ibatis.session.SqlSession;
+import org.apache.ibatis.session.SqlSessionFactory;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.CellType;
@@ -43,6 +47,7 @@ import org.apache.poi.xssf.usermodel.XSSFDataFormat;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -50,8 +55,13 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
+import com.istec.m1.devController;
 import com.istec.m1.common.ExcelReader;
 import com.istec.m1.defines.Define;
+import com.istec.m1.mapper.TbM1CmapDeviceMapper;
+import com.istec.m1.mapper.TbM1InfoCustomerMapper;
+import com.istec.m1.mapper.TbM1InfoImportMapper;
+import com.istec.m1.mapper.TbM1InfoPointMapper;
 
 @Service
 public class FileService {
@@ -59,9 +69,27 @@ public class FileService {
 	@Autowired
 	private QueryService queryService;
 	
-	/**
-	 *
-	 */
+	@Autowired
+	private SqlSessionFactory sqlSessionFactory;
+	
+	private final TbM1InfoImportMapper tbM1InfoImportMapper;
+	private final TbM1CmapDeviceMapper tbM1CmapDeviceMapper;
+	private final TbM1InfoCustomerMapper tbM1InfoCustomerMapper;
+	private final TbM1InfoPointMapper tbM1InfoPointMapper;	
+
+	@Autowired
+	public FileService(
+		TbM1InfoImportMapper tbM1InfoImportMapper, 
+		TbM1CmapDeviceMapper tbM1CmapDeviceMapper, 
+		TbM1InfoCustomerMapper tbM1InfoCustomerMapper, 
+		TbM1InfoPointMapper tbM1InfoPointMapper) 
+	{
+		this.tbM1InfoImportMapper = tbM1InfoImportMapper;
+		this.tbM1CmapDeviceMapper = tbM1CmapDeviceMapper;
+		this.tbM1InfoCustomerMapper = tbM1InfoCustomerMapper;
+		this.tbM1InfoPointMapper = tbM1InfoPointMapper;
+	}
+
 	public List<List<String>> excelRead(MultipartFile file)  {
 		
 		InputStream in = null;
@@ -417,6 +445,300 @@ public class FileService {
 			}
 		}
 	}
+
+	// Brad : 2025.06.29
+	private String getString(Row row, int cellIndex) {
+		if (row == null) return "";
+		Cell cell = row.getCell(cellIndex);
+		if (cell == null) return "";
+		cell.setCellType(CellType.STRING);
+		return cell.getStringCellValue().trim();
+	}
+
+	private Integer  getInteger (Row row, int cellIndex) {
+		if (row == null) return null;
+		Cell cell = row.getCell(cellIndex);
+		if (cell == null) return null;
+
+		try {
+			String value = cell.getStringCellValue().trim();
+			if (value.isEmpty()) return null;
+			return Integer.parseInt(value);
+		} catch (Exception e) {
+			// 필요 시 로그 출력
+			return null;
+		}
+	}
+
+	private BigDecimal getBigDecimal(Row row, int cellIndex) {
+		if (row == null) return null;
+		Cell cell = row.getCell(cellIndex);
+		if (cell == null) return null;
+
+		try {
+
+			String value = cell.getStringCellValue().trim();
+			if (value == null || value.isEmpty()) return null;
+
+			return new BigDecimal(value);
+		} catch (Exception e) {
+			System.err.println("Error converting cell to BigDecimal: " + e.getMessage());
+			return null;
+		}
+	}
+
+	private Double getDouble(Row row, int cellIndex) {
+		if (row == null) return null;
+		Cell cell = row.getCell(cellIndex);
+		if (cell == null) return null;
+
+		try {
+			String value = cell.getStringCellValue().trim();
+			return value.isEmpty() ? null : Double.parseDouble(value);
+		} catch (Exception e) {
+			// 필요 시 로그 출력
+			return null;
+		}
+	}
+
+	@Transactional
+	public void insertCustomInfoFromExcel(
+		MultipartFile file, 
+		int upsitesq, 
+		String tokenKey, 
+		boolean isCheck) throws Exception  
+	{
+		int rowCount;
+
+		// try-with-resources를 사용하면 InputStream, Workbook 자동 close됨
+		try (InputStream in = file.getInputStream();
+			Workbook workbook = WorkbookFactory.create(in)) {
+
+			Sheet sheet = workbook.getSheetAt(0);
+			rowCount = sheet.getPhysicalNumberOfRows();
+
+			// 헤더는 0번째 행이라 데이터는 1부터 시작
+			for (int i = 1; i < rowCount; i++) {
+				Row row = sheet.getRow(i);
+				int j = 0;
+				
+				try {
+					// TODO: row에서 데이터 추출 후 insert 처리
+					// 1. 공통으로 쓸 데이터 추출
+					Integer dataSq = getInteger(row, j++);  // 순번
+					String custNm = getString(row, j++);   // 수용가명
+					String adminNo = getString(row, j++);  // 수용가번호
+					String addr = getString(row, j++);  // 구주소
+					String addrNew = getString(row, j++);  // 신주소
+					BigDecimal locLng = getBigDecimal(row, j++);  // 경도
+					BigDecimal locLat = getBigDecimal(row, j++);  // 위도
+					String useType = getString(row, j++);  // 업종
+					String siteNm = getString(row, j++);   // 소속
+					String blkNm = getString(row, j++);  // 블럭
+					String custPhone = getString(row, j++);  // 수용가 전화번호
+					String setYears = getString(row, j++);  // 수용가 대상 년도
+					String readOpr = getString(row, j++);  // 검침원
+					Integer checkDay = getInteger(row, j++);  // 검침일
+					String meterNo = getString(row, j++);  // 계량기번호
+					BigDecimal pipeDia = getBigDecimal(row, j++);   // 구경
+					String amiType = getString(row, j++);   // 통신
+					String subDevNo = getString(row, j++);   // 단말 부번호
+					String devNo = getString(row, j++);   // 단말 주번호
+					String companyNm = getString(row, j++);  // 단말회사
+					String setDt = getString(row, j++); // 단말설치일
+					// String tokenKey = tokenKey; // 토큰 키
+
+					// tb_m1_info_import
+					Map<String, Object> importMap = new HashMap<>();
+					importMap.put("dataSq", dataSq);
+					importMap.put("custNm", custNm);
+					importMap.put("adminNo", adminNo);
+					importMap.put("addr", addr);
+					importMap.put("addrNew", addrNew); 
+					importMap.put("locLng", locLng);
+					importMap.put("locLat", locLat);
+					importMap.put("useType", useType); 
+					importMap.put("siteNm", siteNm);
+					importMap.put("blkNm", blkNm);
+					importMap.put("custPhone", custPhone);
+					importMap.put("setYears", setYears);
+					importMap.put("readOpr", readOpr);
+					importMap.put("checkDay", checkDay);
+					importMap.put("meterNo", meterNo);
+					importMap.put("pipeDia", pipeDia);
+					importMap.put("amiType", amiType);
+					importMap.put("subDevNo", subDevNo);
+					importMap.put("devNo", devNo);
+					importMap.put("companyNm", companyNm);
+					importMap.put("setDt", setDt);
+					importMap.put("tokenKey", tokenKey);
+					
+					tbM1InfoImportMapper.insertImport(importMap);
+
+					// tb_m1_info_customer
+					Map<String, Object> customerMap = new HashMap<>();					
+					customerMap.put("adminNo", adminNo);
+					customerMap.put("custName", custNm);
+					customerMap.put("addr", addr);
+					customerMap.put("addrNew", addrNew);
+					customerMap.put("pipeDiameter", pipeDia);
+					customerMap.put("meterNo", meterNo);
+					customerMap.put("readResponsi", readOpr);
+					customerMap.put("custPhone", custPhone);
+					customerMap.put("setYears", setYears);
+					customerMap.put("checkDay", checkDay);
+					
+					Long custSq = tbM1InfoCustomerMapper.insertCustomer(customerMap);	
+										
+					// tb_m1_info_point
+					Map<String, Object> pointMap = new HashMap<>();
+					pointMap.put("custSq", custSq);  // customer insert 후 키 매핑 필요
+					pointMap.put("siteNm", siteNm);
+					pointMap.put("blkNm", blkNm);
+					pointMap.put("locLng", locLng);
+					pointMap.put("locLat", locLat);
+					Long pointSq = tbM1InfoPointMapper.insertPoint(pointMap);
+
+					// tb_m1_cmap_device
+					Map<String, Object> deviceMap = new HashMap<>();
+					deviceMap.put("devNo", devNo);
+					deviceMap.put("subDevNo", subDevNo);
+					deviceMap.put("pointSq", pointSq); 
+					deviceMap.put("companyNm", companyNm);
+					deviceMap.put("amiType", amiType); // 통신사 (KT, LG, SK)			
+					
+					tbM1CmapDeviceMapper.insertDevice(deviceMap);					
+					
+				} catch (Exception e) {
+					throw new Exception("엑셀 " + (i + 1) + "행" + j + " 열 처리 중 오류" + System.lineSeparator() + e.getMessage());
+				}
+			}
+
+			// 검증모드일 경우 트랜잭션 롤백 유도
+			if (isCheck) {
+				throw new RuntimeException("엑셀 데이터 검증이 완료되었습니다.");
+			}
+
+		} catch (IOException e) {
+			throw new Exception("엑셀 파일 처리 실패: " + e.getMessage(), e);
+		}
+	}
+
+	@Transactional
+	public void updateCustomInfoFromExcel(
+		MultipartFile file, 
+		int upsitesq, 
+		String tokenKey) throws Exception  
+	{
+		int rowCount;
+
+		// try-with-resources를 사용하면 InputStream, Workbook 자동 close됨
+		try (InputStream in = file.getInputStream();
+			Workbook workbook = WorkbookFactory.create(in)) {
+
+			Sheet sheet = workbook.getSheetAt(0);
+			rowCount = sheet.getPhysicalNumberOfRows();
+
+			// 헤더는 0번째 행이라 데이터는 1부터 시작
+			for (int i = 1; i < rowCount; i++) {
+				Row row = sheet.getRow(i);
+				int j = 0;
+				
+				try {
+					// TODO: row에서 데이터 추출 후 insert 처리
+					// 1. 공통으로 쓸 데이터 추출
+					Integer dataSq = getInteger(row, j++);  // 순번
+					String custNm = getString(row, j++);   // 수용가명
+					String adminNo = getString(row, j++);  // 수용가번호
+					String addr = getString(row, j++);  // 구주소
+					String addrNew = getString(row, j++);  // 신주소
+					BigDecimal locLng = getBigDecimal(row, j++);  // 경도
+					BigDecimal locLat = getBigDecimal(row, j++);  // 위도
+					String useType = getString(row, j++);  // 업종
+					String siteNm = getString(row, j++);   // 소속
+					String blkNm = getString(row, j++);  // 블럭
+					String custPhone = getString(row, j++);  // 수용가 전화번호
+					String setYears = getString(row, j++);  // 수용가 대상 년도
+					String readOpr = getString(row, j++);  // 검침원
+					Integer checkDay = getInteger(row, j++);  // 검침일
+					String meterNo = getString(row, j++);  // 계량기번호
+					BigDecimal pipeDia = getBigDecimal(row, j++);   // 구경
+					String amiType = getString(row, j++);   // 통신
+					String subDevNo = getString(row, j++);   // 단말 부번호
+					String devNo = getString(row, j++);   // 단말 주번호
+					String companyNm = getString(row, j++);  // 단말회사
+					String setDt = getString(row, j++); // 단말설치일
+					// String tokenKey = tokenKey; // 토큰 키
+
+					// tb_m1_info_import
+					Map<String, Object> importMap = new HashMap<>();
+					importMap.put("dataSq", dataSq);
+					importMap.put("custNm", custNm);
+					importMap.put("adminNo", adminNo);
+					importMap.put("addr", addr);
+					importMap.put("addrNew", addrNew); 
+					importMap.put("locLng", locLng);
+					importMap.put("locLat", locLat);
+					importMap.put("useType", useType); 
+					importMap.put("siteNm", siteNm);
+					importMap.put("blkNm", blkNm);
+					importMap.put("custPhone", custPhone);
+					importMap.put("setYears", setYears);
+					importMap.put("readOpr", readOpr);
+					importMap.put("checkDay", checkDay);
+					importMap.put("meterNo", meterNo);
+					importMap.put("pipeDia", pipeDia);
+					importMap.put("amiType", amiType);
+					importMap.put("subDevNo", subDevNo);
+					importMap.put("devNo", devNo);
+					importMap.put("companyNm", companyNm);
+					importMap.put("setDt", setDt);
+					importMap.put("tokenKey", tokenKey);
+					
+					//tbM1InfoImportMapper.updateImport(importMap);
+
+					// tb_m1_info_customer
+					Map<String, Object> customerMap = new HashMap<>();					
+					customerMap.put("adminNo", adminNo);
+					customerMap.put("custName", custNm);
+					customerMap.put("addr", addr);
+					customerMap.put("addrNew", addrNew);
+					customerMap.put("pipeDiameter", pipeDia);
+					customerMap.put("meterNo", meterNo);
+					customerMap.put("readResponsi", readOpr);
+					customerMap.put("custPhone", custPhone);
+					customerMap.put("setYears", setYears);
+					customerMap.put("checkDay", checkDay);
+					
+					Long custSq = tbM1InfoCustomerMapper.updateCustomer(customerMap);	
+										
+					// tb_m1_info_point
+					Map<String, Object> pointMap = new HashMap<>();
+					pointMap.put("custSq", custSq);  // customer insert 후 키 매핑 필요
+					pointMap.put("siteNm", siteNm);
+					pointMap.put("blkNm", blkNm);
+					pointMap.put("locLng", locLng);
+					pointMap.put("locLat", locLat);
+					Long pointSq = tbM1InfoPointMapper.updatePoint(pointMap);
+
+					// tb_m1_cmap_device
+					Map<String, Object> deviceMap = new HashMap<>();
+					deviceMap.put("devNo", devNo);
+					deviceMap.put("subDevNo", subDevNo);
+					deviceMap.put("pointSq", pointSq); 
+					deviceMap.put("companyNm", companyNm);
+					deviceMap.put("amiType", amiType); // 통신사 (KT, LG, SK)			
+					
+					tbM1CmapDeviceMapper.updateDevice(deviceMap);					
+					
+				} catch (Exception e) {
+					throw new Exception("엑셀 " + (i + 1) + "행" + j + " 열 처리 중 오류" + System.lineSeparator() + e.getMessage());
+				}
+			}
+		} catch (IOException e) {
+			throw new Exception("엑셀 파일 처리 실패: " + e.getMessage(), e);
+		}
+	}
 	
 	public List<HashMap<String, Object>> insertRead_f5_2(MultipartFile file, String templetPath, int upsitesq, String tokenKey) throws Exception  {
 		
@@ -460,8 +782,6 @@ public class FileService {
 			if(in != null) in.close();
 			throw new Exception("엑셀 시트 확인");
 		}	
-			
-		
 		
 		for (int i = 1; i <= rownum; i++) {
 			param = new HashMap<>();

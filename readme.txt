@@ -6,3 +6,6 @@
     COMMENT ON COLUMN public.tb_m1_info_customer.receive_consent IS '수신동의';
     ALTER TABLE public.tb_m1_info_customer ADD consent_dt timestamp(6) NULL;
     COMMENT ON COLUMN public.tb_m1_info_customer.consent_dt IS '수신동의해제시간';
+
+3. tb_m1_info_customer
+    ALTER TABLE public.tb_m1_info_customer ALTER COLUMN admin_no SET NOT NULL;

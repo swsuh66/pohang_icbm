@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+<mapper namespace="com.istec.m1.mapper.TbM1InfoPointMapper">
+    <select id="insertPoint" parameterType="java.util.Map" resultType="java.lang.Long">
+        INSERT INTO tb_m1_info_point (
+            blk_sq,
+            cust_sq,
+            site_sq,
+			use_cd,
+            loc_lng,
+            loc_lat,
+            ins_dt,
+			upd_dt
+		)
+        VALUES (
+            (SELECT blk_sq FROM tb_m1_info_block WHERE blk_nm = #{blkNm}),
+            #{custSq},
+            (SELECT site_sq FROM tb_m1_info_site WHERE site_nm = #{siteNm}), 
+            1,
+            #{locLng} , 
+            #{locLat},
+			now(),
+			now()		
+        )
+		RETURNING point_sq
+    </select>
+    <select id="updatePoint" parameterType="java.util.Map" resultType="java.lang.Long">
+        UPDATE tb_m1_info_point
+        SET 
+            blk_sq = (SELECT blk_sq FROM tb_m1_info_block WHERE blk_nm = #{blkNm}),
+            site_sq = (SELECT site_sq FROM tb_m1_info_site WHERE site_nm = #{siteNm}),
+            loc_lng = #{locLng},
+            loc_lat = #{locLat},
+            upd_dt = now()
+        WHERE 
+            cust_sq = #{custSq}
+        RETURNING point_sq
+    </select>
+</mapper>
