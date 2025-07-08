@@ -318,22 +318,24 @@ public class FileController {
 		
 		if (msg == null) return "알 수 없는 오류가 발생했습니다.";
 
-		if (msg.contains("violates foreign key constraint")) {
-			return "연관된 데이터가 존재하지 않습니다.";
-		} else if (msg.contains("duplicate key")) {
-			return "이미 등록된 항목입니다.";
-		} else if (msg.contains("Cannot invoke")) {
-			return "필수 입력값이 누락되었거나 잘못된 형식입니다.";
-		} else if (msg.contains("Cannot get a STRING value from a NUMERIC cell")) {
-			return "엑셀 셀 타입 오류: 숫자 셀에서 문자열을 읽을 수 없습니다.";
-		} else if (msg.contains("NumberFormatException")) {
-			return "숫자 형식 오류: 잘못된 숫자 입력입니다.";
-		} else if (msg.contains("null")) {
-			return "입력값이 null 입니다.";
-		}
+		return msg;
+
+		// if (msg.contains("violates foreign key constraint")) {
+		// 	return "연관된 데이터가 존재하지 않습니다.";
+		// } else if (msg.contains("duplicate key")) {
+		// 	return "이미 등록된 항목입니다.";
+		// } else if (msg.contains("Cannot invoke")) {
+		// 	return "필수 입력값이 누락되었거나 잘못된 형식입니다.";
+		// } else if (msg.contains("Cannot get a STRING value from a NUMERIC cell")) {
+		// 	return "엑셀 셀 타입 오류: 숫자 셀에서 문자열을 읽을 수 없습니다.";
+		// } else if (msg.contains("NumberFormatException")) {
+		// 	return "숫자 형식 오류: 잘못된 숫자 입력입니다.";
+		// } else if (msg.contains("null")) {
+		// 	return "입력값이 null 입니다.";
+		// }
 
 		// 기본 메시지는 앞 100자만 표시
-		return "처리 중 오류 발생: " + msg.substring(0, Math.min(100, msg.length())) + "...";
+		//return "처리 중 오류 발생: " + msg.substring(0, Math.min(100, msg.length())) + "...";
 	}
 
 	@RequestMapping(value = "/file/insert_customers", method = RequestMethod.POST)

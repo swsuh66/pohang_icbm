@@ -612,7 +612,7 @@ public class FileService {
 					tbM1CmapDeviceMapper.insertDevice(deviceMap);					
 					
 				} catch (Exception  e) {
-					throw new ExcelProcessingException(i + 1, j, e.getMessage());
+					throw new ExcelProcessingException(i + 1, j,  e.getCause().getMessage());
 					//throw new Exception("엑셀 " + (i + 1) + "행" + j + " 열 처리 중 오류" + System.lineSeparator() + e.getMessage());
 				}
 			}
@@ -785,7 +785,7 @@ public class FileService {
 			if(in != null) in.close();
 			throw new Exception("엑셀 시트 확인");
 		}	
-		
+			
 		for (int i = 1; i <= rownum; i++) {
 			param = new HashMap<>();
 			try {
