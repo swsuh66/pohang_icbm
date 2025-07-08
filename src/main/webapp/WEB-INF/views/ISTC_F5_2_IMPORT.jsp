@@ -96,34 +96,33 @@ function down() {
 	});
 }
 
-function submit2() {
+			function submit2() {
+				let formData = new FormData(insertForm);
+				formData.append('isCheck', true); // isCheck 파라미터 추가
+				$('#fileUp').aceWidget('startLoading');
+
 	$.ajax({
-		url : "file/insert_f5_2",
-		processData : false,
-		contentType : false,
-		data : new FormData(insertForm),
-		type : 'POST',
-		success : function(result) {
-			resultParam = result.errParam;
-			errorDataGridSearch(result.errParam);
-			if (resultParam.length > 0) {
-				jAlert.error('에러', 'import 에 실패했습니다. 다음 목록은 에러리뷰 입니다. 에러목록 다운로드를 하여 확인해주세요.');
-			}
-			else {
-				jAlert.info('정보', 'import 에 성공했습니다. ');
-			}
-				
+					url: 'file/insert_customers',
+					processData: false,
+					contentType: false,
+					data: formData,
+					type: 'POST',
+					success: function (result) {
+						$('#fileUp').aceWidget('stopLoading');
+						jAlert.info('정보', res.message);
+
 			$('#insertForm').hide();
 			$('#gridWindow').show();
 		},
-		error: function(xhr, status, error) {
+					error: function (e) {
             // 오류 발생 시 동작
-            console.error(error);
-			jAlert.error('오류', 'import 에 실패하였습니다.');
-            // 오류 처리를 수행합니다.
+						$('#fileUp').aceWidget('stopLoading');
+						console.error(e);
+						const msg = e.responseJSON?.message || '알 수 없는 오류 발생';
+						jAlert.error('오류 발생: ' + msg);
+					},
+				});
         }
-	});
-}
 
 	function updateSubmit() {
 		$.ajax({

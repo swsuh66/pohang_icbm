@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+<mapper namespace="com.istec.m1.mapper.TbM1InfoImportMapper">
+    <insert id="insertImport" parameterType="java.util.Map">
+		insert into tb_m1_info_import (
+			data_sq,
+			cust_name,
+			admin_no,
+			addr,
+			addr_new,
+			loc_lng,
+			loc_lat,
+			business_name,
+			master_site_sq,
+			master_site_nm,
+			site_nm,
+			blk_nm,
+			cust_phone,
+			set_years,
+			read_responsi,
+			check_day,
+			meter_no,
+			pipe_diameter,
+			ami_type,
+			sub_dev_no,
+			dev_no,
+			company_nm,
+			set_dt,
+			token_key,
+			ins_dt			
+	    )	    
+	    values (
+	    	#{dataSq},
+			#{custNm},
+			#{adminNo},
+			#{addr},
+			#{addrNew},
+			#{locLng}, 
+			#{locLat}, 
+			#{useType},
+			#{upSiteSq},
+			#{masterSiteNm},
+			#{siteNm},
+			#{blkNm},
+			#{custPhone},
+			#{setYears},
+			#{readOpr},
+			#{checkDay},
+			#{meterNo},
+			#{pipeDia},
+			#{amiType},
+			#{subDevNo},
+			#{devNo},
+			#{companyNm},
+			#{setDt},
+			#{tokenKey},
+			now()		
+	    )
+	</insert>
+</mapper>

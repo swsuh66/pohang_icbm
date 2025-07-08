@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+<mapper namespace="com.istec.m1.mapper.TbM1CmapDeviceMapper">
+    <insert id="insertDevice" parameterType="java.util.Map">
+        INSERT INTO tb_m1_cmap_device (
+            dev_no,
+            sub_dev_no,
+            point_sq,
+            company_sq,
+            ami_type,
+            ins_dt,
+            upd_dt
+        )
+        VALUES (
+            #{devNo},
+            #{subDevNo},
+            #{pointSq}, 
+            (SELECT company_sq FROM tb_m1_info_company WHERE company_nm = #{companyNm}), 
+            #{amiType},
+            now(),
+            now()
+        )
+    </insert>
+    <update id="updateDevice" parameterType="java.util.Map">
+        UPDATE tb_m1_cmap_device
+        SET 
+            dev_no = #{devNo},
+            point_sq = #{pointSq},
+            company_sq = (SELECT company_sq FROM tb_m1_info_company WHERE company_nm = #{companyNm}),
+            ami_type = #{amiType},
+            upd_dt = now()
+        WHERE sub_dev_no = #{subDevNo}
+    </update>
+</mapper>
