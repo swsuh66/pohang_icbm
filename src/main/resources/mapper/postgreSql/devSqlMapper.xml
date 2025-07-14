@@ -66,8 +66,7 @@
         where 1=1
           
         commit;
-    </update>
-
+    </update>    
 
     <select id="selectServiceCdPage" parameterType="java.util.Map" resultType="java.util.Map">           
         <include refid="pageHeader"/>      
@@ -168,6 +167,36 @@
       commit;
     </update>
 
+    <select id="selectBlkListPage" parameterType="java.util.Map" resultType="java.util.Map">
+        <include refid="pageHeader"/>
+        <include refid="selectBlkList"/>
+        <include refid="pageFooter"/>
+    </select>
+
+    <sql id="selectBlkList">
+        SELECT *
+        FROM tb_m1_info_block
+        WHERE 1=1
+        <if test="siteSq != null">
+            AND site_sq = #{siteSq}
+        </if>
+    </sql>
+
+    <select id="selectDeleteCodeListPage" parameterType="java.util.Map" resultType="java.util.Map">           
+        <include refid="pageHeader"/>      
+        <include refid="selectDeleteCodeList"/>
+        <include refid="pageFooter"/>  
+    </select>
+
+    <sql id="selectDeleteCodeList">
+        SELECT *
+        FROM tb_delete_code
+        WHERE 1=1
+        <!-- <if test="siteSq != null">
+            AND site_sq = #{siteSq}
+        </if> -->
+    </sql>
+
     <select id="selectdeletecode" parameterType="java.util.Map" resultType="java.util.Map">
       select count(*) :: text as "cnt" 
         from tb_delete_code 
@@ -177,7 +206,7 @@
 
     <insert id="insertsiteSq" parameterType="java.util.Map">
       /*insertsiteSq*/
-        insert into tb_m1_info_site(
+        insert into tb_m1_info_site(`
 	        site_sq
           ,up_site_sq
           ,site_nm
