@@ -54,6 +54,8 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.istec.m1.devController;
 import com.istec.m1.common.ExcelReader;
@@ -78,6 +80,8 @@ public class FileService {
 	private final TbM1CmapDeviceMapper tbM1CmapDeviceMapper;
 	private final TbM1InfoCustomerMapper tbM1InfoCustomerMapper;
 	private final TbM1InfoPointMapper tbM1InfoPointMapper;	
+
+	private static final Logger log = LoggerFactory.getLogger(FileService.class);
 
 	@Autowired
 	public FileService(
@@ -503,7 +507,7 @@ public class FileService {
 		}
 	}
 
-	@Transactional
+	@Transactional(timeout = 900) // 15분
 	public void insertCustomInfoFromExcel(
 		MultipartFile file, 
 		int upsitesq, 
@@ -591,6 +595,10 @@ public class FileService {
 					customerMap.put("checkDay", checkDay);
 					
 					Long custSq = tbM1InfoCustomerMapper.insertCustomer(customerMap);	
+					if (custSq == null) {
+						log.warn("custSq is null at row {}", i);
+						throw new NullPointerException("custSq is null");
+					}
 										
 					// tb_m1_info_point
 					Map<String, Object> pointMap = new HashMap<>();
@@ -599,7 +607,12 @@ public class FileService {
 					pointMap.put("blkNm", blkNm);
 					pointMap.put("locLng", locLng);
 					pointMap.put("locLat", locLat);
+
 					Long pointSq = tbM1InfoPointMapper.insertPoint(pointMap);
+					if (pointSq == null) {
+						log.warn("pointSq is null at row {}", i);
+						throw new NullPointerException("pointSq is null");
+					}
 
 					// tb_m1_cmap_device
 					Map<String, Object> deviceMap = new HashMap<>();
@@ -612,8 +625,9 @@ public class FileService {
 					tbM1CmapDeviceMapper.insertDevice(deviceMap);					
 					
 				} catch (Exception  e) {
-					throw new ExcelProcessingException(i + 1, j,  e.getCause().getMessage());
-					//throw new Exception("엑셀 " + (i + 1) + "행" + j + " 열 처리 중 오류" + System.lineSeparator() + e.getMessage());
+					log.error("Excel row {} column {} 처리 중 오류: {}", i + 1, j, e.getMessage(), e);
+					String message = e.getCause() != null ? e.getCause().getMessage() : e.getMessage();
+					throw new ExcelProcessingException(i + 1, j, message);
 				}
 			}
 
@@ -623,6 +637,7 @@ public class FileService {
 			}
 
 		} catch (IOException e) {
+			log.error("엑셀 파일 읽기 실패: {}", e.getMessage(), e);
 			throw new Exception("엑셀 파일 처리 실패: " + e.getMessage(), e);
 		}
 	}
