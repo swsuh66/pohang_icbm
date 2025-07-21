@@ -242,25 +242,26 @@
 					case 'sendDt':
 					case 'leakMeasDt':
 					/*
-			case 'measDt':
-				if(!value)
-					return '-';
-				var dt = new Date(value);
-				return '<small>' + kutil.dateFormat(dt, 'yy.mm.dd') +' </small> ' + kutil.dateFormat(dt, 'HH:MM');*/
-					case 'max_date':
-					case 'min_date':
-						if (!value) return '-';
-						var dt = new Date(value);
-						return '' + kutil.dateFormat(dt, 'yyyy.mm.dd') + ' ' + kutil.dateFormat(dt, 'HH:MM');
-					case 'stat_yn':
-						if (value == 'Y') {
-							return '계량기누수';
-						} else {
-							return '정상';
-						}
-					case 'call_check':
-						return callCheckTemplate(value, item, c);
-				}
+                    case 'measDt':
+                        if(!value)
+                            return '-';
+                        var dt = new Date(value);
+                        return '<small>' + kutil.dateFormat(dt, 'yy.mm.dd') +' </small> ' + kutil.dateFormat(dt, 'HH:MM');
+                    */
+                    case 'max_date':
+                    case 'min_date':
+                        if (!value) return '-';
+                        var dt = new Date(value);
+                        return '' + kutil.dateFormat(dt, 'yyyy.mm.dd') + ' ' + kutil.dateFormat(dt, 'HH:MM');
+                    case 'stat_yn':
+                        if (value == 'Y') {
+                            return '계량기누수';
+                        } else {
+                            return '정상';
+                        }
+                    case 'call_check':
+                        return callCheckTemplate(value, item, c);
+                }
 
 				return value || value == 0 ? value : '-';
 			};
@@ -607,6 +608,7 @@
 				params['business_name'] = $('#business_name').val();
 				params['compare_term_cv'] = $('#compare_term_cv').val();
 				params['statYn'] = $('#statYn').val();
+				params['read_responsi'] = $('#read_responsi').val();
 				params['cust_phone'] = $('#cust_phone').val();
 				return params;
 			}
