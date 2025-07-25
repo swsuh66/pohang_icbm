@@ -4,7 +4,6 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.security.Principal;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.util.Calendar;
@@ -15,30 +14,24 @@ import java.util.Locale;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.util.ResourceUtils;
-import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.ModelAndView;
+import org.springframework.web.server.ResponseStatusException;
 
-import com.istec.m1.auth.CustomUserDetails;
-import com.istec.m1.controller.FileController;
-import com.istec.m1.dao.QueryDao;
 import com.istec.m1.service.QueryService;
 
 /**
@@ -148,33 +141,46 @@ public class devController {
 	 */
 	@RequestMapping(value = "/file/image_reset", method = RequestMethod.POST)
 	@ResponseBody
-	public Map<String, Object> image_reset(@RequestParam("imgFile") MultipartFile[] imgfile, @RequestParam Map<String, Object> paramMap, Model model) { //name 이 key값으로 들어온다.
+	public ResponseEntity<Map<String, Object>> image_reset(
+			@RequestParam("imgFile") MultipartFile[] imgfile, 
+			@RequestParam Map<String, Object> paramMap, 
+			Model model) //name 이 key값으로 들어온다.
+	{ 
 		Map<String, Object> result = new HashMap<>();
 		try {
 			//File staticDir = ResourceUtils.getFile("classpath:static/meter_img");
-			String basePath = imgPath.replace("file:", "");
-			File staticDir = new File(basePath, "/meter_img");
-			if (!staticDir.exists()) {
-				result.put("msg", "파일경로 이상");
-				result.put("isSucces", " N");
-				return result;
-			}
-			//int count = querysv.update("mars.icbm.devSqlMapper.img_file_reset", param);
-			String updir = staticDir.getAbsolutePath();
-			logger.info("이미지 업로드 경로 : " + updir);
-			
+			logger.debug("=======================================");
+			File targetDir = new ClassPathResource("static/meter_img").getFile();
+			logger.debug("targetDir: "+ targetDir );
 
-			for (MultipartFile imgf : imgfile) {
-				Path path = Paths.get(updir, imgf.getOriginalFilename());
-				//Path path = Paths.get(updir + "/test123456.jpg");
-            	Files.write(path, imgf.getBytes());
+			if (!targetDir.exists()) {
+				boolean created = targetDir.mkdirs();
+				if (!created) {
+					throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "폴더 생성 실패");
+				}
 			}
-		} catch (Exception e) {
-			result.put("msg", e.getMessage());
+			
+			for (MultipartFile imgf : imgfile) {
+				Path path = Paths.get(targetDir.getAbsolutePath(), imgf.getOriginalFilename());
+				Files.write(path, imgf.getBytes());
+			}
+
+			result.put("msg", "이미지 저장 성공");
+			result.put("isSucces", "Y");
+			return ResponseEntity.ok(result);
+
+		} catch (ResponseStatusException e) {
+			logger.warn("ResponseStatusException 발생: {}", e.getReason());
+			result.put("msg", e.getReason());
 			result.put("isSucces", "N");
+			return ResponseEntity.status(e.getStatus()).body(result);
+
+		} catch (Exception e) {
+			logger.error("이미지 저장 중 예외 발생", e);
+			result.put("msg", "서버 오류: " + e.getMessage());
+			result.put("isSucces", "N");
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(result);
 		}
-       
-		return result;
 	}
 
 	/*

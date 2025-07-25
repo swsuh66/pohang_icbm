@@ -522,7 +522,7 @@ public class FileService {
 
 			Sheet sheet = workbook.getSheetAt(0);
 			rowCount = sheet.getPhysicalNumberOfRows();
-
+			log.info("======================" + rowCount);
 			// 헤더는 0번째 행이라 데이터는 1부터 시작
 			for (int i = 1; i < rowCount; i++) {
 				Row row = sheet.getRow(i);
@@ -532,6 +532,10 @@ public class FileService {
 					// TODO: row에서 데이터 추출 후 insert 처리
 					// 1. 공통으로 쓸 데이터 추출
 					Integer dataSq = getInteger(row, j++);  // 순번
+					if (dataSq == null) {
+						log.warn("dataSq is null at row {}", i);
+						break;
+					}
 					String custNm = getString(row, j++);   // 수용가명
 					String adminNo = getString(row, j++);  // 수용가번호
 					String addr = getString(row, j++);  // 구주소
@@ -632,6 +636,7 @@ public class FileService {
 			}
 
 			// 검증모드일 경우 트랜잭션 롤백 유도
+			//if (isCheck) {
 			if (isCheck) {
 				throw new RuntimeException("엑셀 데이터 검증이 완료되었습니다.");
 			}

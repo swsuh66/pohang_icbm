@@ -1122,7 +1122,7 @@
 												</tr>
 												<tr>
 													<td>
-														<img id="img_src_bf" alt="" src="" style="width: 100%; height: 100%; object-fit: contain" />
+														<img id="img_src_gum" alt="" src="" style="width: 100%; height: 100%; object-fit: contain" />
 													</td>
 
 													<td>
@@ -1135,7 +1135,7 @@
 												</tr>
 												<tr>
 													<td>
-														<img id="img_src_gum" alt="" src="" style="width: 100%; height: 100%; object-fit: contain" />
+														<img id="img_src_bf" alt="" src="" style="width: 100%; height: 100%; object-fit: contain" />
 													</td>
 
 													<td>
