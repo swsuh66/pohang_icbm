@@ -52,4 +52,8 @@
                 admin_no = #{adminNo}
             RETURNING cust_sq;
     </select>
+    <delete id="deleteCustomer" parameterType="java.util.Map">
+        DELETE FROM tb_m1_info_customer
+        WHERE cust_sq = #{custSq}
+    </delete>
 </mapper>

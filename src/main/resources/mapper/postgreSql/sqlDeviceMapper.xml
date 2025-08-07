@@ -31,4 +31,8 @@
             upd_dt = now()
         WHERE sub_dev_no = #{subDevNo}
     </update>
+    <delete id="deleteDevice" parameterType="java.util.Map">
+        DELETE FROM tb_m1_cmap_device
+        WHERE point_sq = #{pointSq}
+    </delete>
 </mapper>

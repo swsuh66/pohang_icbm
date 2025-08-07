@@ -762,6 +762,23 @@ public class FileService {
 			throw new Exception("엑셀 파일 처리 실패: " + e.getMessage(), e);
 		}
 	}
+
+	@Transactional(timeout = 60) // 1분
+	public void deleteCustomInfo(Integer custSq, Integer pointSq) throws Exception {
+		// tb_m1_info_customer 데이터 삭제
+		Map<String, Object> customerMap = new HashMap<>();	
+		customerMap.put("custSq", custSq); 
+
+		// tb_m1_cmap_device 데이터 삭제
+		Map<String, Object> deviceMap = new HashMap<>();
+		deviceMap.put("pointSq", pointSq); 
+
+		tbM1CmapDeviceMapper.deleteDevice(deviceMap); 
+
+		// tb_m1_info_point 데이터 삭제
+		Map<String, Object> pointMap = new HashMap<>();
+		pointMap.put("pointSq", pointSq); 
+	}
 	
 	public List<HashMap<String, Object>> insertRead_f5_2(MultipartFile file, String templetPath, int upsitesq, String tokenKey) throws Exception  {
 		

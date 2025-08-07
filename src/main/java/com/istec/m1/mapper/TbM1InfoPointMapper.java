@@ -7,4 +7,5 @@ import java.util.Map;
 public interface TbM1InfoPointMapper {
     Long insertPoint(Map<String, Object> map);
     Long updatePoint(Map<String, Object> map);
+    Long deletePoint(Map<String, Object> map);
 }

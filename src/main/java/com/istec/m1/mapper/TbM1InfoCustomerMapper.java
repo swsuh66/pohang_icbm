@@ -7,4 +7,5 @@ import java.util.Map;
 public interface TbM1InfoCustomerMapper {
     Long insertCustomer(Map<String, Object> map);
     Long updateCustomer(Map<String, Object> map);
+    Long deleteCustomer(Map<String, Object> map);
 }

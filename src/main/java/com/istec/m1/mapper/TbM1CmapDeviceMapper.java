@@ -7,4 +7,5 @@ import java.util.Map;
 public interface TbM1CmapDeviceMapper {
     int insertDevice(Map<String, Object> map);
     int updateDevice(Map<String, Object> map);
+    int deleteDevice(Map<String, Object> map);
 }
