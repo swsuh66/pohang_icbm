@@ -2033,6 +2033,7 @@
 			(ROW_NUMBER() OVER()) AS "rownum", 
 			a.point_sq		as "pointSq",
 			b.admin_id 		as "adminId",
+			b.cust_sq as "custSq",
 			b.cust_nm 		as "custNm",
 			a.meas_dt		as "measDt",				
 			to_char(a.meas_dt, 'yyyy-mm-dd-hh24-mi-ss') as "measDtStr",					
