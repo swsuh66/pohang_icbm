@@ -119,6 +119,8 @@
 			 */
 			var colfnc = function (value, item, c, d, e) {
 				switch (this.name) {
+					case 'rowChk':
+                        return '<input type="checkbox" name="rowChk" data-pointSq="'+item.pointSq+'" data-custSq="'+item.custSq+'" data-siteSq="'+item.siteSq+'">';
 					case 'num':
 						return (item.pageNo - 1) * item.pageSize + (c + 1);
 					case 'tap_gb':
@@ -156,6 +158,15 @@
 			 */
 			function initGrid(container) {
 				var fields = [
+					{
+						name: 'rowChk',
+						title: '',
+						type: 'checkbox',
+						align: 'center',
+						width: 20,
+						itemTemplate: colfnc,
+						sortingDisabled: true,
+					},
 					{
 						name: 'rownum',
 						title: '순번',
@@ -504,6 +515,41 @@
 				templetDownLoad(params, null, null, function () {
 					jAlert.error('오류', '다운로드에 실패했습니다.');
 				});
+			}
+
+			function deleteGridRows() {
+				//if ('9' != parent.getUserLv()) {
+				//	jAlert.error('오류', '마스터만 이용 가능한 기능입니다.');
+				//	return;
+				//}
+
+                if($('#mainGrid').find('input[name=rowChk]:checked').length < 1){
+					jAlert.error('오류', '선택된 데이터가 없습니다.');
+					return;
+                }
+
+                if( !confirm('정말 삭제하시겠습니까?')){
+                    return ;
+                }
+
+                var pointSqList = [];
+                $.each($('#mainGrid').find('input[name=rowChk]:checked'), function(i, item){
+                    var pointSq = $(item).attr('data-pointSq');
+                    var custSq = $(item).attr('data-custSq');
+                    pointSqList.push({pointSq:pointSq, custSq:custSq});
+                });
+                console.log('pointSqList', pointSqList);
+
+				getAjax(
+                    'test_deleteApi',
+                    pointSqList,
+                    null,
+                    function (result) {
+                        parent.searchGrid();
+                    },
+                    null
+                );
+
 			}
 		</script>
 	</head>

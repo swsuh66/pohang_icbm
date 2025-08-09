@@ -49,10 +49,17 @@
                 <button type="button" class="btn dj-btn-primary btn-sm" onclick="parent.searchGrid();">검색</button>
                 <button type="button" class="btn dj-btn-outline-gray btn-sm" onclick="resetComponentes();">초기화</button>
                 <button type="button" class="btn dj-btn-outline-green btn-sm" onclick="dataDownload();"><i class="ico i-excel"></i>엑셀다운</button>
+                <button type="button" id="btnDelGridRows" class="btn dj-btn-primary btn-sm" onclick="deleteGridRows();" style="display:none;">삭제</button>
             </div>
         </div>
     </div>
 </div>
-
+<script type="text/javascript">
+$(function(){
+    if('9' == parent.getUserLv()){  //9(마스터)
+        $("#btnDelGridRows").show();  //삭제버튼 show
+    }
+});
+</script>
 </body>
 </html>
