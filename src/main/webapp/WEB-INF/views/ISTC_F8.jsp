@@ -532,17 +532,17 @@
                     return ;
                 }
 
-                var pointSqList = [];
+                var rowList = [];
                 $.each($('#mainGrid').find('input[name=rowChk]:checked'), function(i, item){
                     var pointSq = $(item).attr('data-pointSq');
                     var custSq = $(item).attr('data-custSq');
-                    pointSqList.push({pointSq:pointSq, custSq:custSq});
+                    rowList.push({pointSq:pointSq, custSq:custSq});
                 });
-                console.log('pointSqList', pointSqList);
+                console.log('rowList', rowList);
 
 				getAjax(
-                    'test_deleteApi',
-                    pointSqList,
+                    '/customer/deleteCustomInfo',
+                    {rowList : rowList},
                     null,
                     function (result) {
                         parent.searchGrid();
