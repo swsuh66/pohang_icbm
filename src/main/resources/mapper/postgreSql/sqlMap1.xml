@@ -3865,7 +3865,8 @@
 		     , c.note
 		     , a.point_sq as "pointSq"
 		     , a.site_sq as "siteSq"
-		     , c.cust_phone 
+             , a.cust_sq as "custSq"
+		     , c.cust_phone
 		     , c.addr 
 		     , c.addr_new 
 		     , c.meter_no
