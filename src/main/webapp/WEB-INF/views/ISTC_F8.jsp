@@ -157,16 +157,22 @@
 			 * 그리드 초기화
 			 */
 			function initGrid(container) {
-				var fields = [
-					{
+
+				var fields = [];
+
+                if('9' == parent.getUserLv()){  //9(마스터)
+					fields.push({
 						name: 'rowChk',
-						title: '',
+						title: '삭제',
 						type: 'checkbox',
 						align: 'center',
-						width: 20,
+						width: 46,
 						itemTemplate: colfnc,
 						sortingDisabled: true,
-					},
+					});
+                }
+
+				fields.push(
 					{
 						name: 'rownum',
 						title: '순번',
@@ -221,7 +227,7 @@
 						itemTemplate: colfnc,
 						hasGroup: false,
 					},
-				];
+				);
 
 				//fields = refactFields(fields);
 
