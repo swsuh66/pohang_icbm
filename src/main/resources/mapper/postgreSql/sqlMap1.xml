@@ -4562,6 +4562,7 @@
 								  ,min(c.meas_dt) :: timestamp as "min_date"
 								  ,max(c.term_cv) as "max_term_cv"
 								  ,min(c.term_cv) as "min_term_cv"
+								  ,max(a.cust_sq) as "cust_sq"
                                   ,max(a.cust_name) as "cust_nm"
                                   ,max(a.admin_no) as "admin_id"
                                   ,max(a.business_name) as "use_type"
@@ -4573,11 +4574,13 @@
 								 ,max(c.meas_sq) as "meas_sq"
 								 ,max(a.read_responsi) as "read_responsi"
 								 ,max(a.cust_phone) as "cust_phone"
+								 ,max(a.remark) as "remark"
 								 ,(select call_check from tb_m1_meas_raw where meas_sq = max(c.meas_sq)) as "call_check"
                         from (
                         select
                                    a.point_sq  -- 장비 Sq
 								  ,a.site_sq
+								  , b.cust_sq
                                   , b.cust_name
                                   , b.admin_no
                                   , b.business_name
@@ -4586,6 +4589,7 @@
 								  , b.read_responsi
 								  , n.stat_cd 
 								  , cust_phone
+								  , b.remark
                           from
                             tb_m1_info_point a
                             join tb_m1_info_customer b ON b.cust_sq = a.cust_sq
