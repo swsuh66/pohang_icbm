@@ -120,7 +120,7 @@
 			var colfnc = function (value, item, c, d, e) {
 				switch (this.name) {
 					case 'rowChk':
-                        return '<input type="checkbox" name="rowChk" data-pointSq="'+item.pointSq+'" data-custSq="'+item.custSq+'" data-siteSq="'+item.siteSq+'">';
+						return '<input type="checkbox" name="rowChk" data-pointSq="' + item.pointSq + '" data-custSq="' + item.custSq + '" data-siteSq="' + item.siteSq + '">';
 					case 'num':
 						return (item.pageNo - 1) * item.pageSize + (c + 1);
 					case 'tap_gb':
@@ -157,10 +157,10 @@
 			 * 그리드 초기화
 			 */
 			function initGrid(container) {
-
 				var fields = [];
 
-                if('9' == parent.getUserLv()){  //9(마스터)
+				if ('9' == parent.getUserLv()) {
+					//9(마스터)
 					fields.push({
 						name: 'rowChk',
 						title: '삭제',
@@ -170,7 +170,7 @@
 						itemTemplate: colfnc,
 						sortingDisabled: true,
 					});
-                }
+				}
 
 				fields.push(
 					{
@@ -226,7 +226,7 @@
 						width: 250,
 						itemTemplate: colfnc,
 						hasGroup: false,
-					},
+					}
 				);
 
 				//fields = refactFields(fields);
@@ -529,33 +529,44 @@
 				//	return;
 				//}
 
-                if($('#mainGrid').find('input[name=rowChk]:checked').length < 1){
+				if ($('#mainGrid').find('input[name=rowChk]:checked').length < 1) {
 					jAlert.error('오류', '선택된 데이터가 없습니다.');
 					return;
-                }
+				}
 
-                if( !confirm('정말 삭제하시겠습니까?')){
-                    return ;
-                }
+				if (!confirm('정말 삭제하시겠습니까?')) {
+					return;
+				}
 
-                var rowList = [];
-                $.each($('#mainGrid').find('input[name=rowChk]:checked'), function(i, item){
-                    var pointSq = $(item).attr('data-pointSq');
-                    var custSq = $(item).attr('data-custSq');
-                    rowList.push({pointSq:pointSq, custSq:custSq});
-                });
-                console.log('rowList', rowList);
+				var rowList = [];
+				$.each($('#mainGrid').find('input[name=rowChk]:checked'), function (i, item) {
+					var pointSq = $(item).attr('data-pointSq');
+					var custSq = $(item).attr('data-custSq');
+					rowList.push({ pointSq: pointSq, custSq: custSq });
+				});
+				console.log('rowList', rowList);
 
-				getAjax(
-                    '/customer/deleteCustomInfo',
-                    {rowList : rowList},
-                    null,
-                    function (result) {
-                        parent.searchGrid();
-                    },
-                    null
-                );
+				$.ajax({
+					url: '/customer/deleteCustomInfo',
+					processData: false,
+					contentType: false,
+					data: { rowList: rowList },
+					type: 'POST',
+					success: function (result) {
+						$('#fileUp').aceWidget('stopLoading');
+						jAlert.info('정보', result.message);
 
+						$('#insertForm').hide();
+						$('#gridWindow').show();
+					},
+					error: function (e) {
+						// 오류 발생 시 동작
+						$('#fileUp').aceWidget('stopLoading');
+						console.error(e);
+						const msg = e.responseJSON?.message || '알 수 없는 오류 발생';
+						jAlert.error('오류 발생: ' + msg);
+					},
+				});
 			}
 		</script>
 	</head>

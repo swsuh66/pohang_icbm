@@ -8,7 +8,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.istec.m1.mapper.TbM1CmapDeviceMapper;
 import com.istec.m1.mapper.TbM1InfoCustomerMapper;
-import com.istec.m1.mapper.TbM1InfoImportMapper;
 import com.istec.m1.mapper.TbM1InfoPointMapper;
 
 public class CustomerService {
@@ -25,8 +24,8 @@ public class CustomerService {
         this.tbM1InfoPointMapper = tbM1InfoPointMapper;
     }
 
-    @Transactional(timeout = 60) // 1분
-	public void deleteCustomInfo(List<Map<String, Integer>> pointSqList) throws Exception {
+    @Transactional(timeout = 900) // 15분
+	public void deleteCustomerInfo(List<Map<String, Integer>> pointSqList) throws Exception {
         for (Map<String, Integer> item : pointSqList) {
             Integer custSq = item.get("custSq");
             Integer pointSq = item.get("pointSq");
