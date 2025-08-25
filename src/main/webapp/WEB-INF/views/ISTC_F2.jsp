@@ -307,7 +307,7 @@
                         title: "도로명 주소",
                         type: "text",
                         align: "center",
-                        width: 400,
+                        width: 350,
                         itemTemplate: colfnc,
                         hasGroup: true
                     },
@@ -316,7 +316,16 @@
                         title: "전화번호",
                         type: "text",
                         align: "center",
-                        width: 140,
+                        width: 110,
+                        itemTemplate: colfnc,
+                        hasGroup: true
+                    },
+                    {
+                        name: "checkDay",
+                        title: "검침일",
+                        type: "text",
+                        align: "center",
+                        width: 50,
                         itemTemplate: colfnc,
                         hasGroup: true
                     },
@@ -325,11 +334,10 @@
                         title: "검침원",
                         type: "text",
                         align: "center",
-                        width: 60,
+                        width: 50,
                         itemTemplate: colfnc,
                         hasGroup: true
-                    },
-                    
+                    },                    
                     {
                         name: "statCd",
                         title: "계량기 상태",
@@ -509,7 +517,7 @@
 
         var groups = [
             {title: '구분', columns: 1, align: "center"},
-            {title: '수용가', columns: 6, align: "center"},            
+            {title: '수용가', columns: 7, align: "center"},            
             {title: '최종 검침', columns: 4, align: "center"},
             /* Brad : 필요없는 정보 제거
             {title: '일간(이동평균) 사용량 (㎥/일)', columns: 5, align: "center"},
@@ -655,6 +663,7 @@
             var params = new Object();
 
             params.qid = dbParams[dbParamsTb]['refer-sql'];
+            console.log ("params.qid : " + params.qid);
             params.colMapping = dbParams[dbParamsTb]['cols'];
             params.length = params.colMapping.length;
 
