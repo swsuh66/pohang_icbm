@@ -119,8 +119,8 @@
 			 */
 			var colfnc = function (value, item, c, d, e) {
 				switch (this.name) {
-					case 'rowChk':
-						return '<input type="checkbox" name="rowChk" data-pointSq="' + item.pointSq + '" data-custSq="' + item.custSq + '" data-siteSq="' + item.siteSq + '">';
+					//case 'rowChk':
+					//	return '<input type="checkbox" name="rowChk" data-pointSq="' + item.pointSq + '" data-custSq="' + item.custSq + '" data-siteSq="' + item.siteSq + '">';
 					case 'num':
 						return (item.pageNo - 1) * item.pageSize + (c + 1);
 					case 'tap_gb':
@@ -159,7 +159,7 @@
 			function initGrid(container) {
 				var fields = [];
 
-				if ('9' == parent.getUserLv()) {
+				/*if ('9' == parent.getUserLv()) {
 					//9(마스터)
 					fields.push({
 						name: 'rowChk',
@@ -170,7 +170,7 @@
 						itemTemplate: colfnc,
 						sortingDisabled: true,
 					});
-				}
+				} */
 
 				fields.push(
 					{
@@ -506,15 +506,15 @@
 				var tParams = makeParams();
 
 				/*
-            var fromDate = $('#fromDate').val();
-            if(!fromDate || fromDate.length == 0) {
+			         var fromDate = $('#fromDate').val();
+			         if(!fromDate || fromDate.length == 0) {
 
-                $('#fromDate').val(kutil.dateFormat(new Date(Date.now()), 'yyyy-mm'));
-                 fromDate = kutil.dateFormat(new Date(Date.now()), 'yyyy-mm');
-            }
+			             $('#fromDate').val(kutil.dateFormat(new Date(Date.now()), 'yyyy-mm'));
+			              fromDate = kutil.dateFormat(new Date(Date.now()), 'yyyy-mm');
+			         }
 
-            tParams.fromDate = fromDate + '-01';
-            */
+			         tParams.fromDate = fromDate + '-01';
+			         */
 
 				$.extend(params, tParams);
 
