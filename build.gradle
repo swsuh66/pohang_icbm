@@ -6,7 +6,7 @@ plugins {
 }
 
 group = 'com.istec'
-version = '1.0.24'
+version = '1.0.26'
 
 war {
     manifest {
