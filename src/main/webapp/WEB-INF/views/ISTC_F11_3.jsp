@@ -270,7 +270,7 @@
 			function callCheckTemplate(value, item, c) {
 				var $_returnData = $('<div>');
 				var $_spanTxt = $('<span>').text(value);
-				var $_inputTxt = $('<input>').attr('type', 'text').attr('maxlength', '60').css('width', '60%').val(value);
+				var $_inputTxt = $('<input>').attr('type', 'text').attr('maxlength', '100').css('width', '85%').val(value);
 				var $_editBtn = $('<button>').addClass('jsgrid-button jsgrid-edit-button');
 				var $_saveBtn = $('<button>').addClass('jsgrid-button jsgrid-update-button');
 				var $_cancelBtn = $('<button>').addClass('jsgrid-button jsgrid-cancel-button');
@@ -481,7 +481,7 @@
 				{ name: 'min_term_cv', title: '최소사용량', type: 'text', width: 40, itemTemplate: colfnc, hasGroup: false },
 				{ name: 'stat_yn', title: '계량기누수여부', type: 'text', width: 40, itemTemplate: colfnc, hasGroup: false },
 				{ name: 'cust_phone', title: '전화번호', type: 'text', width: 40, itemTemplate: colfnc, hasGroup: false },
-				{ name: 'remark', title: '비고', type: 'text', width: 60, itemTemplate: colfnc, hasGroup: false },
+				{ name: 'remark', title: '비고', type: 'text', width: 120, itemTemplate: colfnc, hasGroup: false },
 			];
 
 			function initGrid(container, fields) {
