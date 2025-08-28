@@ -119,6 +119,8 @@
 			 */
 			var colfnc = function (value, item, c, d, e) {
 				switch (this.name) {
+					//case 'rowChk':
+					//	return '<input type="checkbox" name="rowChk" data-pointSq="' + item.pointSq + '" data-custSq="' + item.custSq + '" data-siteSq="' + item.siteSq + '">';
 					case 'num':
 						return (item.pageNo - 1) * item.pageSize + (c + 1);
 					case 'tap_gb':
@@ -155,7 +157,22 @@
 			 * 그리드 초기화
 			 */
 			function initGrid(container) {
-				var fields = [
+				var fields = [];
+
+				/*if ('9' == parent.getUserLv()) {
+					//9(마스터)
+					fields.push({
+						name: 'rowChk',
+						title: '삭제',
+						type: 'checkbox',
+						align: 'center',
+						width: 46,
+						itemTemplate: colfnc,
+						sortingDisabled: true,
+					});
+				} */
+
+				fields.push(
 					{
 						name: 'rownum',
 						title: '순번',
@@ -209,8 +226,8 @@
 						width: 250,
 						itemTemplate: colfnc,
 						hasGroup: false,
-					},
-				];
+					}
+				);
 
 				//fields = refactFields(fields);
 
@@ -489,20 +506,66 @@
 				var tParams = makeParams();
 
 				/*
-            var fromDate = $('#fromDate').val();
-            if(!fromDate || fromDate.length == 0) {
+			         var fromDate = $('#fromDate').val();
+			         if(!fromDate || fromDate.length == 0) {
 
-                $('#fromDate').val(kutil.dateFormat(new Date(Date.now()), 'yyyy-mm'));
-                 fromDate = kutil.dateFormat(new Date(Date.now()), 'yyyy-mm');
-            }
+			             $('#fromDate').val(kutil.dateFormat(new Date(Date.now()), 'yyyy-mm'));
+			              fromDate = kutil.dateFormat(new Date(Date.now()), 'yyyy-mm');
+			         }
 
-            tParams.fromDate = fromDate + '-01';
-            */
+			         tParams.fromDate = fromDate + '-01';
+			         */
 
 				$.extend(params, tParams);
 
 				templetDownLoad(params, null, null, function () {
 					jAlert.error('오류', '다운로드에 실패했습니다.');
+				});
+			}
+
+			function deleteGridRows() {
+				//if ('9' != parent.getUserLv()) {
+				//	jAlert.error('오류', '마스터만 이용 가능한 기능입니다.');
+				//	return;
+				//}
+
+				if ($('#mainGrid').find('input[name=rowChk]:checked').length < 1) {
+					jAlert.error('오류', '선택된 데이터가 없습니다.');
+					return;
+				}
+
+				if (!confirm('정말 삭제하시겠습니까?')) {
+					return;
+				}
+
+				var rowList = [];
+				$.each($('#mainGrid').find('input[name=rowChk]:checked'), function (i, item) {
+					var pointSq = $(item).attr('data-pointSq');
+					var custSq = $(item).attr('data-custSq');
+					rowList.push({ pointSq: pointSq, custSq: custSq });
+				});
+				console.log('rowList', rowList);
+
+				$.ajax({
+					url: '/customer/deleteCustomInfo',
+					processData: false,
+					contentType: false,
+					data: { rowList: rowList },
+					type: 'POST',
+					success: function (result) {
+						$('#fileUp').aceWidget('stopLoading');
+						jAlert.info('정보', result.message);
+
+						$('#insertForm').hide();
+						$('#gridWindow').show();
+					},
+					error: function (e) {
+						// 오류 발생 시 동작
+						$('#fileUp').aceWidget('stopLoading');
+						console.error(e);
+						const msg = e.responseJSON?.message || '알 수 없는 오류 발생';
+						jAlert.error('오류 발생: ' + msg);
+					},
 				});
 			}
 		</script>

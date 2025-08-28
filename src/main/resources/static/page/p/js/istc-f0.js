@@ -412,6 +412,41 @@ function rawStockchart(container, data) {
 	this.setDataSourceNew = function (data, beginDate, endDate) {
 		var seriesData = [[], [], [], []];
 
+		// 2025-08-25 이용민: 기존의 정시 데이터만 표시하는는 로직을 주석 처리하고 실제 데이터를 사용하는 로직으로 변경
+		// 기존 차트 데이터 초기화
+		for (var ix = 0; ix < seriesData.length; ix++) {
+			_chart.series[ix].setData([]);
+		}
+		_chart.zoomOut();
+
+		// 원본 데이터를 그대로 사용 (정시 필터링 제거)
+		if (data) {
+			var cnt = data.length;
+			for (var ix = data.length - 1; ix >= 0; ix--) {
+				var dateStr = data[ix].measDtStr;
+				const [year, month, day, hour, min, sec] = dateStr.split('-').map(Number);
+				var reDate = Date.UTC(year, month - 1, day, hour, min, sec);
+				
+				if (data[ix].pointSq) {
+					seriesData[0].push([reDate, data[ix].termCv / data[ix].intavlH]);
+					seriesData[1].push([reDate, data[ix].accuIv]);
+					if (_amiType && _amiType === 'lora') {
+						seriesData[2].push([reDate, data[ix].rssiV]);
+						seriesData[3].push([reDate, data[ix].snrV]);
+					} else {
+						seriesData[2].push([reDate, data[ix].rsrpV]);
+						seriesData[3].push([reDate, data[ix].rsrqV]);
+					}
+				} else {
+					seriesData[0].push([reDate, null]);
+					seriesData[1].push([reDate, null]);
+					seriesData[2].push([reDate, null]);
+					seriesData[3].push([reDate, null]);
+				}
+			}
+		}
+
+		/*
 		// 날짜 범위를 밀리초 단위로 설정
 		var beginTime = new Date(`${beginDate} 00:00:00`).getTime();
 		var endTime = new Date(`${endDate} 23:59:59`).getTime();
@@ -460,6 +495,7 @@ function rawStockchart(container, data) {
 				seriesData[3].push([kctTimestamp, null]);
 			}
 		}
+		*/
 
 		// 차트에 데이터 설정
 		for (var ix = 0; ix < seriesData.length; ix++) {

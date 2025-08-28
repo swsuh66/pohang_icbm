@@ -36,4 +36,8 @@
             cust_sq = #{custSq}
         RETURNING point_sq
     </select>
+    <delete id="deletePoint" parameterType="java.util.Map">
+        DELETE FROM tb_m1_info_point
+        WHERE point_sq = #{pointSq}
+    </delete>
 </mapper>

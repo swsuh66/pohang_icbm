@@ -767,16 +767,16 @@
 	            param = {};
 	            param.custSq = document.getElementById('custSq').value;
 	            param.remark = document.getElementById('remark').value.trim();
-
+				/*
 				if (document.getElementById('remark').value.trim().length == 0)
 	            {
 	                jAlert.error('경고', '비고를 입력하세요');
 	                return;
 	            }
-
-	            if (document.getElementById('remark').value.length > 60)
+				*/
+	            if (document.getElementById('remark').value.length > 100)
 	            {
-	                jAlert.error('경고', '비고는 60자를 넘을수 없습니다');
+	                jAlert.error('경고', '비고는 100자를 넘을수 없습니다');
 	                return;
 	            }
 

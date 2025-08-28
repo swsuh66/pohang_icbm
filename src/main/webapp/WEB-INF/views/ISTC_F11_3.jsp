@@ -248,20 +248,20 @@
                         var dt = new Date(value);
                         return '<small>' + kutil.dateFormat(dt, 'yy.mm.dd') +' </small> ' + kutil.dateFormat(dt, 'HH:MM');
                     */
-                    case 'max_date':
-                    case 'min_date':
-                        if (!value) return '-';
-                        var dt = new Date(value);
-                        return '' + kutil.dateFormat(dt, 'yyyy.mm.dd') + ' ' + kutil.dateFormat(dt, 'HH:MM');
-                    case 'stat_yn':
-                        if (value == 'Y') {
-                            return '계량기누수';
-                        } else {
-                            return '정상';
-                        }
-                    case 'call_check':
-                        return callCheckTemplate(value, item, c);
-                }
+					case 'max_date':
+					case 'min_date':
+						if (!value) return '-';
+						var dt = new Date(value);
+						return '' + kutil.dateFormat(dt, 'yyyy.mm.dd') + ' ' + kutil.dateFormat(dt, 'HH:MM');
+					case 'stat_yn':
+						if (value == 'Y') {
+							return '계량기누수';
+						} else {
+							return '정상';
+						}
+					case 'remark':
+						return callCheckTemplate(value, item, c);
+				}
 
 				return value || value == 0 ? value : '-';
 			};
@@ -270,7 +270,7 @@
 			function callCheckTemplate(value, item, c) {
 				var $_returnData = $('<div>');
 				var $_spanTxt = $('<span>').text(value);
-				var $_inputTxt = $('<input>').attr('type', 'text').attr('maxlength', '60').css('width', '60%').val(value);
+				var $_inputTxt = $('<input>').attr('type', 'text').attr('maxlength', '100').css('width', '85%').val(value);
 				var $_editBtn = $('<button>').addClass('jsgrid-button jsgrid-edit-button');
 				var $_saveBtn = $('<button>').addClass('jsgrid-button jsgrid-update-button');
 				var $_cancelBtn = $('<button>').addClass('jsgrid-button jsgrid-cancel-button');
@@ -282,10 +282,10 @@
 				$_saveBtn.on('click', function () {
 					//저장 버튼 클릭
 					var params = {};
-					params['measSq'] = item.meas_sq;
-					params['callCheck'] = $_inputTxt.val();
+					params['custSq'] = item.cust_sq;
+					params['remark'] = $_inputTxt.val();
 					getAjax(
-						'mars.icbm.map1.updateCallCheck',
+						'mars.icbm.map1.updateRemark',
 						params,
 						false,
 						function (result) {
@@ -481,7 +481,7 @@
 				{ name: 'min_term_cv', title: '최소사용량', type: 'text', width: 40, itemTemplate: colfnc, hasGroup: false },
 				{ name: 'stat_yn', title: '계량기누수여부', type: 'text', width: 40, itemTemplate: colfnc, hasGroup: false },
 				{ name: 'cust_phone', title: '전화번호', type: 'text', width: 40, itemTemplate: colfnc, hasGroup: false },
-				{ name: 'call_check', title: '통화여부', type: 'text', width: 60, itemTemplate: colfnc, hasGroup: false },
+				{ name: 'remark', title: '비고', type: 'text', width: 120, itemTemplate: colfnc, hasGroup: false },
 			];
 
 			function initGrid(container, fields) {
@@ -601,6 +601,7 @@
 
 				params['stdDate'] = $('#stdDate').val() + ' ' + $('#stdTime').val(); // 기준 일자.
 				params['stdTime'] = $('#stdTime').val(); // 기준 일자.
+				params['cust_sq'] = $('#cust_sq').val();
 				params['cust_nm'] = $('#cust_nm').val();
 				params['admin_no'] = $('#admin_no').val();
 				params['calc_hour'] = $('#calc_hour').val();
