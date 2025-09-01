@@ -401,7 +401,7 @@
 
 	        var rawDefFields = [
 	            {name: "measDt", title: "검침일시", type: "text", align: "center", width: 130, itemTemplate: rawColfnc},
-	            {name: "statCd", title: "상태", type: "text", align: "center", width: 80, itemTemplate: rawColfnc},
+	            {name: "statCd", title: "수신상태", type: "text", align: "center", width: 80, itemTemplate: rawColfnc},
 	            {name: "accuIv", title: "최종지침<br>(㎥)", type: "number", align: "right", width: 100, itemTemplate: rawColfnc},
 	            {
 	                name: "termCv",
@@ -432,7 +432,7 @@
 
 	        var dayFields = [
 	            {name: "measDt", title: "기준일자", type: "text", align: "center", width: 80, itemTemplate: dayColfnc},
-	            {name: "statCd", title: "상태", type: "text", align: "center", width: 80, itemTemplate: dayColfnc},
+	            {name: "statCd", title: "일간상태", type: "text", align: "center", width: 80, itemTemplate: dayColfnc},
 	            {name: "rawCnt", title: "검침회수", type: "number", align: "right", width: 70, itemTemplate: dayColfnc},
 	            {name: "lastDt", title: "최종검침일시", type: "text", align: "center", width: 120, itemTemplate: dayColfnc},
 	            {name: "accuIv", title: "최종지침(㎥)", type: "number", align: "right", width: 100, itemTemplate: dayColfnc},
@@ -854,7 +854,7 @@
 						</div>
 						<div class="row">
 							<div class="col-md-no-padding col-md-6">
-								<label class="labelItem" for="statCdStr">검침상태</label>
+								<label class="labelItem" for="statCdStr">최종검침상태</label>
 								<input type="text" class="form-control" id="statCdStr" disabled />
 							</div>
 						</div>
