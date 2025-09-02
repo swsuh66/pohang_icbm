@@ -9,3 +9,5 @@
 
 3. tb_m1_info_customer
     ALTER TABLE public.tb_m1_info_customer ALTER COLUMN admin_no SET NOT NULL;
+
+4. fn_tb_meas_point_his_day_mov 에서  - interval '30 day' 두군데 삭제
