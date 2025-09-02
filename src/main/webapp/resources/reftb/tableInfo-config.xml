@@ -97,6 +97,10 @@
 			<title>전화번호</title>
 		</col>	
 		<col>
+			<name>checkDay</name>
+			<title>검침일</title>
+		</col>
+		<col>
 			<name>readOpr</name>
 			<title>검침원</title>
 		</col>

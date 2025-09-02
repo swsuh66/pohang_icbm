@@ -244,11 +244,12 @@
 					case 'sendDt':
 					case 'leakMeasDt':
 					/*
-			case 'measDt':
-				if(!value)
-					return '-';
-				var dt = new Date(value);
-				return '<small>' + kutil.dateFormat(dt, 'yy.mm.dd') +' </small> ' + kutil.dateFormat(dt, 'HH:MM');*/
+                    case 'measDt':
+                        if(!value)
+                            return '-';
+                        var dt = new Date(value);
+                        return '<small>' + kutil.dateFormat(dt, 'yy.mm.dd') +' </small> ' + kutil.dateFormat(dt, 'HH:MM');
+                    */
 					case 'max_date':
 					case 'min_date':
 						if (!value) return '-';
@@ -260,7 +261,7 @@
 						} else {
 							return '정상';
 						}
-					case 'call_check':
+					case 'remark':
 						return callCheckTemplate(value, item, c);
 					case 'receive_consent':
 						if (value) {
@@ -277,7 +278,7 @@
 			function callCheckTemplate(value, item, c) {
 				var $_returnData = $('<div>');
 				var $_spanTxt = $('<span>').text(value);
-				var $_inputTxt = $('<input>').attr('type', 'text').attr('maxlength', '60').css('width', '60%').val(value);
+				var $_inputTxt = $('<input>').attr('type', 'text').attr('maxlength', '100').css('width', '85%').val(value);
 				var $_editBtn = $('<button>').addClass('jsgrid-button jsgrid-edit-button');
 				var $_saveBtn = $('<button>').addClass('jsgrid-button jsgrid-update-button');
 				var $_cancelBtn = $('<button>').addClass('jsgrid-button jsgrid-cancel-button');
@@ -289,10 +290,10 @@
 				$_saveBtn.on('click', function () {
 					//저장 버튼 클릭
 					var params = {};
-					params['measSq'] = item.meas_sq;
-					params['callCheck'] = $_inputTxt.val();
+					params['custSq'] = item.cust_sq;
+					params['remark'] = $_inputTxt.val();
 					getAjax(
-						'mars.icbm.map1.updateCallCheck',
+						'mars.icbm.map1.updateRemark',
 						params,
 						false,
 						function (result) {
@@ -477,8 +478,9 @@
 
 			var mainFields = [
 				{ name: 'num', title: '순번', type: 'text', align: 'center', width: 20, sortingDisabled: true },
-				{ name: 'cust_nm', title: '이름', type: 'text', align: 'left', width: 50, itemTemplate: colfnc, hasGroup: false, group: groups[0] },
-				{ name: 'admin_id', title: '수용가번호', type: 'text', width: 40, itemTemplate: colfnc, hasGroup: false },
+				{ name: 'cust_nm', title: '이름', type: 'text', align: 'left', width: 40, itemTemplate: colfnc, hasGroup: false, group: groups[0] },
+				{ name: 'admin_id', title: '수용가번호', type: 'text', width: 80, itemTemplate: colfnc, hasGroup: false },
+				{ name: 'read_responsi', title: '검침원', type: 'text', width: 30, itemTemplate: colfnc, hasGroup: false },
 				{ name: 'receive_consent', title: '수신동의', type: 'text', width: 25, itemTemplate: colfnc, hasGroup: false },
 				{ name: 'use_type', title: '업종', type: 'text', width: 40, itemTemplate: colfnc, hasGroup: false },
 				{ name: 'pipe_dia', title: '구경', type: 'text', width: 40, itemTemplate: colfnc, hasGroup: false },
@@ -487,8 +489,8 @@
 				{ name: 'max_term_cv', title: '최고사용량', type: 'text', width: 30, itemTemplate: colfnc, hasGroup: false },
 				{ name: 'min_term_cv', title: '최소사용량', type: 'text', width: 30, itemTemplate: colfnc, hasGroup: false },
 				{ name: 'stat_yn', title: '계량기누수여부', type: 'text', width: 40, itemTemplate: colfnc, hasGroup: false },
-				{ name: 'cust_phone', title: '전화번호호', type: 'text', width: 45, itemTemplate: colfnc, hasGroup: false },
-				{ name: 'call_check', title: '통화여부', type: 'text', width: 60, itemTemplate: colfnc, hasGroup: false },
+				{ name: 'cust_phone', title: '전화번호호', type: 'text', width: 40, itemTemplate: colfnc, hasGroup: false },
+				{ name: 'remark', title: '비고', type: 'text', width: 120, itemTemplate: colfnc, hasGroup: false },
 			];
 
 			function initGrid(container, fields) {
@@ -641,6 +643,7 @@
 
 				params['stdDate'] = $('#stdDate').val() + ' ' + $('#stdTime').val(); // 기준 일자.
 				params['stdTime'] = $('#stdTime').val(); // 기준 일자.
+				params['cust_sq'] = $('#cust_sq').val();
 				params['cust_nm'] = $('#cust_nm').val();
 				params['admin_no'] = $('#admin_no').val();
 				params['calc_hour'] = $('#calc_hour').val();
@@ -648,6 +651,7 @@
 				params['business_name'] = $('#business_name').val();
 				params['compare_term_cv'] = $('#compare_term_cv').val();
 				params['statYn'] = $('#statYn').val();
+				params['read_responsi'] = $('#read_responsi').val();
 				params['cust_phone'] = $('#cust_phone').val();
 				return params;
 			}
@@ -870,10 +874,10 @@
 						$select.append(el);
 					});
 
-					// 구경값만  15로 설정
-					if (key == 2 && result.length > 1) {
-						$select.val(result[0].val);
-					}
+					//// 구경값만  15로 설정
+					//if (key == 2 && result.length > 1) {
+					//	$select.val(result[0].val);
+					//}
 				}
 			}
 

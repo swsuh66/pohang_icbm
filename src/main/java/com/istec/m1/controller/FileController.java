@@ -46,6 +46,7 @@ import com.istec.m1.manager.DBAccessManager;
 import com.istec.m1.manager.FileManager;
 import com.istec.m1.service.FileService;
 import com.istec.m1.service.QueryService;
+import com.istec.m1.exception.ExcelProcessingException;
 
 @Controller
 public class FileController {
@@ -379,12 +380,120 @@ public class FileController {
 		}
 		return selMap;
 	}
+
+	private String getSimpleErrorMessage(String msg) {
+		
+		if (msg == null) return "알 수 없는 오류가 발생했습니다.";
+
+		return msg;
+
+		// if (msg.contains("violates foreign key constraint")) {
+		// 	return "연관된 데이터가 존재하지 않습니다.";
+		// } else if (msg.contains("duplicate key")) {
+		// 	return "이미 등록된 항목입니다.";
+		// } else if (msg.contains("Cannot invoke")) {
+		// 	return "필수 입력값이 누락되었거나 잘못된 형식입니다.";
+		// } else if (msg.contains("Cannot get a STRING value from a NUMERIC cell")) {
+		// 	return "엑셀 셀 타입 오류: 숫자 셀에서 문자열을 읽을 수 없습니다.";
+		// } else if (msg.contains("NumberFormatException")) {
+		// 	return "숫자 형식 오류: 잘못된 숫자 입력입니다.";
+		// } else if (msg.contains("null")) {
+		// 	return "입력값이 null 입니다.";
+		// }
+
+		// 기본 메시지는 앞 100자만 표시
+		//return "처리 중 오류 발생: " + msg.substring(0, Math.min(100, msg.length())) + "...";
+	}
+
+	@RequestMapping(value = "/file/insert_customers", method = RequestMethod.POST)
+	@ResponseBody
+	public Map<String, Object> insertCustomInfoFromExcel(
+			@RequestParam("file") MultipartFile file,
+			@RequestParam(value = "isCheck", defaultValue = "true") boolean isCheck,
+			HttpServletRequest request,
+			HttpServletResponse response) throws Exception {
+
+		Map<String, Object> result = new HashMap<>();
+		String tokenKey = UUID.randomUUID().toString();
+
+		// 사용자 정보 추출
+		CustomUserDetails userDetails = (CustomUserDetails) request.getSession(false)
+			.getAttribute(Define.Key.LOGIN_INFO);
+		int siteSq = userDetails.getSiteSq();
+
+		try {
+			// 파일 처리 및 DB 입력
+			fileService.insertCustomInfoFromExcel(file, siteSq, tokenKey, isCheck);
+
+			response.setStatus(StatusCode.STATUS_OK.getValue());
+			result.put("status", "success");
+			result.put("message", isCheck ? "검증 완료" : "신규 정보 입력 성공");
+		} catch (ExcelProcessingException  e) {
+			// 런타임 예외 처리
+			response.setStatus(StatusCode.STATUS_INTERNAL_SERVER_ERROR.getValue());
+			result.put("status", "error");
+			result.put("errorRow", e.getRow());
+			result.put("errorCol", e.getCol());
+			result.put("message", e.getMessage() +  ": " + getSimpleErrorMessage(e.getDetailMessage())); 
+			e.printStackTrace();
+
+		} catch (Exception e) {
+			// 모든 일반 예외 처리
+			response.setStatus(StatusCode.STATUS_INTERNAL_SERVER_ERROR.getValue());
+			result.put("status", "error");
+			result.put("details", getSimpleErrorMessage(e.getMessage())); 
+			e.printStackTrace();
+		}
+
+		return result;
+	}
+
+	@RequestMapping(value = "/file/update_customers", method = RequestMethod.POST)
+	@ResponseBody
+	public Map<String, Object>updateCustomInfoFromExcel(
+			@RequestParam("file") MultipartFile file,
+			HttpServletRequest request,
+			HttpServletResponse response) throws Exception {
+
+		Map<String, Object> result = new HashMap<>();
+		String tokenKey = UUID.randomUUID().toString();
+
+		// 사용자 정보 추출
+		CustomUserDetails userDetails = (CustomUserDetails) request.getSession(false)
+			.getAttribute(Define.Key.LOGIN_INFO);
+		int siteSq = userDetails.getSiteSq();
+
+		try {
+			// 파일 처리 및 DB 입력
+			fileService.updateCustomInfoFromExcel(file, siteSq, tokenKey);
+
+			response.setStatus(StatusCode.STATUS_OK.getValue());
+			result.put("status", "success");
+		} catch (ExcelProcessingException e) {
+			// 런타임 예외 처리
+			response.setStatus(StatusCode.STATUS_INTERNAL_SERVER_ERROR.getValue());
+			result.put("status", "error");
+			result.put("message", e.getMessage() + ": " + getSimpleErrorMessage(e.getDetailMessage())); 
+			e.printStackTrace();
+
+		} catch (Exception e) {
+			// 모든 일반 예외 처리
+			response.setStatus(StatusCode.STATUS_INTERNAL_SERVER_ERROR.getValue());
+			result.put("status", "error");
+			result.put("details", getSimpleErrorMessage(e.getMessage())); 
+			e.printStackTrace();
+		}
+
+		return result;
+	}
+	
 	
 	/**
 	 * 신규 종합정보등록 
 	 */	
 	@RequestMapping(value = "/file/insert_f5_2", method = RequestMethod.POST)
-	public @ResponseBody Map<String, Object> uploadTest(@RequestParam("file") MultipartFile file, HttpServletRequest request, HttpServletResponse response) throws Exception {
+	@ResponseBody
+	public  Map<String, Object> uploadTest(@RequestParam("file") MultipartFile file, HttpServletRequest request, HttpServletResponse response) throws Exception {
 		HttpSession session = request.getSession(false);		
 		Map<String, Object> resData = new HashMap<String, Object>();
 		List<HashMap<String, Object>>  parData = null;

@@ -1,13 +1,18 @@
 .DS_Store
 .svn
 .git
-.gradle
 .classpath
+.factorypath
 .project
 .settings
 
-/.settings
+/.gradle
+/.history
+/.idea
+/.settings  
+/.vscode
 /build
 /bin
-/.idea
-/.history
+/logs
+/release
+

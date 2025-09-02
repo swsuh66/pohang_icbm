@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+<mapper namespace="com.istec.m1.mapper.TbM1InfoCustomerMapper">
+    <!-- insert 후 cust_sq를 받기위해 select 를 사용함(오류아니니 고치지 말것) -->
+    <select id="insertCustomer" parameterType="java.util.Map" resultType="java.lang.Long">
+        INSERT INTO tb_m1_info_customer (
+            admin_no,
+            cust_name,
+            addr,
+            addr_new,
+            business_name,
+            pipe_diameter,
+            meter_no,            
+            read_responsi,
+            cust_phone,
+            set_years,            
+            check_day,
+            ins_dt,
+			udt_dt
+        )
+        VALUES (
+            #{adminNo},
+            #{custName},
+            #{addr},
+            #{addrNew},
+            #{businessName},
+            #{pipeDiameter}, 
+            #{meterNo},            
+            #{readResponsi},
+            #{custPhone},
+            #{setYears},
+            #{checkDay},
+            now(),
+            now()
+        ) RETURNING cust_sq;
+    </select>
+    <select id="updateCustomer" parameterType="java.util.Map" resultType="java.lang.Long">
+        UPDATE tb_m1_info_customer
+            SET
+                cust_name = #{custName},
+                addr = #{addr},
+                addr_new = #{addrNew},
+                business_name = #{businessName},
+                pipe_diameter = #{pipeDiameter},
+                meter_no = #{meterNo},
+                read_responsi = #{readResponsi},
+                cust_phone = #{custPhone},
+                set_years = #{setYears},
+                check_day = #{checkDay},
+                udt_dt = now()
+            WHERE
+                admin_no = #{adminNo}
+            RETURNING cust_sq;
+    </select>
+    <delete id="deleteCustomer" parameterType="java.util.Map">
+        DELETE FROM tb_m1_info_customer
+        WHERE cust_sq = #{custSq}
+    </delete>
+</mapper>
