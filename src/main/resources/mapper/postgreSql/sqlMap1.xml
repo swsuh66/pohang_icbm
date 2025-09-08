@@ -1283,6 +1283,12 @@
 		where
 			cust_sq = #{custSq}::integer;
 	</update>
+
+	<update id="updateReceiveConsent" parameterType="java.util.Map">
+		UPDATE tb_m1_info_customer
+		SET receive_consent = #{receive_consent, jdbcType=BOOLEAN}
+		WHERE cust_sq = #{custSq, jdbcType=INTEGER}::integer
+	</update>
 	
 	<select id="noUseList" parameterType="java.util.Map" resultType="java.util.Map">           
       <include refid="noUse_sql"/>            
@@ -3857,6 +3863,7 @@
 	
 	<sql id="adminList_sql">
 		select (ROW_NUMBER() OVER(order by c.cust_sq)) AS "rownum"
+		  	 , c.cust_sq
 		     , c.admin_no
 		     , c.cust_name
 		     <!-- 

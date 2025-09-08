@@ -40,6 +40,29 @@
 
 				/* 수용가 조회 */
 				mainGrid.search();
+
+				/* 체크박스 클릭 이벤트 */
+				$(document).on('click', 'input[name=receive_consent]', function () {
+					var custSq = $(this).attr('data-custSq');
+					var receive_consent = $(this).is(':checked') ? '1' : '0';
+
+					console.log('custSq', custSq, 'receive_consent', receive_consent);
+
+					var params = {};
+
+					params['custSq'] = custSq;
+					params['receive_consent'] = receive_consent == '1' ? true : false;
+
+					getAjax(
+						'mars.icbm.map1.updateReceiveConsent',
+						params,
+						false,
+						function (result) {
+							jAlert.info('정보', '저장 완료');
+						},
+						null
+					);
+				});
 			});
 
 			function updateColPos(cols, parentElement) {
@@ -151,8 +174,7 @@
 					case 'receive_consent':
 						var selected = item.receive_consent;
 
-						return '<input type="checkbox" name="useCdtext"' + selected + '>';
-						return value ? "<i class='ico i-check'></i>" : "<i class='ico i-uncheck'></i>";
+						return "<input type='checkbox' name='receive_consent' " + (selected ? 'checked' : '') + '  class="cbox" data-custSq="' + item.cust_sq + '"/>';
 				}
 
 				return value == 0 || value ? value : '-';
@@ -426,6 +448,25 @@
 						msg += error.responseText ? error.responseText.trim() : '서버에 오류가 있습니다.';
 
 						jAlert.error('오류', msg);
+					},
+				});
+			}
+
+			function updateAjax(qid, params, beforesend, callback, errCallback, async) {
+				ajaxUpdate({
+					sql: qid,
+					data: params,
+					async: async ? async : true,
+					beforeSend: function () {
+						if (beforesend) beforesend();
+					},
+					success: function (result) {
+						if (callback) callback(result);
+					},
+					error: function (result) {
+						if (errCallback) errCallback(error);
+
+						jAlert.error('오류', '서버에 오류가 있습니다.');
 					},
 				});
 			}
