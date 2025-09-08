@@ -479,18 +479,18 @@
 			var mainFields = [
 				{ name: 'num', title: '순번', type: 'text', align: 'center', width: 20, sortingDisabled: true },
 				{ name: 'cust_nm', title: '이름', type: 'text', align: 'left', width: 40, itemTemplate: colfnc, hasGroup: false, group: groups[0] },
-				{ name: 'admin_id', title: '수용가번호', type: 'text', width: 80, itemTemplate: colfnc, hasGroup: false },
+				{ name: 'admin_id', title: '수용가번호', type: 'text', width: 60, itemTemplate: colfnc, hasGroup: false },
 				{ name: 'read_responsi', title: '검침원', type: 'text', width: 30, itemTemplate: colfnc, hasGroup: false },
-				{ name: 'receive_consent', title: '수신동의', type: 'text', width: 25, itemTemplate: colfnc, hasGroup: false },
+				{ name: 'receive_consent', title: '수신동의', type: 'text', width: 30, itemTemplate: colfnc, hasGroup: false },
 				{ name: 'use_type', title: '업종', type: 'text', width: 40, itemTemplate: colfnc, hasGroup: false },
-				{ name: 'pipe_dia', title: '구경', type: 'text', width: 40, itemTemplate: colfnc, hasGroup: false },
+				{ name: 'pipe_dia', title: '구경', type: 'text', width: 20, itemTemplate: colfnc, hasGroup: false },
 				{ name: 'max_date', title: '최대시간', type: 'text', width: 50, itemTemplate: colfnc, hasGroup: false },
 				{ name: 'min_date', title: '최소시간', type: 'text', width: 50, itemTemplate: colfnc, hasGroup: false },
 				{ name: 'max_term_cv', title: '최고사용량', type: 'text', width: 30, itemTemplate: colfnc, hasGroup: false },
 				{ name: 'min_term_cv', title: '최소사용량', type: 'text', width: 30, itemTemplate: colfnc, hasGroup: false },
 				{ name: 'stat_yn', title: '계량기누수여부', type: 'text', width: 40, itemTemplate: colfnc, hasGroup: false },
 				{ name: 'cust_phone', title: '전화번호호', type: 'text', width: 40, itemTemplate: colfnc, hasGroup: false },
-				{ name: 'remark', title: '비고', type: 'text', width: 120, itemTemplate: colfnc, hasGroup: false },
+				{ name: 'remark', title: '비고', type: 'text', width: 115, itemTemplate: colfnc, hasGroup: false },
 			];
 
 			function initGrid(container, fields) {
