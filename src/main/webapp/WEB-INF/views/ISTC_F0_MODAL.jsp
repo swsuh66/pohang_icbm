@@ -857,6 +857,10 @@
 								<label class="labelItem" for="statCdStr">최종검침상태</label>
 								<input type="text" class="form-control" id="statCdStr" disabled />
 							</div>
+							<div class="col-md-no-padding col-md-6">
+								<label class="labelItem" for="modemId">지시부번호</label>
+								<input type="text" class="form-control" id="modemId" disabled />
+							</div>
 						</div>
 					</div>
 					<div class="col-md-no-padding col-md-6 filedBlock">
