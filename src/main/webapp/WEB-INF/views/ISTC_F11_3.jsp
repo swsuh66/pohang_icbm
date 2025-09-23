@@ -244,12 +244,12 @@
 					case 'sendDt':
 					case 'leakMeasDt':
 					/*
-                    case 'measDt':
-                        if(!value)
-                            return '-';
-                        var dt = new Date(value);
-                        return '<small>' + kutil.dateFormat(dt, 'yy.mm.dd') +' </small> ' + kutil.dateFormat(dt, 'HH:MM');
-                    */
+			                 case 'measDt':
+			                     if(!value)
+			                         return '-';
+			                     var dt = new Date(value);
+			                     return '<small>' + kutil.dateFormat(dt, 'yy.mm.dd') +' </small> ' + kutil.dateFormat(dt, 'HH:MM');
+			                 */
 					case 'max_date':
 					case 'min_date':
 						if (!value) return '-';
@@ -596,6 +596,15 @@
 
 			function sendAlrimTok() {
 				const url = 'http://localhost:8088/api/v1/message/send';
+				String message =
+					"[포항시] 원격검침 수용가 누수 의심 안내\n\n" +
+					"귀댁의 수도 계량기 원격검침 데이터상, 72시간(3일) 동안 지속적인 물 사용량으로 누수가 의심되오니 아래 링크를 참조하여 자가진단 및 누수탐지 바랍니다.\n" +
+					"누수가 맞다면 누수공사 완료 후, 감면대상 여부를 확인하고 공사일로부터 60일 이내에 누수감면 신청 바랍니다.\n\n" +
+					"★ 자가진단 방법 및 옥내누수감면 안내 ★\n" +
+					"https://www.pohang.go.kr/water/contents.do?mid=0302040000\n\n" +
+					"수도요금안내>요금납부방법안내>요금감면안내>옥내누수요금감면(누수자가진단)\n\n" +
+					"▶ 관련문의 : 054-270-5331 (평일 9시 ~ 18시)\n\n" +
+					"- 포항시 상하수도행정과 요금팀 -";
 
 				const params = makeParams();
 				loadData('mars.icbm.map1.select_waterLeakList_page2', params, function (data) {
@@ -605,15 +614,15 @@
 					for (let i = 0; i < data.length; i++) {
 						if (!data[i].receive_consent) continue;
 						params.push({
-							title: '누수안내',
-							msgContent: '홍길동님, 누수가 의심됩니다.',
+							title: '[포항시] 원격검침 수용가 누수 의심 안내',
+							msgContent: message,
 							tgtNm: data[i].cust_nm,
 							phoneNum: data[i].cust_phone,
-							templateCd: '1001',
+							templateCd: 'UMS_2025080611060242672',
 						});
 					}
 					//console.log('params', params);
-					ajaxPost('http://localhost:8088/api/v1/message/send', params, sendResult);
+					ajaxPost(url, params, sendResult);
 					return;
 				});
 			}
