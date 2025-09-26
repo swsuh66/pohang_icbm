@@ -434,7 +434,7 @@
 	            {name: "measDt", title: "기준일자", type: "text", align: "center", width: 80, itemTemplate: dayColfnc},
 	            {name: "statCd", title: "일간상태", type: "text", align: "center", width: 80, itemTemplate: dayColfnc},
 	            {name: "rawCnt", title: "검침회수", type: "number", align: "right", width: 70, itemTemplate: dayColfnc},
-	            {name: "lastDt", title: "최종검침일시", type: "text", align: "center", width: 120, itemTemplate: dayColfnc},
+	            {name: "lastDt", title: "최종수신일시", type: "text", align: "center", width: 120, itemTemplate: dayColfnc},
 	            {name: "accuIv", title: "최종지침(㎥)", type: "number", align: "right", width: 100, itemTemplate: dayColfnc},
 	            {name: "temperature", title: "온도", type: "text", align: "right", width: 60, itemTemplate: rawColfnc},     ////////////// 2022-11-30
 	            {
