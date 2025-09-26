@@ -373,7 +373,7 @@
 			function loadData() {
 				const params = makeParams();
 				//const queryString = new URLSearchParams(params).toString();
-				const url = 'http://localhost:8088/api/v1/message/history';
+				const url = 'http://111.1.4.87:3000/api/v1/message/history';
 				/* 알림톡 발신 리스트 조회 */
 				getAjax(
 					url,
@@ -492,7 +492,7 @@
 				var params = new Object();
 
 				params.qid = null; // dbParams[dbParamsTb]['refer-sql'];
-				params.url = 'http://localhost:8088/api/v1/message/history';
+				params.url = 'http://111.1.4.87:3000/api/v1/message/history';
 				params.colMapping = dbParams[dbParamsTb]['cols'];
 				params.length = params.colMapping.length;
 
