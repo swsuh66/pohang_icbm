@@ -595,7 +595,7 @@
 			}
 
 			function sendAlrimTok() {
-				const url = 'http://111.1.4.87:3000/api/v1/message/send';
+				const url = 'http://localhost:3000/api/v1/message/send';
 				String message =
 					"귀댁의 수도 계량기 원격검침 데이터상, 72시간(3일) 동안 지속적인 물 사용량으로 누수가 의심되오니 아래 링크를 참조하여 자가진단 및 누수탐지 바랍니다.\n" +
 					"누수가 맞다면 누수공사 완료 후, 감면대상 여부를 확인하고 공사일로부터 60일 이내에 누수감면 신청 바랍니다.\n\n" +

@@ -373,7 +373,7 @@
 			function loadData() {
 				const params = makeParams();
 				//const queryString = new URLSearchParams(params).toString();
-				const url = 'http://111.1.4.87:3000/api/v1/message/history';
+				const url = 'http://localhost:3000/api/v1/message/history';
 				/* 알림톡 발신 리스트 조회 */
 				getAjax(
 					url,

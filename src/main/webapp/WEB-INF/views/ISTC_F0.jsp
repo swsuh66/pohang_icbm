@@ -690,7 +690,8 @@
                 <li>${user.getUserNm()}님</li>
                 <li><a href="logout">로그아웃</a></li>
             </ul>
-            <span class="system-version">버전 ${systemVersion}</span>
+            <!-- <span class="system-version">버전 ${systemVersion}</span> -->
+             <span class="system-version">버전 1.0.28</span>
         </header>
 
         <div class="main-container" id="main-container">

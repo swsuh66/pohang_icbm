@@ -413,7 +413,7 @@
     		  a.img_src_add,
 			  a.remark,
 			  a.note,
-			  w.modem_id as "modemId"
+			  w.modem_id as modemId
 		  from
 		    vi_m1_sv_point_list a
 		    left outer join vi_m1_sv_meas_now b on b.POINT_SQ = a.POINT_SQ
