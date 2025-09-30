@@ -594,18 +594,19 @@
 				}
 			}
 
+			let message =
+				'귀댁의 수도 계량기 원격검침 데이터상, 72시간(3일) 동안 지속적인 물 사용량으로 누수가 의심되오니 아래 링크를 참조하여 자가진단 및 누수탐지 바랍니다.\n' +
+				'누수가 맞다면 누수공사 완료 후, 감면대상 여부를 확인하고 공사일로부터 60일 이내에 누수감면 신청 바랍니다.\n\n' +
+				'★ 자가진단 방법 및 옥내누수감면 안내 ★\n' +
+				'https://www.pohang.go.kr/water/contents.do?mid=0302040000\n\n' +
+				'수도요금안내>요금납부방법안내>요금감면안내>옥내누수요금감면(누수자가진단)\n\n' +
+				'▶ 관련문의 : 054-270-5331 (평일 9시 ~ 18시)\n\n' +
+				'- 포항시 상하수도행정과 요금팀 -';
+
 			function sendAlrimTok() {
 				const url = 'http://localhost:3000/api/v1/message/send';
-				let message =
-					'귀댁의 수도 계량기 원격검침 데이터상, 72시간(3일) 동안 지속적인 물 사용량으로 누수가 의심되오니 아래 링크를 참조하여 자가진단 및 누수탐지 바랍니다.\n' +
-					'누수가 맞다면 누수공사 완료 후, 감면대상 여부를 확인하고 공사일로부터 60일 이내에 누수감면 신청 바랍니다.\n\n' +
-					'★ 자가진단 방법 및 옥내누수감면 안내 ★\n' +
-					'https://www.pohang.go.kr/water/contents.do?mid=0302040000\n\n' +
-					'수도요금안내>요금납부방법안내>요금감면안내>옥내누수요금감면(누수자가진단)\n\n' +
-					'▶ 관련문의 : 054-270-5331 (평일 9시 ~ 18시)\n\n' +
-					'- 포항시 상하수도행정과 요금팀 -';
-
 				const params = makeParams();
+
 				loadData('mars.icbm.map1.select_waterLeakList_page2', params, function (data) {
 					// console.log('sendNusuAlrimTok data', data);
 					// display(data);
@@ -624,6 +625,47 @@
 					ajaxPost(url, params, sendResult);
 					return;
 				});
+			}
+
+			function openAlrimTokPopup() {
+				document.getElementById('alrimTokPopup').style.display = 'block';
+			}
+
+			// 팝업 닫기
+			function closeAlrimTokPopup() {
+				document.getElementById('alrimTokPopup').style.display = 'none';
+			}
+
+			function confirmSendAlrimTok() {
+				const name = document.getElementById('popupUserName').value.trim();
+				const phone = document.getElementById('popupPhoneNum').value.trim();
+				const phoneRegex = /^010-\d{4}-\d{4}$/; // 010-1234-5678 형식
+
+				if (!name) {
+					alert('사용자명을 입력하세요.');
+					return;
+				}
+				if (!phoneRegex.test(phone)) {
+					alert('전화번호는 010-1234-5678 형식으로 입력하세요.');
+					return;
+				}
+
+				sendTestAlrimTok(name, phone);
+				closeAlrimTokPopup();
+			}
+
+			function sendTestAlrimTok() {
+				let params = [];
+				params.push({
+					title: '[포항시] 원격검침 수용가 누수 의심 안내',
+					msgContent: message,
+					tgtNm: data[i].cust_nm,
+					phoneNum: data[i].cust_phone,
+					templateCd: 'UMS_2025080611060242672',
+				});
+
+				//console.log('params', params);
+				ajaxPost(url, params, sendResult);
 			}
 
 			function ajaxPost(url, params, callback) {
@@ -1082,6 +1124,45 @@
 			</div>
 		</div>
 
+		<!-- 알림톡 테스트 모달 팝업 -->
+		<div id="alrimTokPopup" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); z-index: 1000">
+			<div
+				style="
+					background: #fff;
+					width: 380px;
+					margin: 120px auto;
+					padding: 25px 20px;
+					border-radius: 12px;
+					box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+					font-family: 'Segoe UI', sans-serif;
+					animation: fadeIn 0.3s;
+				"
+			>
+				<h3 style="margin-top: 0; color: #333; text-align: center">알림톡 테스트</h3>
+
+				<div style="margin-bottom: 15px">
+					<label for="popupUserName" style="display: block; text-align: left; font-weight: bold; margin-bottom: 5px">사용자명</label>
+					<input type="text" id="popupUserName" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 6px" />
+				</div>
+
+				<div style="margin-bottom: 20px">
+					<label for="popupPhoneNum" style="display: block; text-align: left; font-weight: bold; margin-bottom: 5px">전화번호</label>
+					<input type="text" id="popupPhoneNum" placeholder="010-1234-5678" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 6px" />
+				</div>
+
+				<div style="text-align: right">
+					<button
+						onclick="confirmSendAlrimTok()"
+						style="padding: 8px 16px; background: #2196f3; color: white; border: none; border-radius: 6px; cursor: pointer; margin-right: 8px"
+					>
+						확인
+					</button>
+					<button onclick="closeAlrimTokPopup()" style="padding: 8px 16px; background: #aaa; color: white; border: none; border-radius: 6px; cursor: pointer">
+						취소
+					</button>
+				</div>
+			</div>
+		</div>
 		<div class="modal fade" id="hideSettingModal" tabindex="-1" role="dialog">
 			<div class="modal-dialog modal-dialog-scrollable modal-dialog-centered" role="document">
 				<div class="modal-content">
