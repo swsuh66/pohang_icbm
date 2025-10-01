@@ -1,3 +1,7 @@
+0. 배포시 주의사항
+    - application.properties가 포항서버로 설정되어 있는지 확인
+    - ISTC_F0 694라인 버전과 build.gradle 파일 버전과 동일성 확인 후 배포
+
 1. DB 수정내용
     - vi_m1_sv_point_list 에 c.remark 추가
     - tb_m1_meas_raw call_check(var(60)) 필드 추가
