@@ -114,8 +114,8 @@
 			 * 그리드 갱신
 			 */
 			function refreshGrid(data) {
-				//mainGrid = initGrid('mainGrid');
-
+				// mainGrid = initGrid('mainGrid');
+				// console.log('refreshGrid data ===== ', data);
 				if (data) {
 					mainGrid.finishLoad(data || []);
 				} else {
@@ -369,11 +369,77 @@
 				return params;
 			}
 
+			function hyphenizePhoneIfNeeded(v) {
+				if (!v) return v;
+				var digits = String(v).replace(/\D/g, '');
+				if (digits.length === 11 && digits.startsWith('010')) {
+					return digits.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3');
+				}
+				return v;
+			}
+
+			function hyphenizePhone(v) {
+				if (!v) return '';
+				var d = String(v).replace(/\D/g, '');
+				if (d.length === 11 && d.indexOf('010') === 0) {
+					return d.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3');
+				}
+				return v;
+			}
+
+			// 응답 정규화: 문자열→JSON, data/rows 래핑 대응, 키 변환
+			function normalizeHistoryResponse(raw) {
+				// 1) 문자열이면 파싱
+				if (typeof raw === 'string') {
+					try {
+						raw = JSON.parse(raw);
+					} catch (e) {
+						console.error('JSON parse error', e);
+						return [];
+					}
+				}
+
+				// 2) 배열 꺼내기
+				var arr = [];
+				if (Array.isArray(raw)) arr = raw;
+				else if (raw && Array.isArray(raw.data)) arr = raw.data;
+				else if (raw && Array.isArray(raw.rows)) arr = raw.rows;
+				else if (raw && typeof raw === 'object') arr = [raw]; // 방어적
+
+				// 3) 키/포맷 변환
+				var out = arr.map(function (o) {
+					return {
+						rownum: o.rownum,
+						id: o.id,
+						userId: o.user_id,
+						scheduleType: o.schedule_type,
+						title: o.title,
+						msgContent: (o.msg_content || '').replace(/\t/g, '').trim(), // 탭 제거/트림
+						callingNum: o.calling_num,
+						tgtNm: o.tgt_nm,
+						phoneNum: hyphenizePhone(o.phone_num), // 하이픈 보정
+						stateCd: o.state_cd,
+						stateMsg: o.state_msg,
+						templateCd: o.template_cd,
+						reservDttm: o.reserv_dttm,
+						regDttm: o.reg_dttm,
+						totalCount: o.totalCount,
+					};
+				});
+
+				return out;
+			}
+
 			/* 메인 gird 로드  */
 			function loadData() {
 				const params = makeParams();
-				//const queryString = new URLSearchParams(params).toString();
-				const url = 'http://localhost:3000/api/v1/message/history';
+				console.log('loadData: params ===== ', params);
+
+				const base = getContextPath();
+				if (base && base.endsWith('/')) base = base.slice(0, -1);
+				const url = base + '/api/alrimtok/history';
+				console.log('loadData: url ===== ', url);
+
 				/* 알림톡 발신 리스트 조회 */
 				getAjax(
 					url,
@@ -398,7 +464,15 @@
 						if (beforesend) beforesend();
 					},
 					success: function (result) {
-						//console.log('getAjax result', result);
+						if (typeof result === 'string') {
+							try {
+								result = JSON.parse(result);
+							} catch (e) {
+								console.error(e);
+								result = [];
+							}
+						}
+						console.log('getAjax result ===== ', result);
 						if (callback) callback(result);
 					},
 					error: function (error) {

@@ -1,4 +1,4 @@
-<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <c:set var="contextPath" value="<%=request.getContextPath()%>"></c:set>
 <%@ page language="java" session="false" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
@@ -604,26 +604,85 @@
 				'- 포항시 상하수도행정과 요금팀 -';
 
 			function sendAlrimTok() {
-				const url = 'http://localhost:3000/api/v1/message/send';
-				const params = makeParams();
+				const API_SEND = '<c:url value="/api/alrimtok/send"/>';
+				const reqParams = makeParams(); // 기존 그대로 사용
 
-				loadData('mars.icbm.map1.select_waterLeakList_page2', params, function (data) {
-					// console.log('sendNusuAlrimTok data', data);
-					// display(data);
-					let params = [];
+				// 기본 메시지: 전역 message 또는 #message 입력값 or 상수
+				const DEFAULT_MSG =
+					(typeof message !== 'undefined' && String(message || '').trim()) ||
+					(document.getElementById('message') ? String(document.getElementById('message').value || '').trim() : '') ||
+					'귀댁의 수도 계량기 원격검침 데이터상, 72시간(3일) 동안 지속적인 물 사용량으로 누수가 의심되오니 아래 링크를 참조하여 자가진단 및 누수탐지 바랍니다.';
+
+				// 전화번호 형식
+				const PHONE_RE = /^010-\d{4}-\d{4}$/;
+				const hyphenize = (s) => {
+					const digits = String(s || '').replace(/\D/g, '');
+					if (digits.length === 11 && digits.startsWith('010')) {
+						return digits.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3');
+					}
+					return s || '';
+				};
+
+				loadData('mars.icbm.map1.select_waterLeakList_page2', reqParams, function (data) {
+					const items = [];
+
 					for (let i = 0; i < data.length; i++) {
-						if (!data[i].receive_consent) continue;
-						params.push({
+						const row = data[i];
+						if (!row.receive_consent) continue; // 동의 안 한 대상 제외
+
+						const name = String(row.cust_nm || '').trim();
+						let phone = String(row.cust_phone || '').trim();
+						phone = PHONE_RE.test(phone) ? phone : hyphenize(phone);
+						if (!PHONE_RE.test(phone)) continue; // 형식 불일치 스킵
+
+						items.push({
 							title: '[포항시] 원격검침 수용가 누수 의심 안내',
-							msgContent: message,
-							tgtNm: data[i].cust_nm,
-							phoneNum: data[i].cust_phone,
+							msgContent: DEFAULT_MSG,
+							tgtNm: name,
+							phoneNum: phone,
 							templateCd: 'UMS_2025080611060242672',
 						});
 					}
-					//console.log('params', params);
-					ajaxPost(url, params, sendResult);
-					return;
+
+					if (items.length === 0) {
+						alert('전송할 대상이 없습니다. (동의 여부/전화번호 형식 확인)');
+						return;
+					}
+
+					// 컨트롤러 프록시를 통해 Node로 배열 그대로 전송
+					ajaxPost(
+						API_SEND,
+						items,
+						function (data, status, xhr) {
+							console.log('sendAlrimTok', data, status, xhr);
+						},
+						function (data, status, xhr) {
+							if (xhr.status === 200) {
+								alert('테스트 전송 성공');
+							} else {
+								alert('전송 실패: ' + (data.message || '알 수 없는 오류'));
+							}
+						}
+					);
+					/*
+					fetch(API_SEND, {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify(items), // ← 하드코딩 배열 대신 items 사용!
+					})
+						.then((res) => res.json())
+						.then((res) => {
+							if (res && res.success === false) {
+								alert('전송 실패: ' + (res.message || '알 수 없는 오류'));
+							} else {
+								alert('전송 요청 완료 (' + items.length + '건)');
+							}
+						})
+						.catch((err) => {
+							console.error(err);
+							alert('요청 중 오류가 발생했습니다.');
+						});
+						*/
 				});
 			}
 
@@ -654,18 +713,45 @@
 				closeAlrimTokPopup();
 			}
 
-			function sendTestAlrimTok() {
-				let params = [];
-				params.push({
-					title: '[포항시] 원격검침 수용가 누수 의심 안내',
-					msgContent: message,
-					tgtNm: data[i].cust_nm,
-					phoneNum: data[i].cust_phone,
-					templateCd: 'UMS_2025080611060242672',
-				});
+			function sendTestAlrimTok(name, phone) {
+				const base = getContextPath();
+				if (base && base.endsWith('/')) base = base.slice(0, -1);
+				const url = base + '/api/alrimtok/test';
+				console.log('sendTestAlrimTok', name, phone, url);
 
-				//console.log('params', params);
-				ajaxPost(url, params, sendResult);
+				ajaxPost(
+					url,
+					{ phoneNum: phone, tgtNm: name },
+					function (data, status, xhr) {
+						console.log('sendTestAlrimTok', data, status, xhr);
+					},
+					function (data, status, xhr) {
+						if (xhr.status === 200) {
+							alert('테스트 전송 성공');
+						} else {
+							alert('전송 실패: ' + (data.message || '알 수 없는 오류'));
+						}
+					}
+				);
+				/*
+				fetch(url, {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ phoneNum: phone, tgtNm: name }),
+				})
+					.then((res) => res.json())
+					.then((data) => {
+						if (data.success) {
+							alert('테스트 전송 성공');
+						} else {
+							alert('전송 실패: ' + (data.message || '알 수 없는 오류'));
+						}
+					})
+					.catch((err) => {
+						console.error(err);
+						alert('요청 중 오류 발생');
+					});
+				*/
 			}
 
 			function ajaxPost(url, params, callback) {
