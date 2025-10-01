@@ -461,17 +461,26 @@ public class FileService {
 		return cell.getStringCellValue().trim();
 	}
 
-	private Integer  getInteger (Row row, int cellIndex) {
+	private Integer getInteger(Row row, int cellIndex) {
 		if (row == null) return null;
 		Cell cell = row.getCell(cellIndex);
 		if (cell == null) return null;
 
 		try {
-			String value = cell.getStringCellValue().trim();
-			if (value.isEmpty()) return null;
-			return Integer.parseInt(value);
+			switch (cell.getCellType()) {
+				case Cell.CELL_TYPE_STRING:
+					String strValue = cell.getStringCellValue().trim();
+					if (strValue.isEmpty()) return null;
+					return Integer.parseInt(strValue);
+
+				case Cell.CELL_TYPE_NUMERIC:
+					// 숫자일 경우 소수점 없이 정수로 변환
+					return (int) cell.getNumericCellValue();
+				
+				default:
+					return null;
+			}
 		} catch (Exception e) {
-			// 필요 시 로그 출력
 			return null;
 		}
 	}
@@ -629,7 +638,7 @@ public class FileService {
 					tbM1CmapDeviceMapper.insertDevice(deviceMap);					
 					
 				} catch (Exception  e) {
-					log.error("Excel row {} column {} 처리 중 오류: {}", i + 1, j, e.getMessage(), e);
+					log.error("Excel row {} column {} was failed: {}", i + 1, j, e.getMessage(), e);
 					String message = e.getCause() != null ? e.getCause().getMessage() : e.getMessage();
 					throw new ExcelProcessingException(i + 1, j, message);
 				}
@@ -642,7 +651,7 @@ public class FileService {
 			}
 
 		} catch (IOException e) {
-			log.error("엑셀 파일 읽기 실패: {}", e.getMessage(), e);
+			log.error("Reading file was failed: {}", e.getMessage(), e);
 			throw new Exception("엑셀 파일 처리 실패: " + e.getMessage(), e);
 		}
 	}

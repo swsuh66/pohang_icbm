@@ -49,15 +49,15 @@ import com.istec.m1.service.QueryService;
 import com.istec.m1.exception.ExcelProcessingException;
 
 @Controller
-public class FileController {
-
-	private Logger logger = LoggerFactory.getLogger(FileController.class);
+public class FileController {	
 
 	@Autowired
 	private FileService fileService;
 	@Autowired
 	private QueryService queryService;
 	
+	private static final Logger log = LoggerFactory.getLogger(FileController.class);
+
 	//@Value("#{config['file.expireInterval']}") protected long interval;
 	protected long interval = 600000;
 	
@@ -124,7 +124,7 @@ public class FileController {
 	public @ResponseBody List<HashMap<String, Object>> confirmData(Model model, 
 			HttpServletRequest request, HttpServletResponse response) throws Exception {
 		
-		logger.info("start confirmData");
+		log.info("start confirmData");
 		HttpSession session = request.getSession(false);		
 		CustomUserDetails userDetails = (CustomUserDetails) session.getAttribute(Define.Key.LOGIN_INFO);
 		int siteSq = userDetails.getSiteSq();
@@ -420,6 +420,7 @@ public class FileController {
 		CustomUserDetails userDetails = (CustomUserDetails) request.getSession(false)
 			.getAttribute(Define.Key.LOGIN_INFO);
 		int siteSq = userDetails.getSiteSq();
+		log.info("siteSq : " + siteSq + ", isCheck : " + isCheck);
 
 		try {
 			// 파일 처리 및 DB 입력
@@ -435,6 +436,7 @@ public class FileController {
 			result.put("errorRow", e.getRow());
 			result.put("errorCol", e.getCol());
 			result.put("message", e.getMessage() +  ": " + getSimpleErrorMessage(e.getDetailMessage())); 
+			log.error("errorRow : " + e.getRow() + ", errorCol : " + e.getCol());
 			e.printStackTrace();
 
 		} catch (Exception e) {
@@ -442,6 +444,7 @@ public class FileController {
 			response.setStatus(StatusCode.STATUS_INTERNAL_SERVER_ERROR.getValue());
 			result.put("status", "error");
 			result.put("details", getSimpleErrorMessage(e.getMessage())); 
+			log.error("Exception : " + e.getMessage());
 			e.printStackTrace();
 		}
 
