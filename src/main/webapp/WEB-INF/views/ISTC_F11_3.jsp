@@ -593,7 +593,7 @@
 					jAlert.error('오류', '누수알림톡 전송에 실패하였습니다.<br><br>' + (data.error ? data.error.statusText : '서버에서 오류가 발생하였습니다.'));
 				}
 			}
-
+			/*
 			let message =
 				'귀댁의 수도 계량기 원격검침 데이터상, 72시간(3일) 동안 지속적인 물 사용량으로 누수가 의심되오니 아래 링크를 참조하여 자가진단 및 누수탐지 바랍니다.\n' +
 				'누수가 맞다면 누수공사 완료 후, 감면대상 여부를 확인하고 공사일로부터 60일 이내에 누수감면 신청 바랍니다.\n\n' +
@@ -602,16 +602,10 @@
 				'수도요금안내>요금납부방법안내>요금감면안내>옥내누수요금감면(누수자가진단)\n\n' +
 				'▶ 관련문의 : 054-270-5331 (평일 9시 ~ 18시)\n\n' +
 				'- 포항시 상하수도행정과 요금팀 -';
-
+			*/
 			function sendAlrimTok() {
 				const API_SEND = '<c:url value="/api/alrimtok/send"/>';
 				const reqParams = makeParams(); // 기존 그대로 사용
-
-				// 기본 메시지: 전역 message 또는 #message 입력값 or 상수
-				const DEFAULT_MSG =
-					(typeof message !== 'undefined' && String(message || '').trim()) ||
-					(document.getElementById('message') ? String(document.getElementById('message').value || '').trim() : '') ||
-					'귀댁의 수도 계량기 원격검침 데이터상, 72시간(3일) 동안 지속적인 물 사용량으로 누수가 의심되오니 아래 링크를 참조하여 자가진단 및 누수탐지 바랍니다.';
 
 				// 전화번호 형식
 				const PHONE_RE = /^010-\d{4}-\d{4}$/;
@@ -636,11 +630,8 @@
 						if (!PHONE_RE.test(phone)) continue; // 형식 불일치 스킵
 
 						items.push({
-							title: '[포항시] 원격검침 수용가 누수 의심 안내',
-							msgContent: DEFAULT_MSG,
 							tgtNm: name,
 							phoneNum: phone,
-							templateCd: 'UMS_2025080611060242672',
 						});
 					}
 
@@ -649,40 +640,25 @@
 						return;
 					}
 
+					const total_count = data.length;
+					const sent_count = items.length;
+					const success_message = '전체 ' + total_count + '건중 수신동의 데이터 ' + sent_count + '건 전송 성공';
 					// 컨트롤러 프록시를 통해 Node로 배열 그대로 전송
 					ajaxPost(
 						API_SEND,
 						items,
 						function (data, status, xhr) {
 							console.log('sendAlrimTok', data, status, xhr);
+							alert(success_message);
 						},
 						function (data, status, xhr) {
 							if (xhr.status === 200) {
-								alert('테스트 전송 성공');
+								alert(success_message);
 							} else {
 								alert('전송 실패: ' + (data.message || '알 수 없는 오류'));
 							}
 						}
 					);
-					/*
-					fetch(API_SEND, {
-						method: 'POST',
-						headers: { 'Content-Type': 'application/json' },
-						body: JSON.stringify(items), // ← 하드코딩 배열 대신 items 사용!
-					})
-						.then((res) => res.json())
-						.then((res) => {
-							if (res && res.success === false) {
-								alert('전송 실패: ' + (res.message || '알 수 없는 오류'));
-							} else {
-								alert('전송 요청 완료 (' + items.length + '건)');
-							}
-						})
-						.catch((err) => {
-							console.error(err);
-							alert('요청 중 오류가 발생했습니다.');
-						});
-						*/
 				});
 			}
 
