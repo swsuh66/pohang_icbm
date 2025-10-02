@@ -604,6 +604,8 @@
 				'- 포항시 상하수도행정과 요금팀 -';
 			*/
 			function sendAlrimTok() {
+				closeAlrimTokPopup();
+
 				const API_SEND = '<c:url value="/api/alrimtok/send"/>';
 				const reqParams = makeParams(); // 기존 그대로 사용
 
@@ -648,8 +650,11 @@
 						API_SEND,
 						items,
 						function (data, status, xhr) {
-							console.log('sendAlrimTok', data, status, xhr);
-							alert(success_message);
+							if (xhr.status === 200) {
+								alert(success_message);
+							} else {
+								alert('전송 실패: ' + (data.message || '알 수 없는 오류'));
+							}
 						},
 						function (data, status, xhr) {
 							if (xhr.status === 200) {
@@ -699,7 +704,11 @@
 					url,
 					{ phoneNum: phone, tgtNm: name },
 					function (data, status, xhr) {
-						console.log('sendTestAlrimTok', data, status, xhr);
+						if (xhr.status === 200) {
+							alert('테스트 전송 성공');
+						} else {
+							alert('전송 실패: ' + (data.message || '알 수 없는 오류'));
+						}
 					},
 					function (data, status, xhr) {
 						if (xhr.status === 200) {
@@ -709,25 +718,6 @@
 						}
 					}
 				);
-				/*
-				fetch(url, {
-					method: 'POST',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ phoneNum: phone, tgtNm: name }),
-				})
-					.then((res) => res.json())
-					.then((data) => {
-						if (data.success) {
-							alert('테스트 전송 성공');
-						} else {
-							alert('전송 실패: ' + (data.message || '알 수 없는 오류'));
-						}
-					})
-					.catch((err) => {
-						console.error(err);
-						alert('요청 중 오류 발생');
-					});
-				*/
 			}
 
 			function ajaxPost(url, params, callback) {
@@ -1200,28 +1190,36 @@
 					animation: fadeIn 0.3s;
 				"
 			>
-				<h3 style="margin-top: 0; color: #333; text-align: center">알림톡 테스트</h3>
+				<button
+					onclick="sendAlrimTok()"
+					style="width: 100%; height: 20%; font-size: 25px; padding: 8px 16px; background: #f0f321; color: 333; border: none; border-radius: 6px; cursor: pointer"
+				>
+					대상자 전체 알림톡 전송
+				</button>
+				<div style="border: 1px solid #ccc; margin-top: 10px; padding: 10px">
+					<label style="font-size: 20px; margin-top: 0; color: #333; text-align: center">알림톡 테스트</label>
 
-				<div style="margin-bottom: 15px">
-					<label for="popupUserName" style="display: block; text-align: left; font-weight: bold; margin-bottom: 5px">사용자명</label>
-					<input type="text" id="popupUserName" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 6px" />
-				</div>
+					<div style="margin-bottom: 15px">
+						<label for="popupUserName" style="display: block; text-align: left; font-weight: bold; margin-bottom: 5px">사용자명</label>
+						<input type="text" id="popupUserName" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 6px" />
+					</div>
 
-				<div style="margin-bottom: 20px">
-					<label for="popupPhoneNum" style="display: block; text-align: left; font-weight: bold; margin-bottom: 5px">전화번호</label>
-					<input type="text" id="popupPhoneNum" placeholder="010-1234-5678" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 6px" />
-				</div>
+					<div style="margin-bottom: 20px">
+						<label for="popupPhoneNum" style="display: block; text-align: left; font-weight: bold; margin-bottom: 5px">전화번호</label>
+						<input type="text" id="popupPhoneNum" placeholder="010-1234-5678" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 6px" />
+					</div>
 
-				<div style="text-align: right">
-					<button
-						onclick="confirmSendAlrimTok()"
-						style="padding: 8px 16px; background: #2196f3; color: white; border: none; border-radius: 6px; cursor: pointer; margin-right: 8px"
-					>
-						확인
-					</button>
-					<button onclick="closeAlrimTokPopup()" style="padding: 8px 16px; background: #aaa; color: white; border: none; border-radius: 6px; cursor: pointer">
-						취소
-					</button>
+					<div style="text-align: right">
+						<button
+							onclick="confirmSendAlrimTok()"
+							style="padding: 8px 16px; background: #2196f3; color: white; border: none; border-radius: 6px; cursor: pointer; margin-right: 8px"
+						>
+							확인
+						</button>
+						<button onclick="closeAlrimTokPopup()" style="padding: 8px 16px; background: #aaa; color: white; border: none; border-radius: 6px; cursor: pointer">
+							취소
+						</button>
+					</div>
 				</div>
 			</div>
 		</div>

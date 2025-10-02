@@ -220,8 +220,7 @@
 						<button type="button" class="btn dj-btn-primary btn-sm" onclick="parent.searchGrid();">검색</button>
 						<button type="button" class="btn dj-btn-outline-gray btn-sm" onclick="resetComponentes();">초기화</button>
 						<button type="button" class="btn dj-btn-outline-green btn-sm" onclick="dataDownload();"><i class="ico i-excel"></i>엑셀다운</button>
-						<button type="button" class="btn dj-btn-outline-gray btn-sm" onclick="sendAlrimTok();"><i class="ico i-kakao"></i>누수알림</button>
-						<button type="button" class="btn dj-btn-outline-gray btn-sm" onclick="openAlrimTokPopup();"><i class="ico i-kakao"></i>테스트</button>
+						<button type="button" class="btn dj-btn-outline-gray btn-sm" onclick="openAlrimTokPopup();"><i class="ico i-kakao"></i>누수알림</button>
 						<button type="button" class="btn dj-btn-outline-gray btn-sm" onclick="openHideSettingModal();"><i class="ico i-set"></i>제외 수용가 설정</button>
 					</div>
 				</div>
