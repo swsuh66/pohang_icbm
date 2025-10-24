@@ -596,11 +596,15 @@
                <ul class="nav custom-nav custom-nav-navbar" >
                     <li class="nav-item" id="ISTC_F11_3">
                         <a href="javascript:void(0);" onclick="reloadFrame('ISTC_F11_3', this);"
-                           class="nav-link">누수의심검출</a>
+                           class="nav-link">누수의심검출-old</a>
+                    </li>
+                    <li class="nav-item" id="ISTC_F11_5">
+                        <a href="javascript:void(0);" onclick="reloadFrame('ISTC_F11_5', this);"
+                           class="nav-link">누수의심검출-new</a>
                     </li>
                     <li class="nav-item" id="ISTC_F11_4">
                         <a href="javascript:void(0);" onclick="reloadFrame('ISTC_F11_4', this);"
-                            class="nav-link">누수알림조회</span>
+                            class="nav-link">알림실패조회</span>
                         </a>
                    </li>
                 </ul>
@@ -691,7 +695,7 @@
                 <li><a href="logout">로그아웃</a></li>
             </ul>
             <!-- <span class="system-version">버전 ${systemVersion}</span> -->
-             <span class="system-version">버전 1.0.29</span>
+             <span class="system-version">버전 1.1.33</span>
         </header>
 
         <div class="main-container" id="main-container">

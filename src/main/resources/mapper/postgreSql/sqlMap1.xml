@@ -4648,6 +4648,109 @@
 						</if>
 	</sql>
 
+	<select id="select_waterLeakList_page3" parameterType="java.util.Map" resultType="java.util.Map">
+	/*mars.icbm.map1.select_waterLeakList_page3*/
+      <include refid="pageHeader"/>      
+      <include refid="select_waterLeakList_sql3"/>      
+      <include refid="pageFooter"/>           
+    </select>
+
+	<select id='select_waterLeakList3' parameterType='java.util.Map' resultType='java.util.Map'>
+		/*mars.icbm.map1.select_waterLeakList3*/
+		<include refid="select_waterLeakList_sql3"/>  
+	</select>
+	<sql id="select_waterLeakList_sql3">
+		SELECT (ROW_NUMBER() OVER()) AS "num", aa.*
+		FROM (
+			SELECT
+				a.point_sq              AS "pointSq"   -- 장비 Sq
+			, a.site_sq               AS "siteSq"
+			, MAX(c.meas_dt)::timestamp AS "max_date"
+			, MIN(c.meas_dt)::timestamp AS "min_date"
+			, MAX(c.term_cv)          AS "max_term_cv"
+			, MIN(c.term_cv)          AS "min_term_cv"
+			, MAX(a.cust_sq)          AS "cust_sq"
+			, MAX(a.cust_name)        AS "cust_nm"
+			, MAX(a.admin_no)         AS "admin_id"
+			, MAX(a.business_name)    AS "use_type"
+			, MAX(a.pipe_diameter)    AS "pipe_dia"
+			, MAX(a.addr_new)         AS "addr_new"
+			, BOOL_OR(a.receive_consent) AS receive_consent
+			, CASE WHEN MAX(a.stat_cd) IS NOT NULL THEN 'Y' ELSE 'N' END AS "stat_yn"
+			, MAX(c.meas_sq)          AS "meas_sq"
+			, MAX(a.read_responsi)    AS "read_responsi"
+			, MAX(a.cust_phone)       AS "cust_phone"
+			, MAX(a.remark)           AS "remark"
+			, (SELECT call_check FROM tb_m1_meas_raw WHERE meas_sq = MAX(c.meas_sq)) AS "call_check"
+			, COALESCE(
+				MAX(CASE WHEN r.business_name = a.business_name THEN r.leak_rule END),
+				MAX(CASE WHEN r.business_name = '기타'         THEN r.leak_rule END)
+				)::numeric AS leak_rule
+			FROM (
+			SELECT
+				p.point_sq
+				, p.site_sq
+				, c.cust_sq
+				, c.cust_name
+				, c.admin_no
+				, c.business_name
+				, c.pipe_diameter
+				, c.addr_new
+				, c.read_responsi
+				, c.receive_consent
+				, n.stat_cd
+				, c.cust_phone
+				, c.remark
+			FROM tb_m1_info_point p
+			JOIN tb_m1_info_customer c
+				ON c.cust_sq = p.cust_sq
+			LEFT JOIN vi_m1_sv_meas_now n
+				ON n.point_sq = p.point_sq
+			AND substring(n.stat_cd, 5, 1) = '1'
+			WHERE p.use_cd = '1'
+				<if test="pipe_diameter != null and pipe_diameter != ''">
+				AND c.pipe_diameter = #{pipe_diameter}::integer
+				</if>
+				<if test="business_name != null and business_name != ''">
+				AND c.business_name = #{business_name}
+				</if>
+				<if test="read_responsi != null and read_responsi != ''">
+				AND c.read_responsi LIKE '%' || #{read_responsi} || '%'
+				</if>
+			) a
+			JOIN (
+			SELECT
+				m.meas_sq
+				, m.point_sq
+				, m.meas_dt
+				, m.term_cv
+				, m.call_check
+			FROM tb_m1_meas_raw m
+			WHERE 1=1
+			) c
+			ON c.point_sq = a.point_sq
+			LEFT JOIN tb_m1_rule_waterleak r
+			ON r.pipe_diameter = a.pipe_diameter::integer
+			AND (r.business_name = a.business_name OR r.business_name = '기타')
+			WHERE 1=1
+			AND c.term_cv IS NOT NULL
+			AND a.point_sq NOT IN (SELECT point_sq FROM tb_m1_waterleak_hide_setting)
+			AND c.meas_dt BETWEEN to_timestamp(#{stdDate}, 'yyyy-mm-dd hh24:mi:ss')
+								- make_interval(hours => (#{calc_hour}::integer)-1)
+								AND to_timestamp(#{stdDate}, 'yyyy-mm-dd hh24:mi:ss')
+			GROUP BY a.point_sq, a.site_sq
+		) aa
+		WHERE 1=1
+		AND aa.min_term_cv >= aa.leak_rule
+		<!-- 추가 필터 -->
+		<if test="cust_nm != null and cust_nm != ''">
+		AND aa.cust_nm LIKE '%' || #{cust_nm} || '%'
+		</if>
+		<if test="admin_no != null and admin_no != ''">
+		AND aa.admin_id LIKE '%' || #{admin_no} || '%'
+		</if>		
+	</sql>
+
 	<update id="updateCallCheck" parameterType="java.util.Map">
 		update tb_m1_meas_raw set
 		call_check = #{callCheck}

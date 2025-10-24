@@ -1823,6 +1823,66 @@
 			<title>수용가번호</title>
 		</col>
 		<col>
+			<name>receive_consent</name>
+			<title>수신동의</title>
+		</col>
+		<col>
+			<name>use_type</name>
+			<title>업종</title>
+		</col>
+		<col>
+			<name>pipe_dia</name>
+			<title>구경</title>
+		</col>
+		<col>
+			<name>max_date</name>
+			<title>최대시간</title>
+		</col>
+		<col>
+			<name>min_date</name>
+			<title>최소시간</title>
+		</col>	
+		<col>
+			<name>max_term_cv</name>
+			<title>최고사용량</title>
+		</col>	
+		<col>
+			<name>min_term_cv</name>
+			<title>최소사용량</title>
+		</col>
+	   <col>
+		   <name>stat_yn</name>
+		   <title>계량기누수여부</title>
+	   </col>
+	   <col>
+			<name>read_responsi</name>
+			<title>검침원</title>
+		</col>
+	   <col>
+		   <name>call_check</name>
+		   <title>통화여부</title>
+	   </col>
+	</map>
+
+	<map id="f11-5-export" meta-sql="f11-5-export" refer-sql="mars.icbm.map1.select_waterLeakList3">
+		
+		<col>
+			<name>num</name>
+			<title>순번</title>
+		</col>
+		<col>
+			<name>cust_nm</name>
+			<title>이름</title>
+		</col>
+		<col>
+			<name>admin_id</name>
+			<title>수용가번호</title>
+		</col>
+		<col>
+			<name>receive_consent</name>
+			<title>수신동의</title>
+		</col>
+		<col>
 			<name>use_type</name>
 			<title>업종</title>
 		</col>
