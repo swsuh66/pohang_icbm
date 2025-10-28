@@ -427,18 +427,25 @@
 	/* modal 데이터 raw 로드 */
 	function loadModalRawData(params) {
 		var type = $('#typeSelect', window.parent.document).val();
-		var endDate = $('#fromDate', window.parent.document).val(); 				 		
+		var endDate = $('#endDate', window.parent.document).val(); 	
+		
+		//console.log("getDateRange", endDate);
+		
  		if(!endDate || endDate.length == 0) {
  			/* 날짜 초기화 */
- 			$('#fromDate', window.parent.document).val(kutil.dateFormat(new Date(), 'yyyy-mm-dd')); 			
+ 			//$('#fromDate', window.parent.document).val(kutil.dateFormat(new Date(), 'yyyy-mm-dd')); 			
  			endDate = kutil.dateFormat(new Date(), 'yyyy-mm-dd'); 
  		}
+		//console.log("getDateRange", endDate);
  		var obj = new Object();
  		obj.pointSq = params.pointSq
  		obj.siteSq = params.siteSq
  		obj.endDate = endDate;
 		var begDate = kutil.addMonth(endDate, (type == '0') ? -1 : -12); 		 		
 		obj.begDate = moment(Date.parse(begDate)).format('YYYY-MM-DD');
+		$('#fromDate', window.parent.document).val(obj.begDate); 	
+		//console.log("getDateRange", obj.begDate, endDate, type);
+
 		type == '0' ?
 		loadRawData('pointHisdataRaw', obj) : 
 		loadRawData('pointHisdata', obj);
