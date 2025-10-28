@@ -4660,96 +4660,113 @@
 		<include refid="select_waterLeakList_sql3"/>  
 	</select>
 	<sql id="select_waterLeakList_sql3">
-		SELECT (ROW_NUMBER() OVER()) AS "num", aa.*
+		<![CDATA[
+		WITH customer AS (
+			SELECT
+				p.point_sq,
+				p.site_sq,
+				c.cust_sq, c.cust_name, c.admin_no, c.business_name,
+				c.pipe_diameter, c.addr_new, c.receive_consent,
+				c.read_responsi, c.cust_phone, c.remark
+			FROM tb_m1_info_customer c
+			JOIN tb_m1_info_point p ON c.cust_sq = p.cust_sq
+		),
+		customer_with_rule AS (
+			SELECT
+				c.*,
+				wl.leak_rule                                   AS leak_rule,          -- 매칭 규칙
+				wld.leak_rule                                  AS leak_rule_fallback  -- '기타' 규칙
+			FROM customer c
+			LEFT JOIN tb_m1_rule_waterleak wl
+				ON wl.business_name = c.business_name
+				AND wl.pipe_diameter = c.pipe_diameter
+			LEFT JOIN tb_m1_rule_waterleak wld
+				ON wld.business_name = '기타'
+				AND wld.pipe_diameter = c.pipe_diameter
+		),
+		meas AS (
+			SELECT
+				r.point_sq,
+				MAX(r.meas_dt) AS max_meas_dt,
+				MIN(r.meas_dt) AS min_meas_dt,
+				MAX(r.term_cv) AS max_term_cv,
+				MIN(r.term_cv) AS min_term_cv,
+				MAX(r.stat_cd) AS stat_cd
+			FROM tb_m1_meas_raw r
+			JOIN customer_with_rule cw ON cw.point_sq = r.point_sq
+			WHERE r.meas_dt >= NOW() - interval '72 hour'
+			AND r.meas_dt <  NOW()
+			GROUP BY r.point_sq
+			HAVING
+				COUNT(r.term_cv) > 0
+				AND COUNT(r.term_cv) = SUM(
+					CASE WHEN r.term_cv > COALESCE(cw.leak_rule, cw.leak_rule_fallback)
+						THEN 1 ELSE 0 END
+				)
+		)
+		SELECT (ROW_NUMBER() OVER()) AS "num", t.*
 		FROM (
 			SELECT
-				a.point_sq              AS "pointSq"   -- 장비 Sq
-			, a.site_sq               AS "siteSq"
-			, MAX(c.meas_dt)::timestamp AS "max_date"
-			, MIN(c.meas_dt)::timestamp AS "min_date"
-			, MAX(c.term_cv)          AS "max_term_cv"
-			, MIN(c.term_cv)          AS "min_term_cv"
-			, MAX(a.cust_sq)          AS "cust_sq"
-			, MAX(a.cust_name)        AS "cust_nm"
-			, MAX(a.admin_no)         AS "admin_id"
-			, MAX(a.business_name)    AS "use_type"
-			, MAX(a.pipe_diameter)    AS "pipe_dia"
-			, MAX(a.addr_new)         AS "addr_new"
-			, BOOL_OR(a.receive_consent) AS receive_consent
-			, CASE WHEN MAX(a.stat_cd) IS NOT NULL THEN 'Y' ELSE 'N' END AS "stat_yn"
-			, MAX(c.meas_sq)          AS "meas_sq"
-			, MAX(a.read_responsi)    AS "read_responsi"
-			, MAX(a.cust_phone)       AS "cust_phone"
-			, MAX(a.remark)           AS "remark"
-			, (SELECT call_check FROM tb_m1_meas_raw WHERE meas_sq = MAX(c.meas_sq)) AS "call_check"
-			, COALESCE(
-				MAX(CASE WHEN r.business_name = a.business_name THEN r.leak_rule END),
-				MAX(CASE WHEN r.business_name = '기타'         THEN r.leak_rule END)
-				)::numeric AS leak_rule
-			FROM (
-			SELECT
-				p.point_sq
-				, p.site_sq
-				, c.cust_sq
-				, c.cust_name
-				, c.admin_no
-				, c.business_name
-				, c.pipe_diameter
-				, c.addr_new
-				, c.read_responsi
-				, c.receive_consent
-				, n.stat_cd
-				, c.cust_phone
-				, c.remark
-			FROM tb_m1_info_point p
-			JOIN tb_m1_info_customer c
-				ON c.cust_sq = p.cust_sq
-			LEFT JOIN vi_m1_sv_meas_now n
-				ON n.point_sq = p.point_sq
-			AND substring(n.stat_cd, 5, 1) = '1'
-			WHERE p.use_cd = '1'
-				<if test="pipe_diameter != null and pipe_diameter != ''">
-				AND c.pipe_diameter = #{pipe_diameter}::integer
-				</if>
-				<if test="business_name != null and business_name != ''">
-				AND c.business_name = #{business_name}
-				</if>
-				<if test="read_responsi != null and read_responsi != ''">
-				AND c.read_responsi LIKE '%' || #{read_responsi} || '%'
-				</if>
-			) a
-			JOIN (
-			SELECT
-				m.meas_sq
-				, m.point_sq
-				, m.meas_dt
-				, m.term_cv
-				, m.call_check
-			FROM tb_m1_meas_raw m
-			WHERE 1=1
-			) c
-			ON c.point_sq = a.point_sq
-			LEFT JOIN tb_m1_rule_waterleak r
-			ON r.pipe_diameter = a.pipe_diameter::integer
-			AND (r.business_name = a.business_name OR r.business_name = '기타')
-			WHERE 1=1
-			AND c.term_cv IS NOT NULL
-			AND a.point_sq NOT IN (SELECT point_sq FROM tb_m1_waterleak_hide_setting)
-			AND c.meas_dt BETWEEN to_timestamp(#{stdDate}, 'yyyy-mm-dd hh24:mi:ss')
-								- make_interval(hours => (#{calc_hour}::integer)-1)
-								AND to_timestamp(#{stdDate}, 'yyyy-mm-dd hh24:mi:ss')
-			GROUP BY a.point_sq, a.site_sq
-		) aa
-		WHERE 1=1
-		AND aa.min_term_cv >= aa.leak_rule
-		<!-- 추가 필터 -->
-		<if test="cust_nm != null and cust_nm != ''">
-		AND aa.cust_nm LIKE '%' || #{cust_nm} || '%'
-		</if>
+				cw.point_sq                         AS "pointSq",
+				cw.site_sq                          AS "siteSq",
+				MAX(m.max_meas_dt)::timestamp       AS "max_date",
+				MIN(m.min_meas_dt)::timestamp       AS "min_date",
+				MAX(m.max_term_cv)                  AS "max_term_cv",
+				MIN(m.min_term_cv)                  AS "min_term_cv",
+				MAX(cw.cust_sq)                     AS "cust_sq",
+				MAX(cw.cust_name)                   AS "cust_nm",
+				MAX(cw.admin_no)                    AS "admin_id",
+				MAX(cw.business_name)               AS "use_type",
+				MAX(cw.pipe_diameter)               AS "pipe_dia",
+				MAX(cw.addr_new)                    AS "addr_new",
+				BOOL_OR(cw.receive_consent = 'Y')   AS receive_consent,
+				CASE WHEN MAX(m.stat_cd) IS NOT NULL THEN 'Y' ELSE 'N' END AS "stat_yn",
+				MAX(cw.read_responsi)               AS "read_responsi",
+				MAX(cw.cust_phone)                  AS "cust_phone",
+				MAX(cw.remark)                      AS "remark"
+			FROM customer_with_rule cw
+			JOIN meas m ON m.point_sq = cw.point_sq
+			GROUP BY cw.point_sq, cw.site_sq
+		) AS t
+		]]>
+		<where>
+		<!-- 수용가번호 admin_no -> 컬럼 별칭 "admin_id" -->
 		<if test="admin_no != null and admin_no != ''">
-		AND aa.admin_id LIKE '%' || #{admin_no} || '%'
-		</if>		
+			<![CDATA[
+			AND t."admin_id"  =  #{admin_no} 
+			]]>
+		</if>
+
+		<!-- 수용가명 cust_nm -> 컬럼 별칭 "cust_nm" -->
+		<if test="cust_nm != null and cust_nm != ''">
+			<![CDATA[
+			AND t."cust_nm" ILIKE '%' || #{cust_nm} || '%'
+			]]>
+		</if>
+
+		<!-- 설정구경 pipe_dia (정수) -> 컬럼 별칭 "pipe_dia" -->
+		<if test="pipe_diameter != null and pipe_diameter != ''">
+			<![CDATA[
+			AND t."pipe_dia" = (#{pipe_diameter}::integer)
+			]]>
+		</if>
+
+		<!-- 설정 업종 use_type (정확일치 권장) -> 컬럼 별칭 "use_type" -->
+		<if test="business_name != null and business_name != ''">
+			<![CDATA[
+			AND t."use_type" = #{business_name}
+			]]>
+		</if>
+
+		<!-- 검침원 read_responsi -> 컬럼 별칭 "read_responsi" -->
+		<if test="read_responsi != null and read_responsi != ''">
+			<![CDATA[
+			AND t."read_responsi" ILIKE '%' || #{read_responsi} || '%'
+			]]>
+		</if>
+		</where>
 	</sql>
+	
 
 	<update id="updateCallCheck" parameterType="java.util.Map">
 		update tb_m1_meas_raw set
@@ -4797,8 +4814,10 @@
 	
 	
 	<sql id="use_evening_sql">
-	 select (ROW_NUMBER() OVER()) AS "num",b.*, a.* 
-	   from 
+	 select (ROW_NUMBER() OVER()) AS "num",
+		a.* ,
+		b.admin_id, b.cust_nm, b.addr_new, b.read_opr, b.dev_no
+	   	from 
 		  ( 
 			select a.point_sq ,min(term_cv) as min_term_cv, max(term_cv) as max_term_cv,min(date_meas_dt) as min_meas_dt, max(date_meas_dt) as max_meas_dt, count(*) as cnt 
 			  from (select point_sq
