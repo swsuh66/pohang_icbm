@@ -377,7 +377,7 @@
 			      when 6 then '정상'
 			      when 7 then '정상'
 			      when 8 then 'BAT'
-			      else '정상'
+			      else coalesce(a.cust_status, '정상')
 			  end "statCdStr",		
 			  a.ami_type as "amiType",
 			  a.dev_no   as "devNo",
@@ -412,6 +412,7 @@
     		  a.img_src_af,
     		  a.img_src_add,
 			  a.remark,
+			  a.cust_status,
 			  a.note,
 			  w.modem_id as "modemId"
 		  from
