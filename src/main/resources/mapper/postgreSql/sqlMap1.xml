@@ -4237,6 +4237,15 @@
 		 order by business_name
 	</select>
 	
+	<select id='select_rule_waterleak' parameterType='java.util.Map' resultType='java.util.Map'>
+		/*mars.icbm.map1.select_rule_waterleak*/
+		select (ROW_NUMBER() OVER())  AS "rownum",
+		       business_name as "businessName",
+		       pipe_diameter as "pipeDiameter",
+		       leak_rule as "leakRule"
+		  from tb_m1_rule_waterleak
+	</select>
+	
     <select id="select_waterLeakList_page" parameterType="java.util.Map" resultType="java.util.Map">
       <include refid="pageHeader"/>      
       <include refid="select_waterLeakList_sql"/>      

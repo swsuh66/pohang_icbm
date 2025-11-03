@@ -22,6 +22,9 @@
 			// 누수설정 수용가 제외 모달 그리드.
 			var hideSettingGrid;
 
+			// 누수 규칙 모달 그리드
+			var ruleGrid;
+
 			var dbParams;
 
 			var dbParamsTb = 'f11-5-export';
@@ -56,6 +59,7 @@
 
 				settingGrid = initGrid('settingGrid', settingFields);
 				hideSettingGrid = initGrid('hideSettingGrid', hideSettingFields);
+				ruleGrid = initGrid('ruleGrid', ruleFields);
 
 				mainGrid = initGrid('mainGrid', mainFields);
 
@@ -205,6 +209,30 @@
 							refreshGrid(hideSettingGrid, []);
 						}
 
+						if (callback) callback();
+					},
+					null
+				);
+				return false;
+			}
+
+			function loadRuleData(callback) {
+				var params = new Object();
+
+				getAjax(
+					'mars.icbm.map1.select_rule_waterleak',
+					params,
+					function () {
+						$('.bcard .ruleGrid').aceWidget('startLoading');
+					},
+					function (result) {
+						console.log('loadRuleData', params, result);
+						if (result.length > 0) {
+							refreshGrid(ruleGrid, result);
+						} else {
+							refreshGrid(ruleGrid, []);
+						}
+						$('.bcard .ruleGrid').aceWidget('stopLoading');
 						if (callback) callback();
 					},
 					null
@@ -476,6 +504,21 @@
 				},
 			];
 
+			var ruleColfnc = function (value, item, c, d, e) {
+				switch (this.name) {
+					case 'rownum':
+						return c + 1;
+				}
+				return value || value == 0 ? value : '-';
+			};
+
+			var ruleFields = [
+				{ name: 'rownum', title: '순번', type: 'text', align: 'center', width: 60, itemTemplate: ruleColfnc, sortingDisabled: true },
+				{ name: 'businessName', title: '업종', type: 'text', align: 'center', width: 120, sortingDisabled: true },
+				{ name: 'pipeDiameter', title: '구경', type: 'text', align: 'center', width: 100, sortingDisabled: true },
+				{ name: 'leakRule', title: '누수 규칙', type: 'text', align: 'right', width: 120, sortingDisabled: true }
+			];
+
 			var mainFields = [
 				{ name: 'num', title: '순번', type: 'text', align: 'center', width: 20, sortingDisabled: true },
 				{ name: 'cust_nm', title: '이름', type: 'text', align: 'left', width: 40, itemTemplate: colfnc, hasGroup: false, group: groups[0] },
@@ -517,11 +560,16 @@
 					fields: fields,
 
 					loadStrategy: function () {
+						if (container === 'ruleGrid') {
+							return new CustomPageLoadingStrategy(this, loadRuleData);
+						}
 						return new CustomPageLoadingStrategy(this, loadData);
 					},
 					rowDoubleClick: function (evt) {
-						parent.loadModalData(false, evt.item);
-						parent.loadChartData(false, evt.item);
+						if (container !== 'ruleGrid') {
+							parent.loadModalData(false, evt.item);
+							parent.loadChartData(false, evt.item);
+						}
 					},
 				};
 
@@ -542,6 +590,16 @@
 				modal.modal({ backdrop: 'static', keyboard: false });
 
 				modalGridLayout(modal, 250);
+			}
+
+			function openRuleModal() {
+				var modal = $('#ruleModal');
+
+				modal.modal({ backdrop: 'static', keyboard: false });
+
+				loadRuleData();
+
+				modalGridLayout(modal, 289);
 			}
 
 			function openSMSModal(seq) {
@@ -1270,6 +1328,34 @@
 							</div>
 						</div>
 					</form>
+				</div>
+			</div>
+		</div>
+
+		<div class="modal fade" id="ruleModal" tabindex="-1" role="dialog">
+			<div class="modal-dialog modal-dialog-scrollable modal-dialog-centered" role="document">
+				<div class="modal-content">
+					<div class="modal-header">
+						<h5 class="modal-title" id="exampleModalLabel3">누수 규칙 설정 정보</h5>
+						<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+							<span aria-hidden="true">&times;</span>
+						</button>
+					</div>
+					<div class="modal-body">
+						<div class="bcard ccard overflow-hidden settingGrid">
+							<div class="card-header border-0 bgc-white card-header-sm">
+								<h6 class="card-title text-dark-m3 pl-25 pt-15 text-110">
+									누수 규칙 설정 <br />
+									<span class="text-85 text-dark-l2"></span>
+								</h6>
+							</div>
+							<div class="card-body p-0 bgc-whit flex-grow-1">
+								<div id="ruleContainer" class="card-body p-0">
+									<div id="ruleGrid" class="data-list containerBorder"></div>
+								</div>
+							</div>
+						</div>
+					</div>
 				</div>
 			</div>
 		</div>
