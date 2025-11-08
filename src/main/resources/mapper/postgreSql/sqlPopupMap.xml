@@ -146,11 +146,23 @@
 		    left outer join vi_m1_sv_meas_now b on b.POINT_SQ = a.POINT_SQ
 		    left outer join tb_m1_meas_waterleak c on c.point_sq = a.point_sq
 		 where 1=1 
+		<!-- 사이트 필터링 (사용자 소속 기반) -->
+		<choose>
+			<when test="upSiteSq != null and lv != null">
+				 and a.site_sq in (
+					select site_sq from fn_prj_sites(#{upSiteSq}::integer, #{lv}::integer)
+				 )
+			</when>
+			<when test="upSiteSq != null">
+				 and a.site_sq = #{upSiteSq}::integer
+			</when>
+		</choose>
+		
 		<if test="useCd != null">
 <!-- 	    	and a.use_cd = #{useCd} -->
 	    	and a.use_cd in ('1', '9')
 	    </if>
-		
+
 		<if test="statCd != null">
 	    	and position('1' in a.stat_cd) = #{statCd}::integer
 	    </if>

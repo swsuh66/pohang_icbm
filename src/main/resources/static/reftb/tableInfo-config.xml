@@ -1857,7 +1857,7 @@
 	   <col>
 		   <name>call_check</name>
 		   <title>통화여부</title>
-	   </col>
+	   </col>	   
    </map>
 
 	<map id="f13-export" meta-sql="f13-export" refer-sql="mars.icbm.map1.use_evening_info">

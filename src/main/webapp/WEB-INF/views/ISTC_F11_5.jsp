@@ -76,6 +76,29 @@
 				loadComponent('select_business_name');
 
 				mainGrid.search();
+
+				/* 체크박스 클릭 이벤트 */
+				$(document).on('click', 'input[name=receive_consent]', function () {
+					var custSq = $(this).attr('data-custSq');
+					var receive_consent = $(this).is(':checked') ? '1' : '0';
+
+					console.log('custSq', custSq, 'receive_consent', receive_consent);
+
+					var params = {};
+
+					params['custSq'] = custSq;
+					params['receive_consent'] = receive_consent == '1' ? true : false;
+
+					getAjax(
+						'mars.icbm.map1.updateReceiveConsent',
+						params,
+						false,
+						function (result) {
+							jAlert.info('정보', '저장 완료');
+						},
+						null
+					);
+				});
 			});
 
 			/*
@@ -292,11 +315,9 @@
 					case 'remark':
 						return callCheckTemplate(value, item, c);
 					case 'receive_consent':
-						if (value) {
-							return '동의';
-						} else {
-							return '거부';
-						}
+						var selected = item.receive_consent;
+
+						return "<input type='checkbox' name='receive_consent' " + (selected ? 'checked' : '') + '  class="cbox" data-custSq="' + item.cust_sq + '"/>';
 				}
 
 				return value || value == 0 ? value : '-';
@@ -516,7 +537,7 @@
 				{ name: 'rownum', title: '순번', type: 'text', align: 'center', width: 60, itemTemplate: ruleColfnc, sortingDisabled: true },
 				{ name: 'businessName', title: '업종', type: 'text', align: 'center', width: 120, sortingDisabled: true },
 				{ name: 'pipeDiameter', title: '구경', type: 'text', align: 'center', width: 100, sortingDisabled: true },
-				{ name: 'leakRule', title: '누수 규칙', type: 'text', align: 'right', width: 120, sortingDisabled: true }
+				{ name: 'leakRule', title: '누수 규칙', type: 'text', align: 'right', width: 120, sortingDisabled: true },
 			];
 
 			var mainFields = [
@@ -532,7 +553,7 @@
 				{ name: 'max_term_cv', title: '최고사용량', type: 'text', width: 30, itemTemplate: colfnc, hasGroup: false },
 				{ name: 'min_term_cv', title: '최소사용량', type: 'text', width: 30, itemTemplate: colfnc, hasGroup: false },
 				{ name: 'stat_yn', title: '계량기누수여부', type: 'text', width: 40, itemTemplate: colfnc, hasGroup: false },
-				{ name: 'cust_phone', title: '전화번호호', type: 'text', width: 40, itemTemplate: colfnc, hasGroup: false },
+				{ name: 'cust_phone', title: '전화번호', type: 'text', width: 40, itemTemplate: colfnc, hasGroup: false },
 				{ name: 'remark', title: '비고', type: 'text', width: 115, itemTemplate: colfnc, hasGroup: false },
 			];
 

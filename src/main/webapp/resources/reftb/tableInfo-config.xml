@@ -1862,6 +1862,10 @@
 		   <name>call_check</name>
 		   <title>통화여부</title>
 	   </col>
+	   <col>
+		   <name>cust_phone</name>
+		   <title>전화번호</title>
+	   </col>
 	</map>
 
 	<map id="f11-5-export" meta-sql="f11-5-export" refer-sql="mars.icbm.map1.select_waterLeakList3">
@@ -1917,6 +1921,10 @@
 	   <col>
 		   <name>call_check</name>
 		   <title>통화여부</title>
+	   </col>
+	   <col>
+		   <name>cust_phone</name>
+		   <title>전화번호</title>
 	   </col>
 	</map>
 

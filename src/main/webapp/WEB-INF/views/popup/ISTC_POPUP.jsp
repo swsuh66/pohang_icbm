@@ -12,6 +12,15 @@
 <%@include file="/resources/inc/base.inc"%>
 <%@include file="/resources/inc/jsgrid.inc"%>
 <script>
+// 서버에서 사용자 소속 정보 가져오기
+var currentUserSiteSq = ${user.getSiteSq()};
+var currentUserSiteLv = ${user.getSiteLv()};
+
+console.log('팝업 로드 - 사용자 소속:', {
+	siteSq: currentUserSiteSq,
+	siteLv: currentUserSiteLv
+});
+
 $(function(){
 	/* grid 초기화 */
 	mainGrid = initGrid('mainGrid');
