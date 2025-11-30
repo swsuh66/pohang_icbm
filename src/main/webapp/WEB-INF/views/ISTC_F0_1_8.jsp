@@ -40,6 +40,16 @@
 						<input type="text" class="componentsSelect" id="meter_no" name="meter_no" onKeypress="javascript:if(event.keyCode == 13) { parent.searchGrid(); }" />
 					</div>
 				</div>
+				<div class="col-12 col-sm-6 col-md-4 col-lg-3 col-xl-2">
+					<div class="dj-input-group">
+						<span class="info componentsFont">수신동의</span>
+						<select data-placeholder="선택" class="form-control" name="receive_consent" id="receive_consent" data-component="receive_consent">
+							<option value="" selected>전체</option>
+							<option value="1">동의</option>
+							<option value="0">미동의</option>
+						</select>
+					</div>
+				</div>
 				<div class="col-12 col-sm-12 col-md-8 col-lg-6 col-xl-12">
 					<div class="dj-btn-group">
 						<button type="button" class="btn dj-btn-primary btn-sm" onclick="parent.searchGrid();">검색</button>

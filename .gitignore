@@ -7,13 +7,13 @@
 .settings
 readme.txt
 
-/.gradle
-/.history
-/.idea
-/.settings  
-/.vscode
-/build
-/bin
-/logs
-/release
+.gradle/
+.history/
+.idea/
+.settings/
+.vscode/
+build/
+bin/
+logs/
+release/
 

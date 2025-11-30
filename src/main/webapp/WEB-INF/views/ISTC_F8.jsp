@@ -403,6 +403,7 @@
 				//params['addr_3'] = $('#addr_3').val();
 				params['addr'] = $('#addr').val();
 				params['bungu_cd'] = $('#bungu_cd').val();
+				params['receive_consent'] = $('#receive_consent').val();
 
 				return params;
 			}

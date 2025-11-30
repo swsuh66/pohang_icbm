@@ -585,24 +585,8 @@
 			)
 		</if>
 
-
-		<!--  신규 필터 -->
-		<if test='cust_nm != null and cust_nm != ""'>
-			and a.cust_nm like  '%' || #{cust_nm} || '%'
-		</if>
-		<if test='admin_no != null and admin_no != ""'>
-			and a.admin_id like  '%' || #{admin_no} || '%'
-		</if>
-		<if test='addr != null and addr != ""'>
-			and (a.addr_old like '%' || #{addr} || '%'
-			or  a.addr_new like '%' || #{addr} || '%')
-		</if>
-		<if test='meter_no != null and meter_no != ""'>
-			and (
-			a.sub_dev_no like '%' || #{meter_no} || '%'
-			or a.dev_no like '%' || #{meter_no} || '%'
-			or a.meter_no like '%' || #{meter_no} || '%'
-			)
+		<if test = 'receive_consent != null and receive_consent != "" '>
+			and a.receive_consent = #{receive_consent}
 		</if>
 
 	</sql>
@@ -3913,6 +3897,16 @@
 	     <if test='addr != null and addr != ""'>
 	       and (c.addr like '%' || #{addr} || '%' 
 	        or  c.addr_new like '%' || #{addr} || '%')
+	     </if>
+	     <if test='receive_consent != null and receive_consent != ""'>
+	       <choose>
+	         <when test='receive_consent == "1"'>
+	           and c.receive_consent = true
+	         </when>
+	         <when test='receive_consent == "0"'>
+	           and (c.receive_consent = false or c.receive_consent is null)
+	         </when>
+	       </choose>
 	     </if>
 	</sql>
 	
