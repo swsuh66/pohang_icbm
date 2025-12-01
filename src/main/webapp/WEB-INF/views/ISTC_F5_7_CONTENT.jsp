@@ -1,0 +1,151 @@
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<c:set var="contextPath" value="<%=request.getContextPath()%>"></c:set>
+<%@ page language="java" session="false" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+	<head>
+		<%-- istc_f0_1_base --%> <%-- 기본필터 화면 --%> <%@include file="/resources/inc/meta.inc" %>
+		<title>스마트수도미터원격검침시스템</title>
+		<script type="text/javascript"></script>
+		<script>
+			$(function () {
+				// 화면 오픈시 초기화
+				loadComponentBase();
+			});
+
+			var searchComponentes = {
+				modem_id: null,
+				dev_no: null,
+				sub_dev_no: null,
+				tel_num: null,
+				imsi: null,
+				modem_control: null,
+			};
+
+			/*
+			 * 검색 컴포넌트 변경
+			 */
+			function baseComponentChangHandler(el) {
+				var val = $(el).val() != '-1' ? $(el).val() : null;
+				searchComponentes[$(el).attr('id')] = val;
+			}
+
+			function selectChange(url, key) {
+				var params = {};
+
+				$('#addr_2 option').remove(); //초기화
+				var el = $('<option>').attr('value', '').text('전체');
+				$('.componentsSelect[name="' + 'addr_2' + '"]').append(el);
+
+				var addr_1 = $('#addr_1').val();
+				if (addr_1 == null || addr_1 == '') {
+					component('mars.icbm.map1.selecAllSecondSiteComponent', 'addr_2');
+					return;
+				}
+
+				params['up_site_sq'] = addr_1;
+
+				ajaxSelect({
+					sql: url,
+					data: params,
+					success: function (data) {
+						if (data != 0) {
+							data.forEach(function (item, idx) {
+								if (item != null) {
+									var el = $('<option>').attr('value', item.val).text(item.name);
+									$('.componentsSelect[name="' + key + '"]').append(el);
+								}
+							});
+						}
+					},
+					error: function (result) {
+						jAlert.error('오류', '데이터를 가져오는데 실패하였습니다.');
+					},
+				});
+			}
+
+			function resetComponentes() {
+				$('#modem_id').val('');
+				$('#dev_no').val('');
+				$('#sub_dev_no').val('');
+				$('#tel_num').val('');
+				$('#imsi').val('');
+				$('#modem_control').val('');
+			}
+
+			// 기본컴포넌트 생성.
+			function loadComponentBase() {}
+		</script>
+	</head>
+	<body>
+		<div class="dj-card" id="filter">
+			<div class="row">
+				<div class="col-12 col-sm-6 col-md-4 col-lg-3 col-xl-2">
+					<div class="dj-input-group">
+						<span class="info componentsFont">모뎀ID</span>
+						<input type="text" class="componentsSelect" id="modem_id" onchange="baseComponentChangHandler(this);" />
+					</div>
+				</div>
+				<div class="col-12 col-sm-6 col-md-4 col-lg-3 col-xl-2">
+					<div class="dj-input-group">
+						<span class="info componentsFont">주번호</span>
+						<input type="text" class="componentsSelect" id="dev_no" onchange="baseComponentChangHandler(this);" />
+					</div>
+				</div>
+				<div class="col-12 col-sm-6 col-md-4 col-lg-3 col-xl-2">
+					<div class="dj-input-group">
+						<span class="info componentsFont">부번호</span>
+						<input type="text" class="componentsSelect" id="sub_dev_no" onchange="baseComponentChangHandler(this);" />
+					</div>
+				</div>
+				<div class="col-12 col-sm-6 col-md-4 col-lg-3 col-xl-2">
+					<div class="dj-input-group">
+						<span class="info componentsFont">IMEI</span>
+						<input type="text" class="componentsSelect" id="tel_num" onchange="baseComponentChangHandler(this);" />
+					</div>
+				</div>
+				<div class="col-12 col-sm-6 col-md-4 col-lg-3 col-xl-2">
+					<div class="dj-input-group">
+						<span class="info componentsFont">IMSI</span>
+						<input type="text" class="componentsSelect" id="imsi" onchange="baseComponentChangHandler(this);" />
+					</div>
+				</div>
+				<div class="col-12 col-sm-6 col-md-4 col-lg-3 col-xl-2">
+					<div class="dj-input-group">
+						<span class="info componentsFont">리셋Flag</span>
+						<select
+							data-placeholder="선택"
+							class="form-control"
+							name="modem_control"
+							id="modem_control"
+							data-component="modem_control"
+							onchange="baseComponentChangHandler(this);"
+						>
+							<option value="" selected>전체</option>
+							<option value="true">True</option>
+							<option value="false">False</option>
+						</select>
+					</div>
+				</div>
+				<div class="col-12 col-sm-6 col-md-8 col-lg-12 col-xl-12">
+					<div class="dj-btn-group">
+						<button type="button" class="btn dj-btn-primary btn-sm" onclick="mainGrid.search();">검색</button>
+						<button type="button" class="btn dj-btn-outline-gray btn-sm" onclick="resetComponentes();">초기화</button>
+						<button
+							type="button"
+							onclick="openModal();"
+							class="btn btn-sm dj-btn-outline-primary"
+							data-toggle="dropdown"
+							data-display="static"
+							aria-haspopup="true"
+							aria-expanded="false"
+						>
+							<i class="ico i-import"></i>Import
+						</button>
+						<button type="button" class="btn dj-btn-outline-green btn-sm" onclick="dataDownload();"><i class="ico i-excel"></i>엑셀다운</button>
+					</div>
+				</div>
+			</div>
+		</div>
+	</body>
+</html>

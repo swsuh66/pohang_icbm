@@ -3897,17 +3897,58 @@
 	     <if test='addr != null and addr != ""'>
 	       and (c.addr like '%' || #{addr} || '%' 
 	        or  c.addr_new like '%' || #{addr} || '%')
-	     </if>
-	     <if test='receive_consent != null and receive_consent != ""'>
-	       <choose>
-	         <when test='receive_consent == "1"'>
-	           and c.receive_consent = true
-	         </when>
-	         <when test='receive_consent == "0"'>
-	           and (c.receive_consent = false or c.receive_consent is null)
-	         </when>
-	       </choose>
-	     </if>
+	     </if>	     
+	</sql>
+	
+	<select id="wizitModemList_paging" parameterType="java.util.Map" resultType="java.util.Map">
+      <include refid="pageHeader"/>      
+      <include refid="wizitModemList_sql"/>      
+      <include refid="pageFooter"/>           
+    </select>
+    
+    <select id="wizitModemList" parameterType="java.util.Map" resultType="java.util.Map">
+      <include refid="wizitModemList_sql"/>      
+    </select>
+	
+	<sql id="wizitModemList_sql">
+		select 
+			(ROW_NUMBER() OVER(order by modem_id)) AS "rownum",
+			modem_id as "modemId",
+			dev_no as "devNo",
+			sub_dev_no as "subDevNo",
+			meter_id as "meterId",
+			tel_num as "telNum",
+			imsi as "imsi",
+			meas_cycle as "measCycle",
+			report_cycle as "reportCycle",
+			modem_control as "modemControl"
+		from tb_m1_wizit_modem_info
+		where 1=1
+		<if test='modem_id != null and modem_id != ""'>
+			and modem_id like '%' || #{modem_id} || '%'
+		</if>
+		<if test='dev_no != null and dev_no != ""'>
+			and dev_no like '%' || #{dev_no} || '%'
+		</if>
+		<if test='sub_dev_no != null and sub_dev_no != ""'>
+			and sub_dev_no like '%' || #{sub_dev_no} || '%'
+		</if>
+		<if test='tel_num != null and tel_num != ""'>
+			and tel_num like '%' || #{tel_num} || '%'
+		</if>
+		<if test='imsi != null and imsi != ""'>
+			and imsi like '%' || #{imsi} || '%'
+		</if>
+		<if test='modem_control != null and modem_control != ""'>
+			<choose>
+				<when test='modem_control == "true"'>
+					and modem_control = true
+				</when>
+				<when test='modem_control == "false"'>
+					and modem_control = false
+				</when>
+			</choose>
+		</if>
 	</sql>
 	
     

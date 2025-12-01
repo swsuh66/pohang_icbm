@@ -631,6 +631,10 @@
                         <a href="javascript:void(0);" onclick="reloadFrame('ISTC_F5_2', this);"
                             class="nav-link">종합등록 관리</a>
                     </li>
+                    <li class="nav-item" id="ISTC_F5_7" >
+                        <a href="javascript:void(0);" onclick="reloadFrame('ISTC_F5_7', this);"
+                            class="nav-link">위지트 모뎀 등록</a>
+                    </li>
                     <li class="nav-item" id="ISTC_F5_1_1">
                         <a href="javascript:void(0);" onclick="reloadFrame('ISTC_F5_1_1', this);"
                             class="nav-link">사용자 관리</span>
