@@ -29,7 +29,7 @@
 
 	var dbImportParams;
 
-	var dbParamsTb = 'f5-export';
+	var dbParamsTb = 'f5-7-export';
 
 	var dbImportTb = 'f5-import';
 
@@ -508,7 +508,7 @@
         { name: "telNum",      title: "IMEI", 	 type: "text",   width: 150,  itemTemplate:colfnc, editing: false, sortingDisabled:true},
         { name: "imsi",      title: "IMSI", 	 type: "text",   width: 150,  itemTemplate:colfnc, editing: false, sortingDisabled:true},
         { name: "measCycle",      title: "검침주기(분)", 	 type: "text",   width: 120,  itemTemplate:colfnc, editing: false, sortingDisabled:true},
-        { name: "reportCycle",      title: "보고횟수", 	 type: "text",   width: 100,  itemTemplate:colfnc, editing: false, sortingDisabled:true},
+        { name: "reportCycle",      title: "검침횟수", 	 type: "text",   width: 100,  itemTemplate:colfnc, editing: false, sortingDisabled:true},
         { name: "modemControl",      title: "리셋Flag", 	 type: "text",   width: 100,  itemTemplate:colfnc, editing: false, sortingDisabled:true}
      ];
 
@@ -932,14 +932,15 @@
 			return;
 
 		}
-
+		// console.log('dbParams:', dbParams);
+		// console.log ('dbParamsTb:', dbParamsTb);
 		var params = new Object();
 
 		params.qid = dbParams[dbParamsTb]['refer-sql'];
 		params.colMapping = dbParams[dbParamsTb]['cols'];
 		params.length = params.colMapping.length;
 
-		params.downloadFileName = "Setting_"+ kutil.dateFormat( new Date(), 'yymmddHHMMss');
+		params.downloadFileName = "WizitModem_"+ kutil.dateFormat( new Date(), 'yymmddHHMMss');
 		$.extend(params, makeParams());
 
 		templetDownLoad(params, null, null, function() {
@@ -949,8 +950,6 @@
 		});
 
 	};
-
-
 
  	function companyModal(event) {
 
@@ -1077,24 +1076,6 @@
 
 
 	}
-
-
-	function openConfigModal() {
-		
-		var modal = $('#config_form');
-		
-		modal.modal({backdrop: 'static', keyboard: false});
-		
-		var params = makeParams();
-		
-		/* 수용가 조회 */
-		getAjax('selectErrstatTime', params, function() {
-			//$('#config_time').attr("value", )
-		}, 
-		function (data) {
-			$('#config_time').val(data[0]['config_time']); 
-		}, null);
-	};
 	
 	function saveConfigModal() {
 		var params = {};
@@ -1107,25 +1088,6 @@
 			jAlert.info('알림', '수정 되었습니다.');
 			 
 		}, null);
-	};
-
-	function img_clear() {
-		$.ajax({
-			url : "file/image_clear",
-			processData : false,
-			contentType : false,
-			data : {},
-			type : 'POST',
-			success : function(result) {
-				jAlert.info('정보', '데이터 업로드 성공');
-			},
-			error: function(xhr, status, error) {
-				// 오류 발생 시 동작
-				console.error(error);
-				jAlert.error('오류', 'import 에 실패하였습니다.');
-				// 오류 처리를 수행합니다.
-			}
-		});
 	};
 
 	function deleteCustInfo(param) {
@@ -1244,14 +1206,14 @@
 	<%@ include file="ISTC_F5_7_CONTENT.jsp" %>
 	<div class="sub-cont-header">
 		<h6></h6>
-		<div class="sub-cont-header-area">
+		<!-- <div class="sub-cont-header-area">
 			<div class="dj-btn-group">
 				<button type="button" class="btn dj-btn-outline-gray btn-sm" onclick="openConfigModal();"><i class="ico i-set"></i>기타 설정</button>
 				<button type="button" class="btn dj-btn-outline-gray btn-sm" onclick="img_clear();">이미지 데이터 업로드</button>
 				<button type="button" class="btn dj-btn-outline-gray btn-sm" onclick="openImgModal();">이미지 업로드</button>
 			</div>
 			
-		</div>
+		</div> -->
 	</div>
 	<div class="dj-card">
 		<div class="bcard card point-grid">

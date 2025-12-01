@@ -351,6 +351,48 @@
 		
 	</map>
 	
+	<map id="f5" meta-sql="f5-7-export" refer-sql="mars.icbm.map1.wizitModemList_sql">		
+		<col>
+			<name>rownum</name>
+			<title>순번</title>
+		</col>										
+		<col>
+			<name>modemId</name>
+			<title>모뎀ID</title>
+		</col>		
+		<col>
+			<name>devNo</name>
+			<title>주번호</title>
+		</col>
+		<col>
+			<name>subDevNo</name>
+			<title>부번호</title>
+		</col>				
+		<col>
+			<name>meterId</name>
+			<title>신주소</title>
+		</col>						
+		<col>
+			<name>telNum</name>
+			<title>IMEI</title>
+		</col>
+		<col>
+			<name>imsi</name>
+			<title>IMSI</title>
+		</col>					
+		<col>
+			<name>measCycle</name>
+			<title>검침주기(분)</title>
+		</col>		
+		<col>
+			<name>reportCycle</name>
+			<title>검침횟수</title>
+		</col>
+		<col>
+			<name>modemControl</name>
+			<title>리셋Flag</title>
+		</col>
+	</map>
 	
 	<map id="f5-1" meta-sql="f5-1-export" refer-sql="mars.icbm.map1.userInfo">		
 		<col>
