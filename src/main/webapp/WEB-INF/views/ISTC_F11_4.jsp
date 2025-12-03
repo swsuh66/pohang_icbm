@@ -139,22 +139,41 @@
 			 * 그리드 컬럼 요소 리빌딩
 			 */
 			var fotmatDateTime = function (value) {
-				if (!value || value.length < 14) return value;
+				if (!value) return '-';
 
-				// 14자리 숫자면 yyyy-mm-dd hh:mm:ss 형식으로 변환
-				return (
-					value.substring(0, 4) +
-					'-' +
-					value.substring(4, 6) +
-					'-' +
-					value.substring(6, 8) +
-					' ' +
-					value.substring(8, 10) +
-					':' +
-					value.substring(10, 12) +
-					':' +
-					value.substring(12, 14)
-				);
+				// 이미 날짜 형식인 경우 (예: "2025-12-03 19:56:55")
+				if (typeof value === 'string' && value.indexOf('-') >= 0) {
+					// 날짜 문자열을 Date 객체로 변환
+					var date = new Date(value);
+					if (!isNaN(date.getTime())) {
+						return kutil.dateFormat(date, 'yyyy-mm-dd HH:MM:ss');
+					}
+					return value;
+				}
+
+				// 14자리 숫자 문자열인 경우 (예: "20251203195655")
+				if (typeof value === 'string' && value.length >= 14 && /^\d+$/.test(value)) {
+					return (
+						value.substring(0, 4) +
+						'-' +
+						value.substring(4, 6) +
+						'-' +
+						value.substring(6, 8) +
+						' ' +
+						value.substring(8, 10) +
+						':' +
+						value.substring(10, 12) +
+						':' +
+						value.substring(12, 14)
+					);
+				}
+
+				// 숫자 타입인 경우 (타임스탬프)
+				if (typeof value === 'number') {
+					return kutil.dateFormat(new Date(value), 'yyyy-mm-dd HH:MM:ss');
+				}
+
+				return value;
 			};
 			var colfnc = function (value, item, c, d, e) {
 				switch (this.name) {
@@ -177,7 +196,7 @@
 						title: '순번',
 						type: 'text',
 						align: 'center',
-						width: 46,
+						width: 60,
 						itemTemplate: colfnc,
 						sortingDisabled: true,
 					},
@@ -186,7 +205,7 @@
 						title: '수신자',
 						type: 'text',
 						align: 'left',
-						width: 100,
+						width: 120,
 						itemTemplate: colfnc,
 						hasGroup: false,
 					},
@@ -195,7 +214,7 @@
 						title: '수신번호',
 						type: 'text',
 						align: 'left',
-						width: 100,
+						width: 120,
 						itemTemplate: colfnc,
 						hasGroup: false,
 					},
@@ -204,16 +223,7 @@
 						title: '제목',
 						type: 'text',
 						align: 'left',
-						width: 160,
-						itemTemplate: colfnc,
-						hasGroup: false,
-					},
-					{
-						name: 'msg_content',
-						title: '내용',
-						type: 'text',
-						align: 'left',
-						width: 250,
+						width: 200,
 						itemTemplate: colfnc,
 						hasGroup: false,
 					},
@@ -222,7 +232,7 @@
 						title: '발신일',
 						type: 'text',
 						align: 'left',
-						width: 100,
+						width: 150,
 						itemTemplate: colfnc,
 						hasGroup: false,
 					},
@@ -231,7 +241,7 @@
 						title: '상태',
 						type: 'text',
 						align: 'left',
-						width: 100,
+						width: 120,
 						itemTemplate: colfnc,
 						hasGroup: false,
 					},
@@ -435,22 +445,106 @@
 				const params = makeParams();
 				console.log('loadData: params ===== ', params);
 
+				/* 로딩 시작 */
+				$('.bcard.point-grid').aceWidget('startLoading');
+
+				// 필터 타입 확인
+				var filterType = $('#filterType').val() || 'all';
+
+				// '전체' 선택 시 MyBatis 데이터만 조회
+				if (filterType === 'all') {
+					loadDbData(params);
+					return;
+				}
+
+				// '오류' 선택 시 API 데이터만 조회
 				const base = getContextPath();
 				if (base && base.endsWith('/')) base = base.slice(0, -1);
 				const url = base + '/api/alrimtok/history';
 				console.log('loadData: url ===== ', url);
 
-				/* 알림톡 발신 리스트 조회 */
-				getAjax(
-					url,
-					params,
-					function () {
-						/* 로딩 시작 */
-						$('.bcard.point-grid').aceWidget('startLoading');
+				$.ajax({
+					url: url,
+					type: 'GET',
+					data: params,
+					async: true,
+					success: function (result) {
+						if (typeof result === 'string') {
+							try {
+								result = JSON.parse(result);
+							} catch (e) {
+								console.error(e);
+								result = [];
+							}
+						}
+						var apiData = Array.isArray(result) ? result : [];
+						console.log('API data ===== ', apiData);
+
+						// API 데이터만 표시
+						refreshGrid(apiData);
 					},
-					refreshGrid,
-					null
-				);
+					error: function (error) {
+						console.error('API 호출 실패:', error);
+						// API 실패하면 빈 배열 표시
+						refreshGrid([]);
+					},
+				});
+			}
+
+			// MyBatis를 통한 전송 결과 조회
+			function loadDbData(params) {
+				// MyBatis 조회용 파라미터 변환
+				var dbParams = {
+					cust_name: params.tgt_nm || '',
+					cust_phone: params.phone_num || '',
+					ins_dt_from: params.startDate ? params.startDate + ' 00:00:00' : '',
+					ins_dt_to: params.endDate ? params.endDate + ' 23:59:59' : '',
+				};
+
+				ajaxSelect({
+					sql: 'mars.icbm.map1.selectAlrimtokHistory',
+					data: dbParams,
+					async: true,
+					success: function (result) {
+						console.log('MyBatis data ===== ', result);
+
+						// MyBatis 데이터를 그리드 형식으로 변환
+						var convertedDbData = [];
+						if (Array.isArray(result)) {
+							convertedDbData = result.map(function (item, index) {
+								// ins_dt가 이미 날짜 형식이므로 그대로 사용 (fotmatDateTime에서 처리)
+								var reg_dttm = '';
+								if (item.ins_dt) {
+									// 이미 날짜 문자열이면 그대로 사용, 아니면 변환
+									if (typeof item.ins_dt === 'string') {
+										reg_dttm = item.ins_dt;
+									} else {
+										reg_dttm = kutil.dateFormat(new Date(item.ins_dt), 'yyyy-mm-dd HH:MM:ss');
+									}
+								}
+
+								return {
+									rownum: index + 1,
+									tgt_nm: item.cust_name || '',
+									phone_num: item.cust_phone || '',
+									title: '[포항시] 원격검침 수용가 누수 의심 안내',
+									msg_content: '누수알림톡 전송',
+									reg_dttm: reg_dttm,
+									state_msg: '',
+									admin_no: item.admin_no || '',
+								};
+							});
+						}
+
+						// MyBatis 데이터만 표시
+						refreshGrid(convertedDbData);
+					},
+					error: function (error) {
+						console.error('MyBatis 조회 실패:', error);
+						// MyBatis 실패하면 빈 배열 표시
+						refreshGrid([]);
+					},
+				});
 			}
 
 			function getAjax(url, params, beforesend, callback, errCallback, async) {

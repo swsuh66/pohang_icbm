@@ -10,6 +10,7 @@
 		<script>
 			function resetComponentes() {
 				$('.componentsSelect').val('').trigger('chosen:updated');
+				$('#filterType').val('all');
 			}
 		</script>
 	</head>
@@ -38,6 +39,15 @@
 					<div class="dj-input-group">
 						<span class="info componentsFont">종료일</span>
 						<input type="date" id="endDate" name="endDate" />
+					</div>
+				</div>
+				<div class="col-12 col-sm-6 col-md-4 col-lg-3 col-xl-2">
+					<div class="dj-input-group">
+						<span class="info componentsFont">조회구분</span>
+						<select id="filterType" class="componentsSelect" onchange="parent.searchGrid();">
+							<option value="all" selected>전체</option>
+							<option value="error">오류</option>
+						</select>
 					</div>
 				</div>
 				<div class="col-12 col-sm-12 col-md-8 col-lg-6 col-xl-12">

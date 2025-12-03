@@ -4827,20 +4827,20 @@
 		(#{admin_id}, #{tgtNm}, #{phoneNum}, NOW())
 	</insert>
 
-	<select id="selectAlrimtokHistory" parameterType="java.util.Map">
+	<select id='selectAlrimtokHistory' parameterType='java.util.Map' resultType='java.util.Map'>
 		select 
 			admin_no,
 			cust_name,
 			cust_phone, 
 			ins_dt
-		tb_m1_alrimtok_history 
+		from tb_m1_alrimtok_history 
 		<where>
 			<if test="admin_no != null and admin_no != ''">
 				AND admin_no = #{admin_no}
 			</if>
 
 			<if test="cust_name != null and cust_name != ''">
-				AND cust_name LIKE CONCAT('%', #{cust_name}, '%')
+				AND cust_name LIKE '%' || #{cust_name} || '%'
 			</if>
 
 			<if test="cust_phone != null and cust_phone != ''">
@@ -4848,13 +4848,14 @@
 			</if>
 
 			<if test="ins_dt_from != null and ins_dt_from != ''">
-				AND ins_dt &gt;= #{ins_dt_from}
+				AND ins_dt &gt;= CAST(#{ins_dt_from} AS timestamp)
 			</if>
 
 			<if test="ins_dt_to != null and ins_dt_to != ''">
-				AND ins_dt &lt;= #{ins_dt_to}
+				AND ins_dt &lt;= CAST(#{ins_dt_to} AS timestamp)
 			</if>
 		</where>
+		order by ins_dt desc
 	</select>
 
 	<update id="updateCallCheck" parameterType="java.util.Map">
