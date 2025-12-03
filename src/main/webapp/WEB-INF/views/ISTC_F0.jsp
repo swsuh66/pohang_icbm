@@ -594,17 +594,17 @@
                        <b class="ico i-arrow-down"></b>
                </a>
                <ul class="nav custom-nav custom-nav-navbar" >
-                    <li class="nav-item" id="ISTC_F11_3">
+                    <!-- <li class="nav-item" id="ISTC_F11_3">
                         <a href="javascript:void(0);" onclick="reloadFrame('ISTC_F11_3', this);"
                            class="nav-link">누수의심검출-old</a>
-                    </li>
+                    </li> -->
                     <li class="nav-item" id="ISTC_F11_5">
                         <a href="javascript:void(0);" onclick="reloadFrame('ISTC_F11_5', this);"
-                           class="nav-link">누수의심검출-new</a>
+                           class="nav-link">누수의심검출</a>
                     </li>
                     <li class="nav-item" id="ISTC_F11_4">
                         <a href="javascript:void(0);" onclick="reloadFrame('ISTC_F11_4', this);"
-                            class="nav-link">알림실패조회</span>
+                            class="nav-link">알림발신조회</span>
                         </a>
                    </li>
                 </ul>

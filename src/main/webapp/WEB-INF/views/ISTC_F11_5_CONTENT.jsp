@@ -174,7 +174,7 @@
 						<button type="button" class="btn dj-btn-outline-green btn-sm" onclick="dataDownload();"><i class="ico i-excel"></i>엑셀다운</button>
 						<button type="button" class="btn dj-btn-outline-gray btn-sm" onclick="openAlrimTokPopup();"><i class="ico i-kakao"></i>누수알림</button>
 						<button type="button" class="btn dj-btn-outline-gray btn-sm" onclick="openRuleModal();"><i class="fa fa-search"></i>설정보기</button>
-						<button type="button" class="btn dj-btn-outline-gray btn-sm" onclick="openHideSettingModal();"><i class="ico i-set"></i>제외 수용가 설정</button>
+						<!-- <button type="button" class="btn dj-btn-outline-gray btn-sm" onclick="openHideSettingModal();"><i class="ico i-set"></i>제외 수용가 설정</button> -->
 					</div>
 				</div>
 			</div>

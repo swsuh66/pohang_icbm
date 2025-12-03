@@ -4710,9 +4710,16 @@
 			SELECT
 				p.point_sq,
 				p.site_sq,
-				c.cust_sq, c.cust_name, c.admin_no, c.business_name,
-				c.pipe_diameter, c.addr_new, c.receive_consent,
-				c.read_responsi, c.cust_phone, c.remark
+				c.cust_sq, 
+				c.cust_name, 
+				c.admin_no, 
+				c.business_name,
+				c.pipe_diameter, 
+				c.addr_new, 
+				c.receive_consent,
+				c.read_responsi, 
+				c.cust_phone, 
+				c.remark
 			FROM tb_m1_info_customer c
 			JOIN tb_m1_info_point p ON c.cust_sq = p.cust_sq
 		),
@@ -4812,6 +4819,43 @@
 		</where>
 	</sql>
 	
+	<insert id="insertAlrimtokHistory" parameterType="java.util.Map">
+		insert into tb_m1_alrimtok_history (
+			admin_no, cust_name, cust_phone, ins_dt
+		)
+		values 
+		(#{admin_id}, #{tgtNm}, #{phoneNum}, NOW())
+	</insert>
+
+	<select id="selectAlrimtokHistory" parameterType="java.util.Map">
+		select 
+			admin_no,
+			cust_name,
+			cust_phone, 
+			ins_dt
+		tb_m1_alrimtok_history 
+		<where>
+			<if test="admin_no != null and admin_no != ''">
+				AND admin_no = #{admin_no}
+			</if>
+
+			<if test="cust_name != null and cust_name != ''">
+				AND cust_name LIKE CONCAT('%', #{cust_name}, '%')
+			</if>
+
+			<if test="cust_phone != null and cust_phone != ''">
+				AND cust_phone = #{cust_phone}
+			</if>
+
+			<if test="ins_dt_from != null and ins_dt_from != ''">
+				AND ins_dt &gt;= #{ins_dt_from}
+			</if>
+
+			<if test="ins_dt_to != null and ins_dt_to != ''">
+				AND ins_dt &lt;= #{ins_dt_to}
+			</if>
+		</where>
+	</select>
 
 	<update id="updateCallCheck" parameterType="java.util.Map">
 		update tb_m1_meas_raw set

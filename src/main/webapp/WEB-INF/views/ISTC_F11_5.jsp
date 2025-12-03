@@ -25,11 +25,16 @@
 			// 누수 규칙 모달 그리드
 			var ruleGrid;
 
+			// 알림톡 전송 결과 그리드
+			var alrimTokResultGrid;
+
 			var dbParams;
 
 			var dbParamsTb = 'f11-5-export';
 
 			var pointListData;
+
+			var alrimtokListData;
 
 			var leakSetting;
 
@@ -63,6 +68,9 @@
 
 				mainGrid = initGrid('mainGrid', mainFields);
 
+				// 알림톡 전송 결과 그리드 초기화
+				alrimTokResultGrid = initAlrimTokResultGrid('alrimTokResultGrid', alrimTokResultFields);
+
 				loadSettingData();
 
 				loadHideSettingData();
@@ -84,10 +92,23 @@
 
 					console.log('custSq', custSq, 'receive_consent', receive_consent);
 
+					var receive_consent_bool = receive_consent == '1' ? true : false;
+
+					// pointListData에서 해당 항목 찾아서 receive_consent 업데이트
+					if (pointListData && pointListData.length > 0) {
+						var dataItem = pointListData.find(function (d) {
+							return d.cust_sq == custSq || d.custSq == custSq;
+						});
+						if (dataItem) {
+							dataItem.receive_consent = receive_consent_bool;
+							console.log('Updated pointListData.receive_consent for custSq:', custSq, 'to:', receive_consent_bool);
+						}
+					}
+
 					var params = {};
 
 					params['custSq'] = custSq;
-					params['receive_consent'] = receive_consent == '1' ? true : false;
+					params['receive_consent'] = receive_consent_bool;
 
 					getAjax(
 						'mars.icbm.map1.updateReceiveConsent',
@@ -557,6 +578,25 @@
 				{ name: 'remark', title: '비고', type: 'text', width: 115, itemTemplate: colfnc, hasGroup: false },
 			];
 
+			// 알림톡 전송 결과 그리드 필드
+			var alrimTokResultFields = [
+				{ name: 'admin_id', title: '수용가번호', type: 'text', align: 'center', width: 100, itemTemplate: colfnc, sortingDisabled: true },
+				{ name: 'cust_nm', title: '이름', type: 'text', align: 'center', width: 100, itemTemplate: colfnc, sortingDisabled: true },
+				{ name: 'cust_phone', title: '전화번호', type: 'text', align: 'center', width: 100, itemTemplate: colfnc, sortingDisabled: true },
+				{
+					name: 'send_status',
+					title: '발신',
+					type: 'text',
+					align: 'center',
+					width: 50,
+					itemTemplate: function (value, item) {
+						var checked = item.send_status === true || item.send_status === 'true' || item.send_status === 1;
+						return "<input type='checkbox' class='cbox alrimtok-send-checkbox' data-admin-id='" + (item.admin_id || '') + "' " + (checked ? 'checked' : '') + '/>';
+					},
+					sortingDisabled: true,
+				},
+			];
+
 			function initGrid(container, fields) {
 				var opt = {
 					height: '100%',
@@ -592,6 +632,22 @@
 							parent.loadChartData(false, evt.item);
 						}
 					},
+				};
+
+				return new DataGrid(container, opt);
+			}
+
+			// 알림톡 전송 결과 그리드 초기화 함수
+			function initAlrimTokResultGrid(container, fields) {
+				var opt = {
+					height: '400px',
+					width: '100%',
+					sorting: false,
+					pageLoading: false,
+					paging: false,
+					fields: fields,
+					rowDoubleClick: function (evt) {},
+					scrollBar: true, // 스크롤바 표시
 				};
 
 				return new DataGrid(container, opt);
@@ -682,28 +738,28 @@
 				'▶ 관련문의 : 054-270-5331 (평일 9시 ~ 18시)\n\n' +
 				'- 포항시 상하수도행정과 요금팀 -';
 			*/
-			function sendAlrimTok() {
-				closeAlrimTokPopup();
-
+			function sendAlrimTok(items) {
 				const API_SEND = '<c:url value="/api/alrimtok/send"/>';
-				const reqParams = makeParams(); // 기존 그대로 사용
 
-				// 전화번호 형식
-				const PHONE_RE = /^010-\d{4}-\d{4}$/;
-				const hyphenize = (s) => {
-					const digits = String(s || '').replace(/\D/g, '');
-					if (digits.length === 11 && digits.startsWith('010')) {
-						return digits.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3');
-					}
-					return s || '';
-				};
+				// items가 전달되지 않은 경우 그리드에서 데이터 가져오기
+				if (!items || items.length === 0) {
+					// 그리드에서 데이터 가져오기
+					var gridData = alrimTokResultGrid.jsGrid('option', 'data') || [];
 
-				loadData('mars.icbm.map1.select_waterLeakList_page3', reqParams, function (data) {
-					const items = [];
+					// 전화번호 형식
+					const PHONE_RE = /^010-\d{4}-\d{4}$/;
+					const hyphenize = (s) => {
+						const digits = String(s || '').replace(/\D/g, '');
+						if (digits.length === 11 && digits.startsWith('010')) {
+							return digits.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3');
+						}
+						return s || '';
+					};
 
-					for (let i = 0; i < data.length; i++) {
-						const row = data[i];
-						if (!row.receive_consent) continue; // 동의 안 한 대상 제외
+					items = [];
+
+					for (let i = 0; i < gridData.length; i++) {
+						const row = gridData[i];
 
 						const name = String(row.cust_nm || '').trim();
 						let phone = String(row.cust_phone || '').trim();
@@ -715,44 +771,148 @@
 							phoneNum: phone,
 						});
 					}
+				}
 
-					if (items.length === 0) {
-						alert('전송할 대상이 없습니다. (동의 여부/전화번호 형식 확인)');
-						return;
-					}
+				if (items.length === 0) {
+					alert('전송할 대상이 없습니다. (전화번호 형식 확인)');
+					return;
+				}
 
-					const total_count = data.length;
-					const sent_count = items.length;
-					const success_message = '전체 ' + total_count + '건중 수신동의 데이터 ' + sent_count + '건 전송 성공';
-					// 컨트롤러 프록시를 통해 Node로 배열 그대로 전송
-					ajaxPost(
-						API_SEND,
-						items,
-						function (data, status, xhr) {
-							if (xhr.status === 200) {
-								alert(success_message);
-							} else {
-								alert('전송 실패: ' + (data.message || '알 수 없는 오류'));
-							}
-						},
-						function (data, status, xhr) {
-							if (xhr.status === 200) {
-								alert(success_message);
-							} else {
-								alert('전송 실패: ' + (data.message || '알 수 없는 오류'));
-							}
+				const sent_count = items.length;
+				const success_message = '전송 대상 ' + sent_count + '건 전송 성공';
+				// 컨트롤러 프록시를 통해 Node로 배열 그대로 전송
+				ajaxPost(
+					API_SEND,
+					items,
+					function (data, status, xhr) {
+						if (xhr.status === 200) {
+							alert(success_message);
+						} else {
+							alert('전송 실패: ' + (data.message || '알 수 없는 오류'));
 						}
-					);
+					},
+					function (data, status, xhr) {
+						if (xhr.status === 200) {
+							alert(success_message);
+						} else {
+							alert('전송 실패: ' + (data.message || '알 수 없는 오류'));
+						}
+					}
+				);
+			}
+
+			function saveAlrimTok(items) {
+				console.log('saveAlrimTok items', items);
+
+				if (!items || items.length === 0) {
+					console.log('저장할 데이터가 없습니다.');
+					return;
+				}
+
+				// ajaxInsert를 사용하여 MyBatis insert 호출
+				ajaxInsert({
+					sql: 'mars.icbm.map1.insertAlrimtokHistory',
+					data: items,
+					async: true,
+					success: function (result) {
+						if (result && result.success) {
+							console.log('알림톡 발신 기록 저장 성공');
+						} else {
+							console.error('알림톡 발신 기록 저장 실패:', result);
+						}
+					},
+					error: function (result) {
+						console.error('알림톡 발신 기록 저장 오류:', result);
+					},
 				});
 			}
 
 			function openAlrimTokPopup() {
+				console.log('pointListData', pointListData);
+				var filteredData = pointListData.filter(function (item) {
+					return item.receive_consent === true || item.receive_consent === 'true' || item.receive_consent === 1;
+				});
+
+				// 알림톡 결과 그리드에 표시할 데이터 형식으로 변환
+				alrimtokListData = filteredData.map(function (item, index) {
+					return {
+						admin_id: item.admin_id || '',
+						cust_nm: item.cust_nm || '',
+						cust_phone: item.cust_phone || '',
+						send_status: item.receive_consent, // 수신동의 값 (boolean)
+					};
+				});
+
+				// 그리드에 데이터 로드
+				alrimTokResultGrid.finishLoad(alrimtokListData);
+
+				// 전체 대상 개수 업데이트
+				document.getElementById('alrimTokTotalCount').textContent = alrimtokListData.length;
+
+				// 체크박스 클릭 이벤트 바인딩 (이벤트 위임)
+				$('#alrimTokResultGrid')
+					.off('change', '.alrimtok-send-checkbox')
+					.on('change', '.alrimtok-send-checkbox', function () {
+						var adminId = $(this).data('admin-id');
+						var isChecked = $(this).is(':checked');
+
+						// alrimtokListData에서 해당 항목 찾아서 send_status 업데이트
+						var dataItem = alrimtokListData.find(function (d) {
+							return d.admin_id === adminId;
+						});
+						if (dataItem) {
+							dataItem.send_status = isChecked;
+							console.log('Updated send_status for admin_id:', adminId, 'to:', isChecked);
+						}
+					});
+
+				// 팝업 표시
 				document.getElementById('alrimTokPopup').style.display = 'block';
 			}
 
 			// 팝업 닫기
 			function closeAlrimTokPopup() {
 				document.getElementById('alrimTokPopup').style.display = 'none';
+			}
+
+			// 알림톡 전송 버튼 클릭 시 그리드 데이터를 가져와서 전송
+			function handleSendAlrimTok() {
+				console.log('handleSendAlrimTok alrimtokListData', alrimtokListData);
+				// 전화번호 형식
+				const PHONE_RE = /^010-\d{4}-\d{4}$/;
+				const hyphenize = (s) => {
+					const digits = String(s || '').replace(/\D/g, '');
+					if (digits.length === 11 && digits.startsWith('010')) {
+						return digits.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3');
+					}
+					return s || '';
+				};
+
+				var items = [];
+
+				for (let i = 0; i < alrimtokListData.length; i++) {
+					const row = alrimtokListData[i];
+
+					// send_status가 true인 항목만 전송 대상에 포함
+					if (!row.send_status) continue;
+
+					const admin_id = String(row.admin_id || '').trim();
+					const name = String(row.cust_nm || '').trim();
+					let phone = '010-9081-7838'; //String(row.cust_phone || '').trim();
+					phone = PHONE_RE.test(phone) ? phone : hyphenize(phone);
+					if (!PHONE_RE.test(phone)) continue; // 형식 불일치 스킵
+
+					items.push({
+						admin_id: admin_id,
+						tgtNm: name,
+						phoneNum: phone,
+					});
+				}
+
+				// alrimtokListData를 기반으로 변환된 items를 파라미터로 전달
+				sendAlrimTok(items);
+				saveAlrimTok(items);
+				closeAlrimTokPopup();
 			}
 
 			function confirmSendAlrimTok() {
@@ -1253,51 +1413,79 @@
 			</div>
 		</div>
 
-		<!-- 알림톡 테스트 모달 팝업 -->
+		<!-- 알림톡 모달 팝업 -->
 		<div id="alrimTokPopup" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); z-index: 1000">
 			<div
 				style="
 					background: #fff;
-					width: 380px;
-					margin: 120px auto;
+					width: 700px;
+					max-width: 90%;
+					margin: 80px auto;
 					padding: 25px 20px;
 					border-radius: 12px;
 					box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 					font-family: 'Segoe UI', sans-serif;
 					animation: fadeIn 0.3s;
+					position: relative;
 				"
 			>
 				<button
-					onclick="sendAlrimTok()"
-					style="width: 100%; height: 20%; font-size: 25px; padding: 8px 16px; background: #f0f321; color: 333; border: none; border-radius: 6px; cursor: pointer"
+					onclick="closeAlrimTokPopup()"
+					style="
+						position: absolute;
+						top: 10px;
+						right: 10px;
+						width: 32px;
+						height: 32px;
+						background: #f5f5f5;
+						border: none;
+						border-radius: 50%;
+						cursor: pointer;
+						font-size: 20px;
+						font-weight: bold;
+						color: #666;
+						display: flex;
+						align-items: center;
+						justify-content: center;
+						transition: all 0.2s ease;
+						z-index: 10;
+					"
+					onmouseover="this.style.background='#e0e0e0'; this.style.color='#333';"
+					onmouseout="this.style.background='#f5f5f5'; this.style.color='#666';"
+					title="닫기"
 				>
-					대상자 전체 알림톡 전송
+					×
 				</button>
-				<div style="border: 1px solid #ccc; margin-top: 10px; padding: 10px">
-					<label style="font-size: 20px; margin-top: 0; color: #333; text-align: center">알림톡 테스트</label>
-
-					<div style="margin-bottom: 15px">
-						<label for="popupUserName" style="display: block; text-align: left; font-weight: bold; margin-bottom: 5px">사용자명</label>
-						<input type="text" id="popupUserName" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 6px" />
-					</div>
-
-					<div style="margin-bottom: 20px">
-						<label for="popupPhoneNum" style="display: block; text-align: left; font-weight: bold; margin-bottom: 5px">전화번호</label>
-						<input type="text" id="popupPhoneNum" placeholder="010-1234-5678" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 6px" />
-					</div>
-
-					<div style="text-align: right">
-						<button
-							onclick="confirmSendAlrimTok()"
-							style="padding: 8px 16px; background: #2196f3; color: white; border: none; border-radius: 6px; cursor: pointer; margin-right: 8px"
-						>
-							확인
-						</button>
-						<button onclick="closeAlrimTokPopup()" style="padding: 8px 16px; background: #aaa; color: white; border: none; border-radius: 6px; cursor: pointer">
-							취소
-						</button>
-					</div>
+				<div style="border: 1px solid #ccc; margin-top: 10px; padding: 10px; padding-top: 20px">
+					<div style="margin-bottom: 10px; font-size: 16px; font-weight: bold; color: #333; text-align: left">전체 대상 : <span id="alrimTokTotalCount">0</span>명</div>
+					<div id="alrimTokResultGrid" class="data-list containerBorder" style="width: 100%; height: 400px"></div>
 				</div>
+				<button
+					onclick="handleSendAlrimTok()"
+					style="
+						width: 100%;
+						min-height: 60px;
+						font-size: 20px;
+						font-weight: bold;
+						padding: 14px 20px;
+						background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+						color: #ffffff;
+						border: none;
+						border-radius: 8px;
+						cursor: pointer;
+						box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+						transition: all 0.3s ease;
+						text-align: center;
+						display: block;
+						margin-top: 10px;
+					"
+					onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(102, 126, 234, 0.6)';"
+					onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(102, 126, 234, 0.4)';"
+					onmousedown="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 10px rgba(102, 126, 234, 0.3)';"
+					onmouseup="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(102, 126, 234, 0.6)';"
+				>
+					알림톡 전송
+				</button>
 			</div>
 		</div>
 		<div class="modal fade" id="hideSettingModal" tabindex="-1" role="dialog">
