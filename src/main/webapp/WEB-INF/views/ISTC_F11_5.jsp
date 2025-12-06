@@ -159,7 +159,7 @@
 			}
 
 			function loadData(qid, params, callback) {
-				var qid = qid ? qid : 'mars.icbm.map1.select_waterLeakList_page3';
+				var qid = qid ? qid : 'mars.icbm.map1.select_waterLeakList_page2';
 				var params = params ? params : makeParams();
 
 				/* 수용가 조회 */
@@ -324,6 +324,8 @@
 			                 */
 					case 'max_date':
 					case 'min_date':
+					case 'last_send_date':
+					case 'leak_start_date':
 						if (!value) return '-';
 						var dt = new Date(value);
 						return '' + kutil.dateFormat(dt, 'yyyy.mm.dd') + ' ' + kutil.dateFormat(dt, 'HH:MM');
@@ -337,8 +339,16 @@
 						return callCheckTemplate(value, item, c);
 					case 'receive_consent':
 						var selected = item.receive_consent;
-
-						return "<input type='checkbox' name='receive_consent' " + (selected ? 'checked' : '') + '  class="cbox" data-custSq="' + item.cust_sq + '"/>';
+						var text = selected ? '동의' : '미동의';
+						var color = selected ? 'blue' : 'red';
+						return "<span style='color: " + color + "; font-weight: bold;'>" + text + '</span>';
+					case 'send_status':
+						// 수신동의자가 체크되도록, 미동의자는 비워두기
+						var receiveConsent = item.receive_consent === true || item.receive_consent === 'true' || item.receive_consent === 1 || item.receive_consent === '1';
+						var checked = receiveConsent;
+						return (
+							"<input type='checkbox' name='send_status' " + (checked ? 'checked' : '') + " class='cbox' data-custSq='" + (item.cust_sq || item.custSq || '') + "'/>"
+						);
 				}
 
 				return value || value == 0 ? value : '-';
@@ -567,6 +577,9 @@
 				{ name: 'admin_id', title: '수용가번호', type: 'text', width: 60, itemTemplate: colfnc, hasGroup: false },
 				{ name: 'read_responsi', title: '검침원', type: 'text', width: 30, itemTemplate: colfnc, hasGroup: false },
 				{ name: 'receive_consent', title: '수신동의', type: 'text', width: 30, itemTemplate: colfnc, hasGroup: false },
+				{ name: 'send_status', title: '발신', type: 'text', width: 30, itemTemplate: colfnc, hasGroup: false },
+				{ name: 'last_send_date', title: '최종발신일', type: 'text', width: 50, itemTemplate: colfnc, hasGroup: false },
+				{ name: 'leak_start_date', title: '누수시작일', type: 'text', width: 50, itemTemplate: colfnc, hasGroup: false },
 				{ name: 'use_type', title: '업종', type: 'text', width: 40, itemTemplate: colfnc, hasGroup: false },
 				{ name: 'pipe_dia', title: '구경', type: 'text', width: 20, itemTemplate: colfnc, hasGroup: false },
 				{ name: 'max_date', title: '최대시간', type: 'text', width: 50, itemTemplate: colfnc, hasGroup: false },
@@ -583,18 +596,6 @@
 				{ name: 'admin_id', title: '수용가번호', type: 'text', align: 'center', width: 100, itemTemplate: colfnc, sortingDisabled: true },
 				{ name: 'cust_nm', title: '이름', type: 'text', align: 'center', width: 100, itemTemplate: colfnc, sortingDisabled: true },
 				{ name: 'cust_phone', title: '전화번호', type: 'text', align: 'center', width: 100, itemTemplate: colfnc, sortingDisabled: true },
-				{
-					name: 'send_status',
-					title: '발신',
-					type: 'text',
-					align: 'center',
-					width: 50,
-					itemTemplate: function (value, item) {
-						var checked = item.send_status === true || item.send_status === 'true' || item.send_status === 1;
-						return "<input type='checkbox' class='cbox alrimtok-send-checkbox' data-admin-id='" + (item.admin_id || '') + "' " + (checked ? 'checked' : '') + '/>';
-					},
-					sortingDisabled: true,
-				},
 			];
 
 			function initGrid(container, fields) {
@@ -786,6 +787,7 @@
 					items,
 					function (data, status, xhr) {
 						if (xhr.status === 200) {
+							// console.log('알림톡 전송 성공: ', data);
 							alert(success_message);
 						} else {
 							alert('전송 실패: ' + (data.message || '알 수 없는 오류'));
@@ -816,7 +818,8 @@
 					async: true,
 					success: function (result) {
 						if (result && result.success) {
-							console.log('알림톡 발신 기록 저장 성공');
+							console.log('알림톡 발신 기록 저장 성공', result);
+							return result;
 						} else {
 							console.error('알림톡 발신 기록 저장 실패:', result);
 						}
@@ -829,8 +832,20 @@
 
 			function openAlrimTokPopup() {
 				console.log('pointListData', pointListData);
+
+				// 메인 그리드에서 발신 체크박스가 체크된 항목의 cust_sq 수집
+				var checkedCustSqs = [];
+				$('#mainGrid input[name="send_status"]:checked').each(function () {
+					var custSq = $(this).data('custsq') || $(this).attr('data-custSq');
+					if (custSq) {
+						checkedCustSqs.push(String(custSq));
+					}
+				});
+
+				// 발신 체크박스가 체크된 데이터만 필터링
 				var filteredData = pointListData.filter(function (item) {
-					return item.receive_consent === true || item.receive_consent === 'true' || item.receive_consent === 1;
+					var custSq = String(item.cust_sq || item.custSq || '');
+					return checkedCustSqs.indexOf(custSq) !== -1;
 				});
 
 				// 알림톡 결과 그리드에 표시할 데이터 형식으로 변환
@@ -981,7 +996,7 @@
 				var params = {};
 
 				$.extend(params, mainGrid.loadParams());
-
+				/*
 				params['stdDate'] = $('#stdDate').val() + ' ' + $('#stdTime').val(); // 기준 일자.
 				params['stdTime'] = $('#stdTime').val(); // 기준 일자.
 				params['cust_sq'] = $('#cust_sq').val();
@@ -990,6 +1005,18 @@
 				params['pipe_diameter'] = $('#pipe_diameter').val();
 				params['business_name'] = $('#business_name').val();
 				params['compare_term_cv'] = $('#compare_term_cv').val();
+				params['read_responsi'] = $('#read_responsi').val();
+				params['cust_phone'] = $('#cust_phone').val();
+				*/
+				params['stdDate'] = '2025-07-28 00:00:00';
+				params['stdTime'] = '00:00:00';
+				params['cust_sq'] = $('#cust_sq').val();
+				params['cust_nm'] = $('#cust_nm').val();
+				params['admin_no'] = $('#admin_no').val();
+				params['calc_hour'] = '72';
+				params['pipe_diameter'] = $('#pipe_diameter').val();
+				params['business_name'] = $('#business_name').val();
+				params['compare_term_cv'] = '0.05'; //$('#compare_term_cv').val();
 				params['read_responsi'] = $('#read_responsi').val();
 				params['cust_phone'] = $('#cust_phone').val();
 				return params;
@@ -1391,6 +1418,13 @@
 				} else {
 					resultEl.value = '0.05';
 				}
+			}
+
+			// 프린트 페이지 열기
+			function openPrintPage() {
+				var contextPath = getContextPath();
+				var url = contextPath + '/ISTC_F11_PRINT';
+				window.open(url, '_blank');
 			}
 		</script>
 

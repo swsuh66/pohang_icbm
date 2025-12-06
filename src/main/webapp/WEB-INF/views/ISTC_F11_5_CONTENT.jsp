@@ -167,6 +167,15 @@
 						<input type="text" class="componentsSelect" id="read_responsi" onKeypress="javascript:if(event.keyCode == 13) { parent.searchGrid(); }" />
 					</div>
 				</div>
+				<div class="col-12 col-sm-6 col-md-4 col-lg-3 col-xl-2">
+					<div class="dj-input-group">
+						<span class="info componentsFont">제외기간</span>
+						<div style="display: flex; align-items: center;">
+							<input type="date" class="componentsSelect" id="exclude_date" onKeypress="javascript:if(event.keyCode == 13) { parent.searchGrid(); }" style="flex: 1;" />
+							<span style="margin-left: 8px; white-space: nowrap;">이전</span>
+						</div>
+					</div>
+				</div>
 				<div class="col-12 col-sm-6 col-md-8 col-lg-12 col-xl-12">
 					<div class="dj-btn-group">
 						<button type="button" class="btn dj-btn-primary btn-sm" onclick="parent.searchGrid();">검색</button>
@@ -174,6 +183,7 @@
 						<button type="button" class="btn dj-btn-outline-green btn-sm" onclick="dataDownload();"><i class="ico i-excel"></i>엑셀다운</button>
 						<button type="button" class="btn dj-btn-outline-gray btn-sm" onclick="openAlrimTokPopup();"><i class="ico i-kakao"></i>누수알림</button>
 						<button type="button" class="btn dj-btn-outline-gray btn-sm" onclick="openRuleModal();"><i class="fa fa-search"></i>설정보기</button>
+						<button type="button" class="btn dj-btn-outline-gray btn-sm" onclick="openPrintPage();"><i class="fa fa-print"></i>프린트</button>
 						<!-- <button type="button" class="btn dj-btn-outline-gray btn-sm" onclick="openHideSettingModal();"><i class="ico i-set"></i>제외 수용가 설정</button> -->
 					</div>
 				</div>
