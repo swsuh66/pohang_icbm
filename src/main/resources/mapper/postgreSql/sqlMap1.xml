@@ -4821,17 +4821,23 @@
 	
 	<insert id="insertAlrimtokHistory" parameterType="java.util.Map">
 		insert into tb_m1_alrimtok_history (
-			admin_no, cust_name, cust_phone, ins_dt
+			admin_no, cust_name, cust_phone, insert_id, ins_dt
 		)
 		values 
-		(#{admin_id}, #{tgtNm}, #{phoneNum}, NOW())
+		(#{admin_id}, #{tgtNm}, #{phoneNum}, #{insertId}, NOW())
 	</insert>
 
-	<select id='selectAlrimtokHistory' parameterType='java.util.Map' resultType='java.util.Map'>
+	<select id="selectAlrimtokHistory_paging" parameterType="java.util.Map" resultType="java.util.Map">		
+		<include refid="pageHeader"/>      
+		<include refid="selectAlrimtokHistory"/>      
+		<include refid="pageFooter"/>           
+    </select>
+	<sql id='selectAlrimtokHistory'>
 		select 
 			admin_no,
 			cust_name,
 			cust_phone, 
+			insert_id, 
 			ins_dt
 		from tb_m1_alrimtok_history 
 		<where>
@@ -4856,7 +4862,7 @@
 			</if>
 		</where>
 		order by ins_dt desc
-	</select>
+	</sql>
 
 	<update id="updateCallCheck" parameterType="java.util.Map">
 		update tb_m1_meas_raw set

@@ -114,13 +114,10 @@
 			 * 그리드 갱신
 			 */
 			function refreshGrid(data) {
-				// mainGrid = initGrid('mainGrid');
-				// console.log('refreshGrid data ===== ', data);
-				if (data) {
-					mainGrid.finishLoad(data || []);
-				} else {
-					mainGrid.command('refresh');
-				}
+				mainGrid = initGrid('mainGrid');
+
+				if (data) mainGrid.finishLoad(data || []);
+				else mainGrid.command('refresh');
 
 				$('.bcard.point-grid').aceWidget('stopLoading');
 
@@ -177,6 +174,8 @@
 			};
 			var colfnc = function (value, item, c, d, e) {
 				switch (this.name) {
+					case 'num':
+						return (item.pageNo - 1) * item.pageSize + (c + 1);
 					case 'reg_dttm':
 						return fotmatDateTime(value);
 					case 'phone_num':
@@ -258,11 +257,11 @@
 					paging: true,
 					pageSize: 50,
 					pageButtonCount: 5, // 페이지 버튼 개수
-					pagerFormat: '{first} {prev} {pages} {next} {last}    {pageIndex} of {pageCount}',
-					pagePrevText: "<i class='ico i-prev'></i>", // 이전
-					pageNextText: "<i class='ico i-next'></i>", // 다음
-					pageFirstText: "<i class='ico i-prev-double'></i>", // 처음
-					pageLastText: "<i class='ico i-next-double'></i>", // 마지막
+					pagerFormat: '{pages} ... {next} {last}    {pageIndex} of {pageCount}',
+					pagePrevText: '',
+					pageNextText: '>',
+					pageFirstText: '',
+					pageLastText: '>>',
 
 					rnTop: 50,
 					rnBottom: 0,
@@ -495,6 +494,7 @@
 			function loadDbData(params) {
 				// MyBatis 조회용 파라미터 변환
 				var dbParams = {
+					...params,
 					cust_name: params.tgt_nm || '',
 					cust_phone: params.phone_num || '',
 					ins_dt_from: params.startDate ? params.startDate + ' 00:00:00' : '',
@@ -502,7 +502,7 @@
 				};
 
 				ajaxSelect({
-					sql: 'mars.icbm.map1.selectAlrimtokHistory',
+					sql: 'mars.icbm.map1.selectAlrimtokHistory_paging',
 					data: dbParams,
 					async: true,
 					success: function (result) {
@@ -510,7 +510,18 @@
 
 						// MyBatis 데이터를 그리드 형식으로 변환
 						var convertedDbData = [];
-						if (Array.isArray(result)) {
+						var totalCount = 0;
+						var pageNo = params.pageIndex || 1;
+						var pageSize = params.pageSize || 50;
+						
+						if (Array.isArray(result) && result.length > 0) {
+							// 첫 번째 항목에서 totalCount 가져오기 (있는 경우)
+							if (result[0].totalCount !== undefined) {
+								totalCount = result[0].totalCount;
+							} else if (result[0].total !== undefined) {
+								totalCount = result[0].total;
+							}
+							
 							convertedDbData = result.map(function (item, index) {
 								// ins_dt가 이미 날짜 형식이므로 그대로 사용 (fotmatDateTime에서 처리)
 								var reg_dttm = '';
@@ -524,7 +535,7 @@
 								}
 
 								return {
-									rownum: index + 1,
+									rownum: (pageNo - 1) * pageSize + index + 1,
 									tgt_nm: item.cust_name || '',
 									phone_num: item.cust_phone || '',
 									title: '[포항시] 원격검침 수용가 누수 의심 안내',
@@ -532,8 +543,16 @@
 									reg_dttm: reg_dttm,
 									state_msg: '',
 									admin_no: item.admin_no || '',
+									pageNo: pageNo,
+									pageSize: pageSize,
+									totalCount: totalCount || result.length,
 								};
 							});
+							
+							// 첫 번째 항목에 totalCount 설정 (CustomPageLoadingStrategy가 필요로 함)
+							if (convertedDbData.length > 0) {
+								convertedDbData[0].totalCount = totalCount || convertedDbData.length;
+							}
 						}
 
 						// MyBatis 데이터만 표시
