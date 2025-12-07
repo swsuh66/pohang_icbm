@@ -170,9 +170,15 @@
 				<div class="col-12 col-sm-6 col-md-4 col-lg-3 col-xl-2">
 					<div class="dj-input-group">
 						<span class="info componentsFont">제외기간</span>
-						<div style="display: flex; align-items: center;">
-							<input type="date" class="componentsSelect" id="exclude_date" onKeypress="javascript:if(event.keyCode == 13) { parent.searchGrid(); }" style="flex: 1;" />
-							<span style="margin-left: 8px; white-space: nowrap;">이전</span>
+						<div style="display: flex; align-items: center">
+							<input
+								type="date"
+								class="componentsSelect"
+								id="last_send_dt"
+								onKeypress="javascript:if(event.keyCode == 13) { parent.searchGrid(); }"
+								style="flex: 1"
+							/>
+							<span style="margin-left: 8px; white-space: nowrap">이전</span>
 						</div>
 					</div>
 				</div>

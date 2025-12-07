@@ -159,7 +159,7 @@
 			}
 
 			function loadData(qid, params, callback) {
-				var qid = qid ? qid : 'mars.icbm.map1.select_waterLeakList_page2';
+				var qid = qid ? qid : 'mars.icbm.map1.select_waterLeakList_page3';
 				var params = params ? params : makeParams();
 
 				/* 수용가 조회 */

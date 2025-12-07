@@ -4706,118 +4706,137 @@
 	</select>
 	<sql id="select_waterLeakList_sql3">
 		<![CDATA[
-		WITH customer AS (
-			SELECT
-				p.point_sq,
-				p.site_sq,
-				c.cust_sq, 
-				c.cust_name, 
-				c.admin_no, 
-				c.business_name,
-				c.pipe_diameter, 
-				c.addr_new, 
-				c.receive_consent,
-				c.read_responsi, 
-				c.cust_phone, 
-				c.remark
-			FROM tb_m1_info_customer c
-			JOIN tb_m1_info_point p ON c.cust_sq = p.cust_sq
-		),
-		customer_with_rule AS (
-			SELECT
-				c.*,
-				wl.leak_rule                                   AS leak_rule,          -- 매칭 규칙
-				wld.leak_rule                                  AS leak_rule_fallback  -- '기타' 규칙
-			FROM customer c
-			LEFT JOIN tb_m1_rule_waterleak wl
-				ON wl.business_name = c.business_name
-				AND wl.pipe_diameter = c.pipe_diameter
-			LEFT JOIN tb_m1_rule_waterleak wld
-				ON wld.business_name = '기타'
-				AND wld.pipe_diameter = c.pipe_diameter
-		),
-		meas AS (
-			SELECT
-				r.point_sq,
-				MAX(r.meas_dt) AS max_meas_dt,
-				MIN(r.meas_dt) AS min_meas_dt,
-				MAX(r.term_cv) AS max_term_cv,
-				MIN(r.term_cv) AS min_term_cv,
-				MAX(r.stat_cd) AS stat_cd
-			FROM tb_m1_meas_raw r
-			JOIN customer_with_rule cw ON cw.point_sq = r.point_sq
-			WHERE r.meas_dt >= NOW() - interval '72 hour'
-			AND r.meas_dt <  NOW()
-			GROUP BY r.point_sq
-			HAVING
-				COUNT(r.term_cv) > 0
-				AND COUNT(r.term_cv) = SUM(
-					CASE WHEN r.term_cv > COALESCE(cw.leak_rule, cw.leak_rule_fallback)
-						THEN 1 ELSE 0 END
-				)
-		)
-		SELECT (ROW_NUMBER() OVER()) AS "num", t.*
-		FROM (
-			SELECT
-				cw.point_sq                         AS "pointSq",
-				cw.site_sq                          AS "siteSq",
-				MAX(m.max_meas_dt)::timestamp       AS "max_date",
-				MIN(m.min_meas_dt)::timestamp       AS "min_date",
-				MAX(m.max_term_cv)                  AS "max_term_cv",
-				MIN(m.min_term_cv)                  AS "min_term_cv",
-				MAX(cw.cust_sq)                     AS "cust_sq",
-				MAX(cw.cust_name)                   AS "cust_nm",
-				MAX(cw.admin_no)                    AS "admin_id",
-				MAX(cw.business_name)               AS "use_type",
-				MAX(cw.pipe_diameter)               AS "pipe_dia",
-				MAX(cw.addr_new)                    AS "addr_new",
-				BOOL_OR(cw.receive_consent = 'Y')   AS receive_consent,
-				CASE WHEN MAX(m.stat_cd) IS NOT NULL THEN 'Y' ELSE 'N' END AS "stat_yn",
-				MAX(cw.read_responsi)               AS "read_responsi",
-				MAX(cw.cust_phone)                  AS "cust_phone",
-				MAX(cw.remark)                      AS "remark"
-			FROM customer_with_rule cw
-			JOIN meas m ON m.point_sq = cw.point_sq
-			GROUP BY cw.point_sq, cw.site_sq
-		) AS t
-		]]>
-		<where>
-		<!-- 수용가번호 admin_no -> 컬럼 별칭 "admin_id" -->
-		<if test="admin_no != null and admin_no != ''">
-			<![CDATA[
-			AND t."admin_id"  =  #{admin_no} 
+			WITH customer AS (
+				SELECT
+					p.point_sq,
+					p.site_sq,
+					c.cust_sq, 
+					c.cust_name, 
+					c.admin_no, 
+					c.business_name,
+					c.pipe_diameter, 
+					c.addr_new, 
+					c.receive_consent,
+					c.read_responsi, 
+					c.cust_phone, 
+					c.remark
+				FROM tb_m1_info_customer c
+				JOIN tb_m1_info_point p ON c.cust_sq = p.cust_sq
+			),
+			customer_with_rule AS (
+				SELECT
+					c.*,
+					wl.leak_rule                                   AS leak_rule,          -- 매칭 규칙
+					wld.leak_rule                                  AS leak_rule_fallback  -- '기타' 규칙
+				FROM customer c
+				LEFT JOIN tb_m1_rule_waterleak wl
+					ON wl.business_name = c.business_name
+					AND wl.pipe_diameter = c.pipe_diameter
+				LEFT JOIN tb_m1_rule_waterleak wld
+					ON wld.business_name = '기타'
+					AND wld.pipe_diameter = c.pipe_diameter
+			),
+			meas AS (
+				SELECT
+					r.point_sq,
+					MAX(r.meas_dt) AS max_meas_dt,
+					MIN(r.meas_dt) AS min_meas_dt,
+					MAX(r.term_cv) AS max_term_cv,
+					MIN(r.term_cv) AS min_term_cv,
+					MAX(r.stat_cd) AS stat_cd
+				FROM tb_m1_meas_raw r
+				JOIN customer_with_rule cw ON cw.point_sq = r.point_sq
+				WHERE r.meas_dt >= NOW() - interval '72 hour'
+				AND r.meas_dt <  NOW()
+				GROUP BY r.point_sq
+				HAVING
+					COUNT(r.term_cv) > 0
+					AND COUNT(r.term_cv) = SUM(
+						CASE WHEN r.term_cv > COALESCE(cw.leak_rule, cw.leak_rule_fallback)
+							THEN 1 ELSE 0 END
+					)
+			),
+			-- 알림톡 최종 발신일 집계
+			alrim AS (
+				SELECT
+					h.admin_no,
+					MAX(h.ins_dt) AS last_ins_dt      -- 최종 발신일
+				FROM tb_m1_alrimtok_history h
+				GROUP BY h.admin_no
+			)
+			SELECT (ROW_NUMBER() OVER()) AS "num", t.*
+			FROM (
+				SELECT
+					cw.point_sq                         AS "pointSq",
+					cw.site_sq                          AS "siteSq",
+					MAX(m.max_meas_dt)::timestamp       AS "max_date",        -- 최근 검침일(72시간 내)
+					MIN(m.min_meas_dt)::timestamp       AS "min_date",        -- 72시간 내 최소 검침일
+					MIN(m.min_meas_dt)::timestamp       AS "leak_start_date",   -- 누수 시작일(72시간 기준)
+					MAX(m.max_term_cv)                  AS "max_term_cv",
+					MIN(m.min_term_cv)                  AS "min_term_cv",
+					MAX(cw.cust_sq)                     AS "cust_sq",
+					MAX(cw.cust_name)                   AS "cust_nm",
+					MAX(cw.admin_no)                    AS "admin_id",
+					MAX(cw.business_name)               AS "use_type",
+					MAX(cw.pipe_diameter)               AS "pipe_dia",
+					MAX(cw.addr_new)                    AS "addr_new",
+					BOOL_OR(cw.receive_consent = 'Y')   AS receive_consent,
+					CASE WHEN MAX(m.stat_cd) IS NOT NULL THEN 'Y' ELSE 'N' END AS "stat_yn",
+					MAX(cw.read_responsi)               AS "read_responsi",
+					MAX(cw.cust_phone)                  AS "cust_phone",
+					MAX(cw.remark)                      AS "remark",
+					MAX(al.last_ins_dt)::timestamp      AS "last_send_date"     -- 알림톡 최종 발신일
+				FROM customer_with_rule cw
+				JOIN meas m ON m.point_sq = cw.point_sq
+				LEFT JOIN alrim al ON al.admin_no = cw.admin_no
+				GROUP BY cw.point_sq, cw.site_sq
+			) AS t
 			]]>
-		</if>
+			<where>
+			<!-- 수용가번호 admin_no -> 컬럼 별칭 "admin_id" -->
+			<if test="admin_no != null and admin_no != ''">
+				<![CDATA[
+				AND t."admin_id"  =  #{admin_no} 
+				]]>
+			</if>
 
-		<!-- 수용가명 cust_nm -> 컬럼 별칭 "cust_nm" -->
-		<if test="cust_nm != null and cust_nm != ''">
-			<![CDATA[
-			AND t."cust_nm" ILIKE '%' || #{cust_nm} || '%'
-			]]>
-		</if>
+			<!-- 수용가명 cust_nm -> 컬럼 별칭 "cust_nm" -->
+			<if test="cust_nm != null and cust_nm != ''">
+				<![CDATA[
+				AND t."cust_nm" ILIKE '%' || #{cust_nm} || '%'
+				]]>
+			</if>
 
-		<!-- 설정구경 pipe_dia (정수) -> 컬럼 별칭 "pipe_dia" -->
-		<if test="pipe_diameter != null and pipe_diameter != ''">
-			<![CDATA[
-			AND t."pipe_dia" = (#{pipe_diameter}::integer)
-			]]>
-		</if>
+			<!-- 설정구경 pipe_dia (정수) -> 컬럼 별칭 "pipe_dia" -->
+			<if test="pipe_diameter != null and pipe_diameter != ''">
+				<![CDATA[
+				AND t."pipe_dia" = (#{pipe_diameter}::integer)
+				]]>
+			</if>
 
-		<!-- 설정 업종 use_type (정확일치 권장) -> 컬럼 별칭 "use_type" -->
-		<if test="business_name != null and business_name != ''">
-			<![CDATA[
-			AND t."use_type" = #{business_name}
-			]]>
-		</if>
+			<!-- 설정 업종 use_type (정확일치 권장) -> 컬럼 별칭 "use_type" -->
+			<if test="business_name != null and business_name != ''">
+				<![CDATA[
+				AND t."use_type" = #{business_name}
+				]]>
+			</if>
 
-		<!-- 검침원 read_responsi -> 컬럼 별칭 "read_responsi" -->
-		<if test="read_responsi != null and read_responsi != ''">
-			<![CDATA[
-			AND t."read_responsi" ILIKE '%' || #{read_responsi} || '%'
-			]]>
-		</if>
-		</where>
+			<!-- 검침원 read_responsi -> 컬럼 별칭 "read_responsi" -->
+			<if test="read_responsi != null and read_responsi != ''">
+				<![CDATA[
+				AND t."read_responsi" ILIKE '%' || #{read_responsi} || '%'
+				]]>
+			</if>
+
+			<!-- 최종 발신일 필터: 입력한 날짜 이전(또는 발신 이력 없음)만 조회 -->
+			<if test="last_send_dt != null and last_send_dt != ''">
+				<![CDATA[
+				AND (t."last_send_dt" IS NULL OR t."last_send_dt" < #{last_send_dt}::timestamp)
+				]]>
+			</if>
+			</where>
 	</sql>
+
 	
 	<insert id="insertAlrimtokHistory" parameterType="java.util.Map">
 		insert into tb_m1_alrimtok_history (
