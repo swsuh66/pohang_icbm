@@ -1011,7 +1011,7 @@
 				var params = {};
 
 				$.extend(params, mainGrid.loadParams());
-				/*
+
 				params['stdDate'] = $('#stdDate').val() + ' ' + $('#stdTime').val(); // 기준 일자.
 				params['stdTime'] = $('#stdTime').val(); // 기준 일자.
 				params['cust_sq'] = $('#cust_sq').val();
@@ -1022,7 +1022,7 @@
 				params['compare_term_cv'] = $('#compare_term_cv').val();
 				params['read_responsi'] = $('#read_responsi').val();
 				params['cust_phone'] = $('#cust_phone').val();
-				*/
+				/*
 				params['stdDate'] = '2025-07-28 00:00:00';
 				params['stdTime'] = '00:00:00';
 				params['cust_sq'] = $('#cust_sq').val();
@@ -1034,6 +1034,7 @@
 				params['compare_term_cv'] = '0.05'; //$('#compare_term_cv').val();
 				params['read_responsi'] = $('#read_responsi').val();
 				params['cust_phone'] = $('#cust_phone').val();
+				*/
 				return params;
 			}
 
@@ -1437,9 +1438,39 @@
 
 			// 프린트 페이지 열기
 			function openPrintPage() {
-				var contextPath = getContextPath();
-				var url = contextPath + '/ISTC_F11_PRINT';
-				window.open(url, '_blank');
+				// pointListData에서 프린트할 데이터 추출 (zipcode, 수용가명, 주소)
+				if (!pointListData || pointListData.length === 0) {
+					alert('프린트할 데이터가 없습니다.');
+					return;
+				}
+
+				// 필요한 데이터만 추출
+				var printData = [];
+				for (var i = 0; i < pointListData.length; i++) {
+					var item = pointListData[i];
+					printData.push({
+						zipCode: item.zipcocde || item.zipCode || '',
+						custName: item.cust_nm || item.custName || '',
+						addr: item.addr_new || item.addrNew || item.addr_old || item.addrOld || '',
+					});
+				}
+
+				// form을 만들어서 POST로 전달
+				var form = document.createElement('form');
+				form.method = 'POST';
+				form.action = getContextPath() + '/ISTC_F11_PRINT';
+				form.target = '_blank';
+
+				// 데이터를 JSON으로 인코딩하여 전달
+				var dataInput = document.createElement('input');
+				dataInput.type = 'hidden';
+				dataInput.name = 'printData';
+				dataInput.value = JSON.stringify(printData);
+				form.appendChild(dataInput);
+
+				document.body.appendChild(form);
+				form.submit();
+				document.body.removeChild(form);
 			}
 		</script>
 

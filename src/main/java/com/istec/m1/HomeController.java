@@ -86,6 +86,19 @@ public class HomeController {
 	}
 	
 	/**
+	 * sub 페이지 (POST).
+	 * 프린트 페이지 등 POST 요청 처리
+	 */
+	@RequestMapping(value = "/{page}", method = RequestMethod.POST)
+	public String pagesPost(@PathVariable String page, Locale locale, Model model, HttpServletRequest request) {
+		
+		setModel(model, request);
+       
+		return page;
+		
+	}
+	
+	/**
 	 * 팝업 페이지.
 	 * 
 	 */

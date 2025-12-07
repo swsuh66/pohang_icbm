@@ -4622,6 +4622,7 @@
                                   ,max(a.admin_no) as "admin_id"
                                   ,max(a.business_name) as "use_type"
                                   ,max(a.pipe_diameter) as "pipe_dia"
+								  ,max(a.zipcode) as "zipcode"
                                   ,max(a.addr_new) as "addr_new"
 								  ,bool_or(a.receive_consent) as receive_consent
 								  ,case when max(a.stat_cd) is not null then 'Y'
@@ -4641,6 +4642,7 @@
                                   , b.admin_no
                                   , b.business_name
                                   , b.pipe_diameter
+								  , b.zipcode
                                   , b.addr_new
 								  , b.read_responsi
 								  , b.receive_consent
@@ -4710,12 +4712,13 @@
 				SELECT
 					p.point_sq,
 					p.site_sq,
+					c.admin_no, 
 					c.cust_sq, 
 					c.cust_name, 
-					c.admin_no, 
+					c.zipcode,
+					c.addr_new,					
 					c.business_name,
 					c.pipe_diameter, 
-					c.addr_new, 
 					c.receive_consent,
 					c.read_responsi, 
 					c.cust_phone, 
@@ -4779,6 +4782,7 @@
 					MAX(cw.admin_no)                    AS "admin_id",
 					MAX(cw.business_name)               AS "use_type",
 					MAX(cw.pipe_diameter)               AS "pipe_dia",
+					MAX(cw.zipcode)                  AS "zipcode",
 					MAX(cw.addr_new)                    AS "addr_new",
 					BOOL_OR(cw.receive_consent = 'Y')   AS receive_consent,
 					CASE WHEN MAX(m.stat_cd) IS NOT NULL THEN 'Y' ELSE 'N' END AS "stat_yn",
