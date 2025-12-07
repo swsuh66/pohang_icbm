@@ -236,7 +236,7 @@
 						hasGroup: false,
 					},
 					{
-						name: 'state_msg',
+						name: 'result_msg',
 						title: '상태',
 						type: 'text',
 						align: 'left',
@@ -428,7 +428,7 @@
 						tgtNm: o.tgt_nm,
 						phoneNum: hyphenizePhone(o.phone_num), // 하이픈 보정
 						stateCd: o.state_cd,
-						stateMsg: o.state_msg,
+						resultMsg: o.result_msg,
 						templateCd: o.template_cd,
 						reservDttm: o.reserv_dttm,
 						regDttm: o.reg_dttm,
@@ -513,7 +513,7 @@
 						var totalCount = 0;
 						var pageNo = params.pageIndex || 1;
 						var pageSize = params.pageSize || 50;
-						
+
 						if (Array.isArray(result) && result.length > 0) {
 							// 첫 번째 항목에서 totalCount 가져오기 (있는 경우)
 							if (result[0].totalCount !== undefined) {
@@ -521,7 +521,7 @@
 							} else if (result[0].total !== undefined) {
 								totalCount = result[0].total;
 							}
-							
+
 							convertedDbData = result.map(function (item, index) {
 								// ins_dt가 이미 날짜 형식이므로 그대로 사용 (fotmatDateTime에서 처리)
 								var reg_dttm = '';
@@ -541,14 +541,14 @@
 									title: '[포항시] 원격검침 수용가 누수 의심 안내',
 									msg_content: '누수알림톡 전송',
 									reg_dttm: reg_dttm,
-									state_msg: '',
+									result_msg: item.result_msg || '',
 									admin_no: item.admin_no || '',
 									pageNo: pageNo,
 									pageSize: pageSize,
 									totalCount: totalCount || result.length,
 								};
 							});
-							
+
 							// 첫 번째 항목에 totalCount 설정 (CustomPageLoadingStrategy가 필요로 함)
 							if (convertedDbData.length > 0) {
 								convertedDbData[0].totalCount = totalCount || convertedDbData.length;

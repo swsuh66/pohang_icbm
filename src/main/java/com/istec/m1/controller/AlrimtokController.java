@@ -12,6 +12,8 @@ import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
+import com.istec.m1.service.QueryService;
+
 import javax.servlet.http.HttpServletResponse;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -33,6 +35,9 @@ public class AlrimtokController {
     @Autowired(required = false)
     private RestTemplate restTemplate; // 프로젝트에 Bean 없으면 fallback 생성
 
+    @Autowired
+    private QueryService queryService;
+
     // ===== Node API 주소/경로 (기본값: 같은 서버의 127.0.0.1:3000) =====
     @Value("${alrimtok.api.base-url:http://127.0.0.1:3000}")
     private String baseUrl;
@@ -53,7 +58,7 @@ public class AlrimtokController {
         return (restTemplate != null) ? restTemplate : new RestTemplate();
     }
 
-     @PostMapping("/test")
+    @PostMapping("/test")
     @ResponseBody
     public ResponseEntity<?> test(@RequestBody Map<String, Object> body, HttpServletResponse resp) {
         try {
@@ -135,6 +140,72 @@ public class AlrimtokController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(json(false, "HISTORY 프록시 오류: " + e.getMessage()));
         }
     }
+
+    /**
+     * 알림톡 발신 결과 업데이트 API
+     * 외부 서버에서 호출하여 발신 상태와 결과 메시지를 업데이트
+     * 
+     * @param body 요청 본문 (insertId, stateCd, resultMsg)
+     * @return 업데이트 결과
+     */
+    @PostMapping("/update")
+@ResponseBody
+public ResponseEntity<?> updateHistory(@RequestBody List<Map<String, Object>> bodyList) {
+    try {
+        if (bodyList == null || bodyList.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(json(false, "업데이트할 데이터가 없습니다."));
+        }
+
+        int totalUpdated = 0;
+        List<Map<String, Object>> results = new ArrayList<>();
+
+        for (Map<String, Object> body : bodyList) {
+            Object insertIdObj = body.get("insertId");
+            Object stateCdObj = body.get("stateCd");
+            Object resultMsgObj = body.get("resultMsg");
+
+            if (insertIdObj == null) {
+                // 개별 레코드 에러는 리스트에 기록만 하고 넘어가기
+                Map<String, Object> oneResult = new HashMap<>();
+                oneResult.put("insertId", null);
+                oneResult.put("success", false);
+                oneResult.put("message", "insertId는 필수 파라미터입니다.");
+                results.add(oneResult);
+                continue;
+            }
+
+            Map<String, Object> params = new HashMap<>();
+            params.put("insertId", insertIdObj);
+            if (stateCdObj != null) params.put("stateCd", stateCdObj);
+            if (resultMsgObj != null) params.put("resultMsg", resultMsgObj);
+
+            int updatedRows = queryService.update("mars.icbm.map1.updateAlrimtokHistory", params);
+
+            Map<String, Object> oneResult = new HashMap<>();
+            oneResult.put("insertId", insertIdObj);
+            oneResult.put("success", updatedRows > 0);
+            oneResult.put("updatedRows", updatedRows);
+            oneResult.put("message", updatedRows > 0 ? "업데이트 성공" : "업데이트된 행이 없습니다.");
+            results.add(oneResult);
+
+            totalUpdated += updatedRows;
+        }
+
+        Map<String, Object> res = new HashMap<>();
+        res.put("success", true);
+        res.put("totalUpdated", totalUpdated);
+        res.put("results", results);
+
+        return ResponseEntity.ok(res);
+
+    } catch (Exception e) {
+        log.error("update history error", e);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(json(false, "업데이트 오류: " + e.getMessage()));
+    }
+}
+
 
     /* ============================ 내부 유틸 ============================ */
 

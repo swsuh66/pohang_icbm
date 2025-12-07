@@ -4827,6 +4827,14 @@
 		(#{admin_id}, #{tgtNm}, #{phoneNum}, #{insertId}, NOW())
 	</insert>
 
+	<update id="updateAlrimtokHistory" parameterType="java.util.Map">
+		update tb_m1_alrimtok_history set
+			state_cd = #{stateCd},
+			result_msg = #{resultMsg}
+		where
+			insert_id = #{insertId}
+	</update>
+
 	<select id="selectAlrimtokHistory_paging" parameterType="java.util.Map" resultType="java.util.Map">		
 		<include refid="pageHeader"/>      
 		<include refid="selectAlrimtokHistory"/>      
@@ -4838,6 +4846,8 @@
 			cust_name,
 			cust_phone, 
 			insert_id, 
+			state_cd, 
+			result_msg,
 			ins_dt
 		from tb_m1_alrimtok_history 
 		<where>
