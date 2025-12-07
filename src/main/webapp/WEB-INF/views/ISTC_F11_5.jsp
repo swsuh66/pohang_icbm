@@ -1444,15 +1444,28 @@
 					return;
 				}
 
-				// 필요한 데이터만 추출
+				// 수신동의 미동의 데이터만 필터링
 				var printData = [];
 				for (var i = 0; i < pointListData.length; i++) {
 					var item = pointListData[i];
-					printData.push({
-						zipCode: item.zipcocde || item.zipCode || '',
-						custName: item.cust_nm || item.custName || '',
-						addr: item.addr_new || item.addrNew || item.addr_old || item.addrOld || '',
-					});
+
+					// 수신동의 확인 (미동의인 경우만 포함)
+					var receiveConsent = item.receive_consent;
+
+					// 수신동의가 미동의인 경우만 추가
+					if (receiveConsent === false) {
+						printData.push({
+							zipCode: item.zipcocde || item.zipCode || '',
+							custName: item.cust_nm || item.custName || '',
+							addr: item.addr_new || item.addrNew || item.addr_old || item.addrOld || '',
+						});
+					}
+				}
+
+				// 필터링된 데이터가 없으면 알림
+				if (printData.length === 0) {
+					alert('수신동의 미동의 데이터가 없습니다.');
+					return;
 				}
 
 				// form을 만들어서 POST로 전달
