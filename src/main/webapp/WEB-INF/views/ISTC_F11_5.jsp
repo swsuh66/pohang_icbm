@@ -787,7 +787,23 @@
 					items,
 					function (data, status, xhr) {
 						if (xhr.status === 200) {
-							// console.log('알림톡 전송 성공: ', data);
+							console.log('알림톡 전송 성공: ', data);
+							const insertedList = data.insertIds || [];
+							const normalizedItems = items.map((item) => ({
+								...item,
+								phoneNumNorm: item.phoneNum.replace(/-/g, ''),
+							}));
+							// console.log('Normalized sent data:', normalizedItems);
+							const merged = normalizedItems.map((item) => {
+								const match = insertedList.find((x) => x.phoneNum === item.phoneNumNorm && x.tgtNm === item.tgtNm);
+								return {
+									...item,
+									insertId: match ? match.insertId : null,
+								};
+							});
+							// console.log('Merged items with insertIds:', merged); -->
+
+							saveAlrimTok(merged);
 							alert(success_message);
 						} else {
 							alert('전송 실패: ' + (data.message || '알 수 없는 오류'));
@@ -926,7 +942,6 @@
 
 				// alrimtokListData를 기반으로 변환된 items를 파라미터로 전달
 				sendAlrimTok(items);
-				saveAlrimTok(items);
 				closeAlrimTokPopup();
 			}
 
@@ -981,7 +996,7 @@
 					data: JSON.stringify(params),
 					type: 'POST',
 					contentType: 'application/json;charset=UTF-8',
-					dataType: 'text',
+					dataType: 'json',
 					async: true,
 					success: function (data, status, xhr) {
 						if (callback) callback(data, status, xhr);
