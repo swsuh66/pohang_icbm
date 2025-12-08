@@ -76,6 +76,21 @@
             margin-bottom: 1mm;
         }
 
+        .label .zipcode-boxes {
+            display: inline-flex;
+            gap: 2mm;
+            align-items: center;
+            margin-bottom: 1mm;
+        }
+
+        .label .zipcode-box {
+            width: 6mm;
+            height: 6mm;
+            border: 1.5pt solid #000;
+            display: inline-block;
+            box-sizing: border-box;
+        }
+
         .label .address {
             font-size: 12pt;
             color: #555;
@@ -102,12 +117,12 @@
             for (Map<String, Object> item : dataList) {
                 Map<String, String> customer = new java.util.HashMap<>();
                 
-                // zipCode 추출 (없으면 기본값 "123-123" 설정)
+                // zipCode 추출 (없으면 null로 설정하여 사각형 표시)
                 Object zipCodeObj = item.get("zipCode");
-                String zipCode = "123-123"; // 기본값
+                String zipCode = null;
                 if (zipCodeObj != null) {
                     String zipCodeStr = String.valueOf(zipCodeObj).trim();
-                    if (!zipCodeStr.isEmpty() && !zipCodeStr.equals("null")) {
+                    if (!zipCodeStr.isEmpty() && !zipCodeStr.equals("null") && !zipCodeStr.equals("123-123")) {
                         zipCode = zipCodeStr;
                     }
                 }
@@ -151,7 +166,20 @@
                 <c:set var="cust" value="${customers[i]}" />
                 <div class="label">
                     <strong>${cust.custName}</strong>
-                    <span class="zipcode">(${not empty cust.zipCode ? cust.zipCode : '123-123'})</span>
+                    <c:choose>
+                        <c:when test="${not empty cust.zipCode}">
+                            <span class="zipcode">(${cust.zipCode})</span>
+                        </c:when>
+                        <c:otherwise>
+                            <span class="zipcode-boxes">
+                                <span class="zipcode-box"></span>
+                                <span class="zipcode-box"></span>
+                                <span class="zipcode-box"></span>
+                                <span class="zipcode-box"></span>
+                                <span class="zipcode-box"></span>
+                            </span>
+                        </c:otherwise>
+                    </c:choose>
                     <span class="address">
                         <c:choose>
                             <c:when test="${not empty cust.addrNew}">
