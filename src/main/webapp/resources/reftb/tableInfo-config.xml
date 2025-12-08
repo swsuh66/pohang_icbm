@@ -1929,6 +1929,14 @@
 			<title>수신동의</title>
 		</col>
 		<col>
+			<name>last_send_date</name>
+			<title>최종발신일</title>
+		</col>
+		<col>
+			<name>leak_start_date</name>
+			<title>누수시작일</title>
+		</col>
+		<col>
 			<name>use_type</name>
 			<title>업종</title>
 		</col>
@@ -1957,17 +1965,17 @@
 		   <title>계량기누수여부</title>
 	   </col>
 	   <col>
-			<name>read_responsi</name>
-			<title>검침원</title>
-		</col>
-	   <col>
-		   <name>call_check</name>
-		   <title>통화여부</title>
-	   </col>
-	   <col>
 		   <name>cust_phone</name>
 		   <title>전화번호</title>
 	   </col>
+	   <!-- <col>
+			<name>read_responsi</name>
+			<title>검침원</title>
+		</col> -->
+	   <col>
+		   <name>remark</name>
+		   <title>비고</title>
+	   </col>	   
 	</map>
 
 	<map id="f13-export" meta-sql="f13-export" refer-sql="mars.icbm.map1.use_evening_info">
