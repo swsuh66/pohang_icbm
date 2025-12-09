@@ -1453,7 +1453,7 @@
 					var receiveConsent = item.receive_consent;
 
 					// 수신동의가 미동의인 경우만 추가
-					if (receiveConsent === false) {
+					if (receiveConsent !== true) {
 						printData.push({
 							zipCode: item.zipcocde || item.zipCode || '',
 							custName: item.cust_nm || item.custName || '',
@@ -1464,7 +1464,7 @@
 
 				// 필터링된 데이터가 없으면 알림
 				if (printData.length === 0) {
-					alert('수신동의 미동의 데이터가 없습니다.');
+					alert('수신 미동의 데이터가 없습니다.');
 					return;
 				}
 
