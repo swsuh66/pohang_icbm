@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" "http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+<mapper namespace="com.istec.m1.mapper.TbM1WizitModemImportMapper">
+    
+    <!-- 전체 조회 -->
+    <select id="selectAll" resultType="com.istec.m1.dto.TbM1WizitModemInfoImportDto">
+        SELECT 
+            data_sq as "dataSq",
+            modem_id as "modemId",
+            dev_no as "deviceNo",
+            sub_dev_no as "subDeviceNo",
+            meter_id as "meterId",
+            tel_num as "IMEI",
+            imsi as "IMSI"
+        FROM tb_m1_wizit_modem_info
+        ORDER BY modem_id
+    </select>
+    
+    <!-- ID로 조회 -->
+    <select id="selectById" parameterType="java.lang.String" resultType="com.istec.m1.dto.TbM1WizitModemInfoImportDto">
+        SELECT 
+            data_sq as "dataSq",
+            modem_id as "modemId",
+            dev_no as "deviceNo",
+            sub_dev_no as "subDeviceNo",
+            meter_id as "meterId",
+            tel_num as "IMEI",
+            imsi as "IMSI"
+        FROM tb_m1_wizit_modem_info
+        WHERE modem_id = #{modemId}
+    </select>
+    
+    <!-- 데이터 삽입 -->
+    <insert id="insertImport" parameterType="java.util.Map">
+        INSERT INTO tb_m1_wizit_modem_info (
+            modem_id,
+            dev_no, 
+            sub_dev_no,
+            meter_id,
+            tel_num,
+            imsi,
+            meas_cycle,            
+            report_cycle,
+            modem_version1,
+            modem_version2,            
+            modem_control,
+            temp_con
+        )
+        VALUES (
+            #{modemId},
+            #{deviceNo},
+            #{subDeviceNo},
+            '21-PH-999999',
+            #{IMEI},
+            #{IMSI}, 
+            60, 
+            6, 
+            '010301',
+            10111, 
+            true,
+            ''
+        )
+    </insert>
+    
+</mapper>

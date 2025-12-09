@@ -63,6 +63,7 @@ import com.istec.m1.defines.Define;
 import com.istec.m1.defines.StatusCode;
 import com.istec.m1.mapper.TbM1CmapDeviceMapper;
 import com.istec.m1.mapper.TbM1InfoCustomerMapper;
+import com.istec.m1.mapper.TbM1WizitModemImportMapper;
 import com.istec.m1.mapper.TbM1InfoImportMapper;
 import com.istec.m1.mapper.TbM1InfoPointMapper;
 import com.istec.m1.exception.ExcelProcessingException;
@@ -76,6 +77,7 @@ public class FileService {
 	@Autowired
 	private SqlSessionFactory sqlSessionFactory;
 	
+	private final TbM1WizitModemImportMapper tbM1WizitModemImportMapper;
 	private final TbM1InfoImportMapper tbM1InfoImportMapper;
 	private final TbM1CmapDeviceMapper tbM1CmapDeviceMapper;
 	private final TbM1InfoCustomerMapper tbM1InfoCustomerMapper;
@@ -85,11 +87,13 @@ public class FileService {
 
 	@Autowired
 	public FileService(
+		TbM1WizitModemImportMapper tbM1WizitModemImportMapper,
 		TbM1InfoImportMapper tbM1InfoImportMapper, 
 		TbM1CmapDeviceMapper tbM1CmapDeviceMapper, 
 		TbM1InfoCustomerMapper tbM1InfoCustomerMapper, 
 		TbM1InfoPointMapper tbM1InfoPointMapper) 
 	{
+		this.tbM1WizitModemImportMapper = tbM1WizitModemImportMapper;
 		this.tbM1InfoImportMapper = tbM1InfoImportMapper;
 		this.tbM1CmapDeviceMapper = tbM1CmapDeviceMapper;
 		this.tbM1InfoCustomerMapper = tbM1InfoCustomerMapper;
@@ -513,6 +517,73 @@ public class FileService {
 		} catch (Exception e) {
 			// 필요 시 로그 출력
 			return null;
+		}
+	}
+
+	@Transactional(timeout = 900) // 15분
+	public void insertWizitModemFromExcel(
+		MultipartFile file, 
+		int upsitesq, 
+		String tokenKey, 
+		boolean isCheck) throws Exception  
+	{
+		int rowCount;
+
+		// try-with-resources를 사용하면 InputStream, Workbook 자동 close됨
+		try (InputStream in = file.getInputStream();
+			Workbook workbook = WorkbookFactory.create(in)) {
+
+			Sheet sheet = workbook.getSheetAt(0);
+			rowCount = sheet.getPhysicalNumberOfRows();
+			log.info("======================" + rowCount);
+			// 헤더는 0번째 행이라 데이터는 1부터 시작
+			for (int i = 1; i < rowCount; i++) {
+				Row row = sheet.getRow(i);
+				int j = 0;
+				
+				try {
+					// TODO: row에서 데이터 추출 후 insert 처리
+					// 1. 공통으로 쓸 데이터 추출
+					Integer dataSq = getInteger(row, j++);  // 순번
+					if (dataSq == null) {
+						log.warn("dataSq is null at row {}", i);
+						break;
+					}
+					String modemId = getString(row, j++);   // 모뎀ID
+					String deviceNo = getString(row, j++);  // 디바이스주번호
+					String subDeviceNo = getString(row, j++);  // 디바이스부번호
+					String meterId = getString(row, j++);  // 계량기ID
+					String IMEI = getString(row, j++);  // IMEI
+					String IMSI = getString(row, j++);  // IMSI
+
+					// tb_m1_wizit_modem_info
+					Map<String, Object> importMap = new HashMap<>();
+					importMap.put("dataSq", dataSq);
+					importMap.put("modemId", modemId);
+					importMap.put("deviceNo", deviceNo);
+					importMap.put("subDeviceNo", subDeviceNo);
+					importMap.put("meterId", meterId); 
+					importMap.put("IMEI", IMEI);
+					importMap.put("IMSI", IMSI);
+					
+					tbM1WizitModemImportMapper.insertImport(importMap);
+					
+				} catch (Exception  e) {
+					log.error("Excel row {} column {} was failed: {}", i + 1, j, e.getMessage(), e);
+					String message = e.getCause() != null ? e.getCause().getMessage() : e.getMessage();
+					throw new ExcelProcessingException(i + 1, j, message);
+				}
+			}
+
+			// 검증모드일 경우 트랜잭션 롤백 유도
+			//if (isCheck) {
+			if (isCheck) {
+				throw new RuntimeException("엑셀 데이터 검증이 완료되었습니다.");
+			}
+
+		} catch (IOException e) {
+			log.error("Reading file was failed: {}", e.getMessage(), e);
+			throw new Exception("엑셀 파일 처리 실패: " + e.getMessage(), e);
 		}
 	}
 

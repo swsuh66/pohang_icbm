@@ -897,7 +897,7 @@
 	 */
 	function exFileDownload() {
 
-		window.location = getContextPath() + '/resources/excel/import.xlsx';
+		window.location = getContextPath() + '/resources/excel/import-wizit.xlsx';
 
 	};
 
