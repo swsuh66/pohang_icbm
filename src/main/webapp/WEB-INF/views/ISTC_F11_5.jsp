@@ -1454,8 +1454,14 @@
 
 					// 수신동의가 미동의인 경우만 추가
 					if (receiveConsent !== true) {
+						// zipcode 추출 (빈 문자열이면 null로 설정)
+						var zipCodeValue = item.zipcode || item.zipCode || null;
+						if (zipCodeValue === '' || zipCodeValue === 'null' || zipCodeValue === '123-123') {
+							zipCodeValue = null;
+						}
+						
 						printData.push({
-							zipCode: item.zipcocde || item.zipCode || '',
+							zipCode: zipCodeValue,
 							custName: item.cust_nm || item.custName || '',
 							addr: item.addr_new || item.addrNew || item.addr_old || item.addrOld || '',
 						});
