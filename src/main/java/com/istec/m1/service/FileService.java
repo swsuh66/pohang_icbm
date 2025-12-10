@@ -520,6 +520,38 @@ public class FileService {
 		}
 	}
 
+	private boolean isRowEmpty(Row row) {
+		if (row == null) return true;
+
+		int firstCellNum = row.getFirstCellNum();
+		int lastCellNum = row.getLastCellNum();
+
+		if (firstCellNum < 0 || lastCellNum <= 0) {
+			return true;
+		}
+
+		for (int c = firstCellNum; c < lastCellNum; c++) {
+			Cell cell = row.getCell(c);
+			if (cell == null) continue;
+
+			int type = cell.getCellType(); // 구버전은 int!
+
+			if (type == Cell.CELL_TYPE_STRING) {
+				String v = cell.getStringCellValue();
+				if (v != null && !v.trim().isEmpty()) {
+					return false;
+				}
+			}
+			else if (type == Cell.CELL_TYPE_NUMERIC ||
+					type == Cell.CELL_TYPE_BOOLEAN ||
+					type == Cell.CELL_TYPE_FORMULA) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
 	@Transactional(timeout = 900) // 15분
 	public void insertWizitModemFromExcel(
 		MultipartFile file, 
@@ -546,7 +578,7 @@ public class FileService {
 					// 1. 공통으로 쓸 데이터 추출
 					Integer dataSq = getInteger(row, j++);  // 순번
 					if (dataSq == null) {
-						log.warn("dataSq is null at row {}", i);
+						// log.warn("dataSq is null at row {}", i);
 						break;
 					}
 					String modemId = getString(row, j++);   // 모뎀ID
@@ -586,6 +618,72 @@ public class FileService {
 			throw new Exception("엑셀 파일 처리 실패: " + e.getMessage(), e);
 		}
 	}
+
+	@Transactional
+	public void updateWizitModemFromExcel(
+		MultipartFile file, 
+		int upsitesq, 
+		String tokenKey) throws Exception  
+	{
+		// int rowCount;
+
+		// try-with-resources를 사용하면 InputStream, Workbook 자동 close됨
+		try (InputStream in = file.getInputStream();
+			Workbook workbook = WorkbookFactory.create(in)) {
+
+			Sheet sheet = workbook.getSheetAt(0);
+			int lastRowNum = sheet.getLastRowNum();			
+			// rowCount = sheet.getPhysicalNumberOfRows();
+			log.info("======================" + lastRowNum);
+
+			// 헤더는 0번째 행이라 데이터는 1부터 시작
+			for (int i = 1; i <= lastRowNum; i++) {
+				Row row = sheet.getRow(i);
+				if (isRowEmpty(row)) {
+					log.info("Skipping empty row {}", i);
+					break;
+				}	
+
+				int j = 0;
+				
+				try {
+					// TODO: row에서 데이터 추출 후 insert 처리
+					// 1. 공통으로 쓸 데이터 추출
+					Integer dataSq = getInteger(row, j++);  // 순번
+					if (dataSq == null) {
+						log.warn("dataSq is null at row {}", i);
+						break;
+					}
+					String modemId = getString(row, j++);   // 모뎀ID
+					String deviceNo = getString(row, j++);  // 디바이스주번호
+					String subDeviceNo = getString(row, j++);  // 디바이스부번호
+					String meterId = getString(row, j++);  // 계량기ID
+					String IMEI = getString(row, j++);  // IMEI
+					String IMSI = getString(row, j++);  // IMSI
+
+					log.info("Updating row {}: modemId={}, deviceNo={}, subDeviceNo={}, meterId={}, IMEI={}, IMSI={}",
+						i , modemId, deviceNo, subDeviceNo, meterId, IMEI, IMSI);
+
+					// tb_m1_info_import
+					Map<String, Object> importMap = new HashMap<>();
+					importMap.put("dataSq", dataSq);
+					importMap.put("modemId", modemId);
+					importMap.put("deviceNo", deviceNo);
+					importMap.put("subDeviceNo", subDeviceNo);
+					importMap.put("meterId", meterId); 
+					importMap.put("IMEI", IMEI);
+					importMap.put("IMSI", IMSI);	
+					
+					tbM1WizitModemImportMapper.updateWizitModem(importMap);					
+					
+				} catch (Exception e) {
+					throw new Exception("엑셀 " + (i + 1) + "행" + j + " 열 처리 중 오류" + System.lineSeparator() + e.getMessage());
+				}
+			}
+		} catch (IOException e) {
+			throw new Exception("엑셀 파일 처리 실패: " + e.getMessage(), e);
+		}
+	}	
 
 	@Transactional(timeout = 900) // 15분
 	public void insertCustomInfoFromExcel(

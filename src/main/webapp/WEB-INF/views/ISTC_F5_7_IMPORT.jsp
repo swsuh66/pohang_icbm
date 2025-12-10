@@ -90,7 +90,7 @@
 		$('#fileUp').aceWidget('startLoading');
 
 		$.ajax({
-			url: 'file/insert_customers',
+			url: 'file/insert_wizit',
 			processData: false,
 			contentType: false,
 			data: formData,
@@ -113,29 +113,37 @@
 	}
 
 	function updateSubmit() {
+		$('#fileUp').aceWidget('startLoading');
+		
 		$.ajax({
-			url: 'file/update_f5_2',
+			url: 'file/update_wizit',
 			processData: false,
 			contentType: false,
 			data: new FormData(insertForm),
 			type: 'POST',
 			success: function (result) {
-				resultParam = result.errParam;
-				errorDataGridSearch(result.errParam);
-				if (resultParam.length > 0) {
+				$('#fileUp').aceWidget('stopLoading');
+				
+				// errParam이 있는 경우 (기존 로직 유지)
+				if (result.errParam && result.errParam.length > 0) {
+					resultParam = result.errParam;
+					errorDataGridSearch(result.errParam);
 					jAlert.error('에러', 'update 에 실패했습니다. 다음 목록은 에러리뷰 입니다. 에러목록 다운로드를 하여 확인해주세요.');
+					$('#insertForm').hide();
+					$('#gridWindow').show();
 				} else {
-					jAlert.info('정보', 'update 에 성공했습니다. ');
+					// 성공 시 서버에서 반환한 message 사용
+					jAlert.info('정보', result.message || '수정 정보 입력 성공');
+					$('#insertForm').hide();
+					$('#gridWindow').show();
 				}
-
-				$('#insertForm').hide();
-				$('#gridWindow').show();
 			},
-			error: function (xhr, status, error) {
+			error: function (e) {
 				// 오류 발생 시 동작
-				console.error(error);
-				jAlert.error('오류', 'update 에 실패하였습니다.');
-				// 오류 처리를 수행합니다.
+				$('#fileUp').aceWidget('stopLoading');
+				console.error(e);
+				const msg = e.responseJSON?.message || '알 수 없는 오류 발생';
+				jAlert.error('오류 발생: ' + msg);
 			},
 		});
 	}
@@ -200,28 +208,12 @@
 
 			fields: [
 				{ name: 'data_sq', title: '순번', type: 'text', align: 'center', width: 50 },
-				{ name: 'custNm', title: '수용가명', type: 'text', width: 100 },
-				{ name: 'adminNo', title: '수용가번호', type: 'text', width: 70 },
-				{ name: 'addr', title: '구주소', type: 'text', width: 170 },
-				{ name: 'addrNew', title: '도로명주소', type: 'text', width: 200 },
-				{ name: 'locLng', title: '경도', type: 'text', align: 'left', width: 120 },
-				{ name: 'locLat', title: '위도', type: 'text', align: 'center', width: 120 },
-				{ name: 'useType', title: '업종', type: 'text', align: 'right', width: 100 },
-				{ name: 'siteNm', title: '동', type: 'text', align: 'right', width: 80 },
-				{ name: 'blkNm', title: '블록', type: 'text', align: 'right', width: 80 },
-				{ name: 'custPhone', title: '수용가 전화번호', type: 'text', align: 'right', width: 80 },
-				{ name: 'setYears', title: '수용가 대상 년도', type: 'text', align: 'right', width: 80 },
-				{ name: 'readOpr', title: '검침원', type: 'text', align: 'right', width: 80 },
-				{ name: 'checkDay', title: '검침일', type: 'text', align: 'right', width: 80 },
-				{ name: 'meterNo', title: '계량기번호', type: 'text', align: 'center', width: 80 },
-				{ name: 'pipeDia', title: '구경', type: 'text', width: 80 }, ////////////// 2022-11-30
-				{ name: 'amiType', title: '통신', type: 'text', width: 80 }, ////////////// 2022-11-30
-				{ name: 'subDevNo', title: '단말부번호', type: 'text', width: 80 }, ////////////// 2022-11-30
-				{ name: 'devNo', title: '단말 주번호', type: 'text', width: 80 }, ////////////// 2022-11-30
-				{ name: 'companyNm', title: '단말 회사', type: 'text', width: 80 }, ////////////// 2022-11-30
-				{ name: 'setDt', title: '단말 설치일', type: 'text', width: 80 }, ////////////// 2022-11-30
-
-				//{ name: "msg",          title: "에러메시지", 	 type: "text",   width: 80}  ////////////// 2022-11-30
+				{ name: 'modemId', title: '모뎀ID', type: 'text', width: 100 },
+				{ name: 'devNo', title: '주번호', type: 'text', width: 100 },
+				{ name: 'subDevNo', title: '부번호', type: 'text', width: 140 },
+				{ name: 'meterId', title: '계량기ID', type: 'text', width: 70 },
+				{ name: 'telNum', title: 'IMEI', type: 'text', align: 'left', width: 100 },
+				{ name: 'imsi', title: 'IMSI', type: 'text', align: 'left', width: 100 },
 			],
 
 			loadStrategy: function () {
@@ -256,8 +248,8 @@
 		</div>
 		<div class="dj-btn-group">
 			<a class="btn dj-btn-primary btn-sm" onclick="submit2();"> 신규 </a>
-			<!-- <a class="btn dj-btn-green btn-sm" onclick="updateSubmit();"> 수정 </a>
-			<a class="btn dj-btn-outline-green btn-sm" onclick="checkSubmit();"> 체크 </a> -->
+			<a class="btn dj-btn-green btn-sm" onclick="updateSubmit();"> 수정 </a>
+			<!-- <a class="btn dj-btn-outline-green btn-sm" onclick="checkSubmit();"> 체크 </a> -->
 			<a class="btn dj-btn-outline-red btn-sm" onclick="closeModal();"> 닫기 </a>
 		</div>
 	</form>

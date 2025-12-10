@@ -451,6 +451,46 @@ public class FileController {
 		return result;
 	}
 
+	@RequestMapping(value = "/file/update_wizit", method = RequestMethod.POST)
+	@ResponseBody
+	public Map<String, Object>updateWizitModemFromExcel(
+			@RequestParam("file") MultipartFile file,
+			HttpServletRequest request,
+			HttpServletResponse response) throws Exception {
+
+		Map<String, Object> result = new HashMap<>();
+		String tokenKey = UUID.randomUUID().toString();
+
+		// 사용자 정보 추출
+		CustomUserDetails userDetails = (CustomUserDetails) request.getSession(false)
+			.getAttribute(Define.Key.LOGIN_INFO);
+		int siteSq = userDetails.getSiteSq();
+
+		try {
+			// 파일 처리 및 DB 입력
+			fileService.updateWizitModemFromExcel(file, siteSq, tokenKey);
+
+			response.setStatus(StatusCode.STATUS_OK.getValue());
+			result.put("status", "success");
+			result.put("message", "수정 정보 입력 성공");
+		} catch (ExcelProcessingException e) {
+			// 런타임 예외 처리
+			response.setStatus(StatusCode.STATUS_INTERNAL_SERVER_ERROR.getValue());
+			result.put("status", "error");
+			result.put("message", e.getMessage() + ": " + getSimpleErrorMessage(e.getDetailMessage())); 
+			e.printStackTrace();
+
+		} catch (Exception e) {
+			// 모든 일반 예외 처리
+			response.setStatus(StatusCode.STATUS_INTERNAL_SERVER_ERROR.getValue());
+			result.put("status", "error");
+			result.put("details", getSimpleErrorMessage(e.getMessage())); 
+			e.printStackTrace();
+		}
+
+		return result;
+	}
+
 	@RequestMapping(value = "/file/insert_customers", method = RequestMethod.POST)
 	@ResponseBody
 	public Map<String, Object> insertCustomInfoFromExcel(

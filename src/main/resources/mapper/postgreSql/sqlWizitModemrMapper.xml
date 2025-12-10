@@ -61,5 +61,13 @@
             ''
         )
     </insert>
-    
+    <!-- 데이터 수정 -->
+    <update id="updateWizitModem" parameterType="java.util.Map">
+        UPDATE tb_m1_wizit_modem_info SET
+            dev_no = #{deviceNo}, 
+            sub_dev_no = #{subDeviceNo},
+            tel_num = #{IMEI},
+            imsi = #{IMSI}     
+        WHERE modem_id = #{modemId}
+    </update>
 </mapper>
