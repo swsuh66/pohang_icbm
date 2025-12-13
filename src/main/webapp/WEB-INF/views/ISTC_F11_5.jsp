@@ -68,6 +68,9 @@
 
 				mainGrid = initGrid('mainGrid', mainFields);
 
+				// 발신 필드 헤더에 체크박스 추가 (전체 선택/해제)
+				setupSendStatusHeaderCheckbox();
+
 				// 알림톡 전송 결과 그리드 초기화
 				alrimTokResultGrid = initAlrimTokResultGrid('alrimTokResultGrid', alrimTokResultFields);
 
@@ -181,6 +184,12 @@
 						pointListData = result;
 
 						refreshGrid(mainGrid, result);
+
+						// 그리드 새로고침 후 발신 헤더 체크박스 다시 설정
+						setTimeout(function () {
+							setupSendStatusHeaderCheckbox();
+							updateSendStatusHeaderCheckbox();
+						}, 100);
 
 						$('.bcard.point-grid').aceWidget('stopLoading');
 					},
@@ -576,8 +585,8 @@
 				{ name: 'cust_nm', title: '이름', type: 'text', align: 'left', width: 40, itemTemplate: colfnc, hasGroup: false, group: groups[0] },
 				{ name: 'admin_id', title: '수용가번호', type: 'text', width: 60, itemTemplate: colfnc, hasGroup: false },
 				{ name: 'read_responsi', title: '검침원', type: 'text', width: 30, itemTemplate: colfnc, hasGroup: false },
-				{ name: 'receive_consent', title: '수신동의', type: 'text', width: 30, itemTemplate: colfnc, hasGroup: false },
-				{ name: 'send_status', title: '발신', type: 'text', width: 30, itemTemplate: colfnc, hasGroup: false },
+				{ name: 'receive_consent', title: '수신동의', type: 'text', width: 30, itemTemplate: colfnc, hasGroup: false, sortingDisabled: true },
+				{ name: 'send_status', title: '발신', type: 'text', width: 30, itemTemplate: colfnc, hasGroup: false, sortingDisabled: true },
 				{ name: 'last_send_date', title: '최종발신일', type: 'text', width: 50, itemTemplate: colfnc, hasGroup: false },
 				{ name: 'leak_start_date', title: '누수시작일', type: 'text', width: 50, itemTemplate: colfnc, hasGroup: false },
 				{ name: 'use_type', title: '업종', type: 'text', width: 40, itemTemplate: colfnc, hasGroup: false },
@@ -652,6 +661,62 @@
 				};
 
 				return new DataGrid(container, opt);
+			}
+
+			// 발신 필드 헤더에 체크박스 추가 (전체 선택/해제)
+			function setupSendStatusHeaderCheckbox() {
+				// 그리드 헤더에서 발신 필드 찾기
+				var $sendStatusHeader = $('#mainGrid th[name="send_status"]');
+
+				if ($sendStatusHeader.length > 0) {
+					// 기존 체크박스가 이미 있으면 제거하지 않고 이벤트만 재설정
+					var $existingCheckbox = $sendStatusHeader.find('.send-status-header-checkbox');
+					if ($existingCheckbox.length > 0) {
+						$existingCheckbox.off('click'); // 기존 이벤트 제거
+					} else {
+						// 체크박스 생성
+						var $checkbox = $('<input>').attr('type', 'checkbox').addClass('send-status-header-checkbox').css('cursor', 'pointer').css('margin-left', '10px');
+
+						// 헤더에 타이틀과 체크박스 함께 표시
+						$sendStatusHeader.html('발신 ').append($checkbox);
+					}
+
+					// 체크박스 참조 (기존 것이 있으면 그것을 사용)
+					var $checkbox = $sendStatusHeader.find('.send-status-header-checkbox');
+
+					// 클릭 이벤트 (정렬 방지)
+					$checkbox.on('click', function (e) {
+						e.stopPropagation(); // 정렬 이벤트 방지
+						var isChecked = $(this).is(':checked');
+
+						// 현재 페이지의 모든 발신 체크박스 선택/해제
+						$('#mainGrid input[name="send_status"]').prop('checked', isChecked);
+
+						// pointListData도 업데이트
+						if (pointListData && pointListData.length > 0) {
+							for (var i = 0; i < pointListData.length; i++) {
+								pointListData[i].send_status = isChecked;
+							}
+						}
+					});
+
+					// 개별 체크박스 변경 시 헤더 체크박스 상태 업데이트
+					$(document).on('change', '#mainGrid input[name="send_status"]', function () {
+						updateSendStatusHeaderCheckbox();
+					});
+				}
+			}
+
+			// 발신 헤더 체크박스 상태 업데이트 (전체 선택 여부 확인)
+			function updateSendStatusHeaderCheckbox() {
+				var $headerCheckbox = $('#mainGrid .send-status-header-checkbox');
+				var $allCheckboxes = $('#mainGrid input[name="send_status"]');
+				var $checkedCheckboxes = $('#mainGrid input[name="send_status"]:checked');
+
+				if ($allCheckboxes.length > 0) {
+					// 모두 선택되어 있으면 체크, 아니면 해제
+					$headerCheckbox.prop('checked', $allCheckboxes.length === $checkedCheckboxes.length);
+				}
 			}
 
 			function openSettingModal() {
@@ -1459,7 +1524,7 @@
 						if (zipCodeValue === '' || zipCodeValue === 'null' || zipCodeValue === '123-123') {
 							zipCodeValue = null;
 						}
-						
+
 						printData.push({
 							zipCode: zipCodeValue,
 							custName: item.cust_nm || item.custName || '',
