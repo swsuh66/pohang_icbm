@@ -352,9 +352,8 @@
 						var color = selected ? 'blue' : 'red';
 						return "<span style='color: " + color + "; font-weight: bold;'>" + text + '</span>';
 					case 'send_status':
-						// 수신동의자가 체크되도록, 미동의자는 비워두기
-						var receiveConsent = item.receive_consent === true || item.receive_consent === 'true' || item.receive_consent === 1 || item.receive_consent === '1';
-						var checked = receiveConsent;
+						// 기본으로 발신 체크박스는 선택되지 않음
+						var checked = false;
 						return (
 							"<input type='checkbox' name='send_status' " + (checked ? 'checked' : '') + " class='cbox' data-custSq='" + (item.cust_sq || item.custSq || '') + "'/>"
 						);
@@ -1087,6 +1086,8 @@
 				params['compare_term_cv'] = $('#compare_term_cv').val();
 				params['read_responsi'] = $('#read_responsi').val();
 				params['cust_phone'] = $('#cust_phone').val();
+				params['startDt'] = $('#startDt').val(); // 제외기간 시작일
+				params['endDt'] = $('#endDt').val(); // 제외기간 종료일
 				/*
 				params['stdDate'] = '2025-07-28 00:00:00';
 				params['stdTime'] = '00:00:00';
