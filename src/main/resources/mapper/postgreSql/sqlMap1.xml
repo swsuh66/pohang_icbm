@@ -3869,7 +3869,9 @@
      LEFT JOIN tb_m1_info_customer c ON c.cust_sq = a.cust_sq
 	 LEFT JOIN tb_m1_cmap_nbiot c2 ON c2.point_sq = a.point_sq
 	 LEFT JOIN tb_m1_info_company com2 ON com2.company_sq = c2.company_sq
+	 LEFT JOIN tb_m1_info_point p ON p.point_sq = a.point_sq
 	     where 1=1
+		 and p.use_cd = '1'
 	     <if test='cust_nm != null and cust_nm != ""'>
 	       and c.cust_name like  '%' || #{cust_nm} || '%'
 	     </if>
@@ -4836,6 +4838,23 @@
 			<if test="last_send_dt != null and last_send_dt != ''">
 				<![CDATA[
 				AND (t."last_send_dt" IS NULL OR t."last_send_dt" < #{last_send_dt}::timestamp)
+				]]>
+			</if>
+
+			<!-- 제외기간 필터: startDt와 endDt 사이에 발신일이 있는 경우 제외 -->
+			<if test="startDt != null and startDt != '' and endDt != null and endDt != ''">
+				<![CDATA[
+				AND (t."last_send_dt" IS NULL OR t."last_send_dt" < CAST(#{startDt} AS timestamp) OR t."last_send_dt" > CAST(#{endDt} AS timestamp))
+				]]>
+			</if>
+			<if test="startDt != null and startDt != '' and (endDt == null or endDt == '')">
+				<![CDATA[
+				AND (t."last_send_dt" IS NULL OR t."last_send_dt" < CAST(#{startDt} AS timestamp))
+				]]>
+			</if>
+			<if test="(startDt == null or startDt == '') and endDt != null and endDt != ''">
+				<![CDATA[
+				AND (t."last_send_dt" IS NULL OR t."last_send_dt" > CAST(#{endDt} AS timestamp))
 				]]>
 			</if>
 			</where>

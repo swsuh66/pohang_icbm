@@ -167,21 +167,17 @@
 						<input type="text" class="componentsSelect" id="read_responsi" onKeypress="javascript:if(event.keyCode == 13) { parent.searchGrid(); }" />
 					</div>
 				</div>
+			</div>
+			<div class="row" style="margin-top: 5px">
 				<div class="col-12 col-sm-6 col-md-4 col-lg-3 col-xl-2">
 					<div class="dj-input-group">
-						<span class="info componentsFont">제외기간</span>
-						<div style="display: flex; align-items: center">
-							<input
-								type="date"
-								class="componentsSelect"
-								id="last_send_dt"
-								onKeypress="javascript:if(event.keyCode == 13) { parent.searchGrid(); }"
-								style="flex: 1"
-							/>
-							<span style="margin-left: 8px; white-space: nowrap">이전</span>
-						</div>
+						<span class="info componentsFont">제외기간 </span>
+						<input type="date" class="componentsSelect" id="startDt" onKeypress="javascript:if(event.keyCode == 13) { parent.searchGrid(); }" />
+						<span style="margin: 0 8px"> ~ </span>
+						<input type="date" class="componentsSelect" id="endDt" onKeypress="javascript:if(event.keyCode == 13) { parent.searchGrid(); }" />
 					</div>
 				</div>
+
 				<div class="col-12 col-sm-6 col-md-8 col-lg-12 col-xl-12">
 					<div class="dj-btn-group">
 						<button type="button" class="btn dj-btn-primary btn-sm" onclick="parent.searchGrid();">검색</button>
