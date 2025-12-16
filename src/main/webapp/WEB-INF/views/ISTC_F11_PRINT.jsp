@@ -51,13 +51,13 @@
 
         .label {
             box-sizing: border-box;
-            padding: 4mm 5mm;
+            padding: 4mm 5mm 9mm 5mm; /* 위 4mm, 좌우 5mm, 아래 9mm (5mm 추가) */
             font-size: 13pt;
-            line-height: 1.6;
+            line-height: 1.5;
             overflow: hidden;
             display: flex;
             flex-direction: column;
-            justify-content: center;
+            justify-content: flex-start;
 
             /* 처음 위치 맞출 때만 보더 켜고, 맞으면 주석 처리 */
             border: 1px dashed #cccccc;
@@ -66,21 +66,21 @@
         .label strong {
             font-size: 16pt;
             font-weight: bold;
-            margin-bottom: 2mm;
+            margin-bottom: 1.5mm;
             display: block;
         }
 
         .label .zipcode {
             font-size: 12pt;
             color: #333;
-            margin-bottom: 1mm;
+            margin-bottom: 0.8mm;
         }
 
         .label .zipcode-boxes {
             display: inline-flex;
             gap: 2mm;
             align-items: center;
-            margin-bottom: 1mm;
+            margin-bottom: 0.8mm;
         }
 
         .label .zipcode-box {
@@ -94,7 +94,8 @@
         .label .address {
             font-size: 12pt;
             color: #555;
-            line-height: 1.5;
+            line-height: 1.4;
+            margin-top: 0;
         }
     </style>
 </head>
@@ -165,7 +166,7 @@
             <c:if test="${i < total}">
                 <c:set var="cust" value="${customers[i]}" />
                 <div class="label">
-                    <strong>${cust.custName}</strong>
+                    <strong>${cust.custName} 귀하</strong>
                     <c:choose>
                         <c:when test="${not empty cust.zipCode}">
                             <span class="zipcode">(${cust.zipCode})</span>
