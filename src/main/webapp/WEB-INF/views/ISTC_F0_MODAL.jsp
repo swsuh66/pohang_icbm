@@ -399,10 +399,11 @@
 
 	        var rawField;
 
-	        var rawDefFields = [
-	            {name: "measDt", title: "검침일시", type: "text", align: "center", width: 130, itemTemplate: rawColfnc},
-	            {name: "statCd", title: "수신상태", type: "text", align: "center", width: 80, itemTemplate: rawColfnc},
-	            {name: "accuIv", title: "최종지침<br>(㎥)", type: "number", align: "right", width: 100, itemTemplate: rawColfnc},
+        var rawDefFields = [
+            {name: "measDt", title: "검침일시", type: "text", align: "center", width: 130, itemTemplate: rawColfnc},
+            {name: "statCd", title: "수신상태", type: "text", align: "center", width: 80, itemTemplate: rawColfnc},
+            {name: "leakSuspect", title: "누수의심", type: "text", align: "center", width: 80, itemTemplate: rawColfnc},
+            {name: "accuIv", title: "최종지침<br>(㎥)", type: "number", align: "right", width: 100, itemTemplate: rawColfnc},
 	            {
 	                name: "termCv",
 	                title: "구간사용량<br>(㎥)",
@@ -430,10 +431,11 @@
 	        ];
 
 
-	        var dayFields = [
-	            {name: "measDt", title: "기준일자", type: "text", align: "center", width: 80, itemTemplate: dayColfnc},
-	            {name: "statCd", title: "일간상태", type: "text", align: "center", width: 80, itemTemplate: dayColfnc},
-	            {name: "rawCnt", title: "검침회수", type: "number", align: "right", width: 70, itemTemplate: dayColfnc},
+        var dayFields = [
+            {name: "measDt", title: "기준일자", type: "text", align: "center", width: 80, itemTemplate: dayColfnc},
+            {name: "statCd", title: "일간상태", type: "text", align: "center", width: 80, itemTemplate: dayColfnc},
+            {name: "leakSuspect", title: "누수의심", type: "text", align: "center", width: 80, itemTemplate: dayColfnc},
+            {name: "rawCnt", title: "검침회수", type: "number", align: "right", width: 70, itemTemplate: dayColfnc},
 	            {name: "lastDt", title: "최종수신일시", type: "text", align: "center", width: 120, itemTemplate: dayColfnc},
 	            {name: "accuIv", title: "최종지침(㎥)", type: "number", align: "right", width: 100, itemTemplate: dayColfnc},
 	            {name: "temperature", title: "온도", type: "text", align: "right", width: 60, itemTemplate: rawColfnc},     ////////////// 2022-11-30
@@ -852,18 +854,36 @@
 								<input type="text" class="form-control" id="accuIv" disabled />
 							</div>
 						</div>
-						<div class="row">
-							<div class="col-md-no-padding col-md-6">
-								<label class="labelItem" for="statCdStr">최종검침상태</label>
-								<input type="text" class="form-control" id="statCdStr" disabled />
-							</div>
-							<div class="col-md-no-padding col-md-6">
-								<label class="labelItem" for="modemId">지시부번호</label>
-								<input type="text" class="form-control" id="modemId" disabled />
-							</div>
+					<div class="row">
+						<div class="col-md-no-padding col-md-6">
+							<label class="labelItem" for="statCdStr">최종검침상태</label>
+							<input type="text" class="form-control" id="statCdStr" disabled />
+						</div>
+						<div class="col-md-no-padding col-md-6">
+							<label class="labelItem" for="modemId">지시부번호</label>
+							<input type="text" class="form-control" id="modemId" disabled />
 						</div>
 					</div>
-					<div class="col-md-no-padding col-md-6 filedBlock">
+					<div class="row">
+						<div class="col-md-no-padding col-md-3">
+							<label class="labelItem" for="custStatus">수용가 상태</label>
+							<input type="text" class="form-control" id="custStatus" disabled />
+						</div>
+						<div class="col-md-no-padding col-md-3">
+							<label class="labelItem" for="devStatus">단말기 상태</label>
+							<input type="text" class="form-control" id="devStatus" disabled />
+						</div>
+						<div class="col-md-no-padding col-md-3">
+							<label class="labelItem" for="meterStatus">계량기 상태</label>
+							<input type="text" class="form-control" id="meterStatus" disabled />
+						</div>
+						<div class="col-md-no-padding col-md-3">
+							<label class="labelItem" for="leakSuspect">누수의심</label>
+							<input type="text" class="form-control" id="leakSuspect" disabled />
+						</div>
+					</div>
+				</div>
+				<div class="col-md-no-padding col-md-6 filedBlock">
 						<div class="row">
 							<div class="col-md-no-padding col-md-4">
 								<!--

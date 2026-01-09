@@ -339,8 +339,8 @@
                         hasGroup: true
                     },                    
                     {
-                        name: "statCd",
-                        title: "계량기 상태",
+                        name: "deviceStatCd",
+                        title: "단말기 상태",
                         type: "text",
                         align: "center",
                         width: 100,
@@ -349,8 +349,8 @@
                         group: groups[2]
                     },
                     {
-                        name: "deviceStatCd",
-                        title: "단말기 상태",
+                        name: "statCd",
+                        title: "계량기 상태",
                         type: "text",
                         align: "center",
                         width: 100,

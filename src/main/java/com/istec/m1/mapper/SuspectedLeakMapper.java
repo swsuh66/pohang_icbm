@@ -14,4 +14,7 @@ public interface SuspectedLeakMapper {
 
     // 알림톡 수신동의 /해제
     int agreeReceive(SuspectedLeakDto dto);
+
+    // 라벨 프린트 히스토리 저장 (UPSERT)
+    int insertLabelPrintHistory(Map<String, Object> params);
 }

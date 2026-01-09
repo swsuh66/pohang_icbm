@@ -327,7 +327,7 @@
 
 	var groups = [
 		{title : '구분', columns : 1,align : "center"},
-		{title : '수용가', columns : 6, align : "center"},
+		{title : '수용가', columns : 5, align : "center"},
 		{title : '계량기', columns : 2, align : "center"},
 	    {title : '단말기', columns : 3, align : "center"} ,
 	    {title : '동작', columns : 2, align : "center"}
@@ -514,9 +514,7 @@
 			width: 60,
 			modeSwitchButton: false
 		},
-     	 { name: "siteNm",        title: "소속", 		 type: "text",   width: 100, itemTemplate:colfnc, hasGroup:true,editing: false, group:groups[1]},
-
-         { name: "adminId",      title: "수용가 번호", 	 type: "text",   width: 150, itemTemplate:colfnc,editing: false, hasGroup:true},
+         { name: "adminId",      title: "수용가 번호", 	 type: "text",   width: 150, itemTemplate:colfnc,editing: false, hasGroup:true, group:groups[1]},
          { name: "custNm",       title: "이름", 		 type: "text",   width: 200, itemTemplate:colfnc, hasGroup:true},
          { name: "useType",      title: "업종", 		 type: "text",   width: 70,  itemTemplate:colfnc,editing: false, hasGroup:true},
          { name: "blkNm",        title: "블록", 		 type: "text",   width: 100, itemTemplate:colfnc,editing: false, hasGroup:true},        
@@ -531,7 +529,7 @@
         { name: "devNo",      title: "주번호", 	 type: "text",   width: 140,  itemTemplate:colfnc,editing: true, hasGroup:true},
         { name: "subDevNo",   title: "부번호", 	 type: "text",   width: 200,  itemTemplate:colfnc,editing: true, hasGroup:true},
         { name: "comNm",      title: "제조회사", 	 type: "text",   width: 100,  itemTemplate:colfnc,editing: false, hasGroup:true},
-        { name: "useCd",      title: "검침상태", 	 type: "checkbox",   width: 60, itemTemplate:colfnc, editing: false, hasGroup:false},
+        { name: "useCd",      title: "단말기 회사", 	 type: "checkbox",   width: 60, itemTemplate:colfnc, editing: false, hasGroup:false},
         /* {
 	        itemTemplate: function(_, item) {
 

@@ -367,6 +367,7 @@
 		if(!params.searchParam) {
 			return;
 		}
+		params.useCd = '1'; // 폐전인 수용가 제외
 		loadModalPointData(false, params, function(result) {
 			if(result.length == 0) {
 	 			jAlert.info('정보', '해당 수용가는 존재하지 않습니다.');

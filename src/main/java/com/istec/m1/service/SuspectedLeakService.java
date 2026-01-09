@@ -23,4 +23,12 @@ public class SuspectedLeakService {
         suspectedLeakMapper.agreeReceive(dto);
         return dto;
     }
+
+    /**
+     * 라벨 프린트 히스토리 저장 (UPSERT)
+     * @param params admin_no, cust_name, zipcode, addr
+     */
+    public void saveLabelPrintHistory(Map<String, Object> params) {
+        suspectedLeakMapper.insertLabelPrintHistory(params);
+    }
 }

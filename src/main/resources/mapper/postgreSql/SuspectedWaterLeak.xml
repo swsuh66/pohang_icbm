@@ -29,4 +29,32 @@
             consent_dt = NOW()
         WHERE cust_phone = #{custPhone}
     </update>
+
+    <!-- 라벨 프린트 히스토리 저장 (UPSERT) -->
+    <insert id="insertLabelPrintHistory" parameterType="java.util.Map">
+        INSERT INTO tb_m1_label_print_history (
+            admin_no, 
+            cust_name, 
+            zipcode, 
+            addr, 
+            first_print_dt,
+            last_print_dt,
+            print_count
+        ) VALUES (
+            #{admin_no}, 
+            #{cust_name}, 
+            #{zipcode}, 
+            #{addr},
+            NOW(),
+            NOW(),
+            1
+        )
+        ON CONFLICT (admin_no) 
+        DO UPDATE SET
+            cust_name = EXCLUDED.cust_name,
+            zipcode = EXCLUDED.zipcode,
+            addr = EXCLUDED.addr,
+            last_print_dt = NOW(),
+            print_count = tb_m1_label_print_history.print_count + 1
+    </insert>
 </mapper>

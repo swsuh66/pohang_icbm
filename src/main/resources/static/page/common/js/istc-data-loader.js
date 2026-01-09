@@ -164,7 +164,8 @@ function _multilLoader(src_list, uuid) {
 				url: src.url ? src.url : ajaxUrl(src.sql), 
 				data:src.data, 
 				success:_internalSuccessHandler, 
-				error:src.error?_internalErrorHandler:null
+				error:src.error?_internalErrorHandler:null,
+				timeout: 300000	// 5분 타임아웃
 			});
 	}
 
@@ -258,7 +259,8 @@ _asyncLoader.prototype.loadAsync = function() {
 		url: this.url, 
 		data: this.parameters, 
 		success: this.successHandler, 
-		error: ((this.error)?this.errorHandler:null)
+		error: ((this.error)?this.errorHandler:null),
+		timeout: 300000	// 5분 타임아웃
 	});
 };
 

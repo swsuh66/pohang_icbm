@@ -368,17 +368,17 @@
 			  trunc(b.accu_iv)   as "accuIv",
 			  b.adjst_os  as "adjstV",
 			  b.stat_cd   as "statCd",
-			  case position('1' in a.stat_cd)			  
-			      when 1 then '통신 장애'
-			      when 2 then '계량기 장애'
-			      when 3 then 'Q3 초과'
-			      when 4 then '역류'
-			      when 5 then '누수'		      		      
-			      when 6 then '정상'
-			      when 7 then '정상'
-			      when 8 then 'BAT'
-			      else coalesce(a.cust_status, '정상')
-			  end "statCdStr",		
+		  case position('1' in a.stat_cd)			  
+		      when 1 then '통신 장애'
+		      when 2 then '계량기 장애'
+		      when 3 then 'Q3 초과'
+		      when 4 then '역류'
+		      when 5 then '누수'		      		      
+		      when 6 then '정상'
+		      when 7 then '정상'
+		      when 8 then 'BAT'
+		      else '정상'
+		  end "statCdStr",
 			  a.ami_type as "amiType",
 			  a.dev_no   as "devNo",
 			  a.sub_dev_no   as "subDevNo",
@@ -407,18 +407,51 @@
 			  a.send_cd as "sendCd",
 			  a.send_dt as "sendDt",
 			  b.temperature,
-			  a.img_src_gum,
-    		  a.img_src_bf,
-    		  a.img_src_af,
-    		  a.img_src_add,
-			  a.remark,
-			  a.cust_status,
-			  a.note,
-			  w.modem_id as "modemId"
-		  from
-		    vi_m1_sv_point_list a
-		    left outer join vi_m1_sv_meas_now b on b.POINT_SQ = a.POINT_SQ
-			left outer join tb_m1_wizit_modem_info w on w.dev_no = a.dev_no
+		  a.img_src_gum,
+   		  a.img_src_bf,
+   		  a.img_src_af,
+   		  a.img_src_add,
+		  a.remark,
+		  a.note,
+		  w.modem_id as "modemId",
+		  c.cust_status as "custStatus",
+		  case position('1' in a.stat_cd)
+		      when 1 then '통신 장애'
+		      else '정상'
+		  end "devStatus",
+	  case 
+	      when substring(a.stat_cd, 2, 1) = '1' or 
+	           substring(a.stat_cd, 3, 1) = '1' or 
+	           substring(a.stat_cd, 4, 1) = '1' or 
+	           substring(a.stat_cd, 8, 1) = '1' then '계량기 장애'
+	      else '정상'
+	  end "meterStatus",
+	  case 
+	      when exists (
+	          select 1
+	          from tb_m1_meas_raw m
+	          where m.point_sq = a.point_sq
+	            and m.term_cv is not null
+	            and a.point_sq not in (select point_sq from tb_m1_waterleak_hide_setting)
+	            and m.meas_dt between now() - interval '24 hours' and now()
+	            and a.use_cd = '1'
+	          group by m.point_sq
+	          having min(m.term_cv) >= coalesce(
+	              (select s.compare_term_cv 
+	               from tb_m1_waterleak_setting2 s
+	               where s.pipe_diameter = c.pipe_diameter 
+	                 and s.business_name = c.business_name
+	               limit 1), 
+	              0.1
+	          )
+	      ) then '누수의심'
+	      else '-'
+	  end "leakSuspect"
+  from
+    vi_m1_sv_point_list a
+    left outer join vi_m1_sv_meas_now b on b.POINT_SQ = a.POINT_SQ
+	left outer join tb_m1_wizit_modem_info w on w.dev_no = a.dev_no
+	left outer join tb_m1_info_customer c on c.cust_sq = a.cust_sq
 		    
 		 <trim prefix="WHERE" prefixOverrides="AND|OR">
 	         <choose>
@@ -1981,26 +2014,45 @@
     </select>
 
 <sql id="pointHisdata_sql">
-		select 
-		    (ROW_NUMBER() OVER()) AS "rownum", 
-			point_sq	as "pointSq", 
-			meas_dt	as     "measDt", 
-			to_char(meas_dt, 'YYYY-MM-DD')	as     "measDtStr", 
-			last_dt as 	"lastDt", 
-			raw_cnt	as     "rawCnt", 
-			stat_cd   as "statCd", 
-			accu_iv	  as   "accuIv",
-			accu_cv	 as    "accuCv",  
-			adjst_os as 	"adjstV", 
-			term_cv	as     "termCv",
-			term_cv_1d	as  "termCv_1d", 
-			term_cv_7d	as  "termCv_7d",
-			term_cv_30d	as  "termCv_30d",
-			temperature
-		from 			
-			fn_tb_meas_point_his_day_mov(#{pointSq}, to_date(#{begDate}, 'yyyy-mm-dd'), to_date(#{endDate}, 'yyyy-mm-dd') )  
-		order by 
-			meas_dt desc
+	select 
+    (ROW_NUMBER() OVER()) AS "rownum", 
+	main_data.point_sq	as "pointSq", 
+	main_data.meas_dt	as     "measDt", 
+	to_char(main_data.meas_dt, 'YYYY-MM-DD')	as     "measDtStr", 
+	main_data.last_dt as 	"lastDt", 
+	main_data.raw_cnt	as     "rawCnt", 
+	main_data.stat_cd   as "statCd",
+	case 
+	    when exists (
+	        select 1
+	        from tb_m1_meas_raw m
+	        join tb_m1_info_point p on p.point_sq = m.point_sq
+	        join tb_m1_info_customer c on c.cust_sq = p.cust_sq
+	        left join tb_m1_waterleak_setting2 s 
+	            on s.pipe_diameter = c.pipe_diameter 
+	            and s.business_name = c.business_name
+	        where m.point_sq = main_data.point_sq
+	          and m.term_cv is not null
+	          and m.point_sq not in (select point_sq from tb_m1_waterleak_hide_setting)
+	          and m.meas_dt between main_data.meas_dt - interval '24 hours' and main_data.meas_dt
+	          and p.use_cd = '1'
+	        group by m.point_sq
+	        having min(m.term_cv) >= coalesce(max(s.compare_term_cv), 0.1)
+	    ) then '누수의심'
+	    else '-'
+	end "leakSuspect",
+	main_data.accu_iv	  as   "accuIv",
+		main_data.accu_cv	 as    "accuCv",  
+		main_data.adjst_os as 	"adjstV", 
+		main_data.term_cv	as     "termCv",
+		main_data.term_cv_1d	as  "termCv_1d", 
+		main_data.term_cv_7d	as  "termCv_7d",
+		main_data.term_cv_30d	as  "termCv_30d",
+		main_data.temperature
+	from 			
+		fn_tb_meas_point_his_day_mov(#{pointSq}, to_date(#{begDate}, 'yyyy-mm-dd'), to_date(#{endDate}, 'yyyy-mm-dd') ) as main_data 
+	order by 
+		main_data.meas_dt desc
 </sql>
 
 	<select id="pointHisdata" parameterType="java.util.Map" resultType="java.util.Map">
@@ -2031,18 +2083,36 @@
 			a.meas_dt		as "measDt",				
 			to_char(a.meas_dt, 'yyyy-mm-dd-hh24-mi-ss') as "measDtStr",					
 			a.stat_cd   	as "statCd",			
-			case position('1' in a.stat_cd)			  
-		      when 1 then '통신 장애'
-		      when 2 then '계량기 장애'
-		      when 3 then 'Q3 초과'
-		      when 4 then '역류'
-		      when 5 then '누수'		      		      
-		      when 6 then '정상'
-		      when 7 then '정상'
-		      when 8 then 'BAT'
-		      else '정상'
-			end "statCdStr",			
-			a.accu_iv		as "accuIv",
+		case position('1' in a.stat_cd)			  
+	      when 1 then '통신 장애'
+	      when 2 then '계량기 장애'
+	      when 3 then 'Q3 초과'
+	      when 4 then '역류'
+	      when 5 then '누수'		      		      
+	      when 6 then '정상'
+	      when 7 then '정상'
+	      when 8 then 'BAT'
+	      else '정상'
+		end "statCdStr",
+		case 
+		    when exists (
+		        select 1
+		        from tb_m1_meas_raw m
+		        join tb_m1_info_customer c on c.cust_sq = b.cust_sq
+		        left join tb_m1_waterleak_setting2 s 
+		            on s.pipe_diameter = c.pipe_diameter 
+		            and s.business_name = c.business_name
+		        where m.point_sq = a.point_sq
+		          and m.term_cv is not null
+		          and a.point_sq not in (select point_sq from tb_m1_waterleak_hide_setting)
+		          and m.meas_dt between a.meas_dt - interval '24 hours' and a.meas_dt
+		          and b.use_cd = '1'
+		        group by m.point_sq
+		        having min(m.term_cv) >= coalesce(max(s.compare_term_cv), 0.1)
+		    ) then '누수의심'
+		    else '-'
+		end "leakSuspect",
+		a.accu_iv		as "accuIv",
 			a.accu_cv		as "accuCv",
 			a.term_cv		as "termCv",			
 			case when a.itval_h > 0 then trunc(a.term_cv / a.itval_h, 3) else null end as "termCh",			
@@ -2572,186 +2642,208 @@
     </select>
  	
  	<sql id="customerList_sql">
- 		select
- 		
- 		 (ROW_NUMBER() OVER(order by p.admin_id)) AS "rownum", 
- 		
- 		 p.addr_new AS "addrNew",         
-         '2' as "tmpVal",
-         p.point_sq AS "pointSq",
-         p.blk_sq    as "blkSq",   -- 블럭 Sq
-         p.site_sq   as "siteSq",
-         blk_name AS "blockName",
-         use_type AS "useType",
-         pipe_dia AS "pipeDia",
-         admin_id AS "adminId",
-         cust_nm AS "custName",
-         dev_no AS "devNo",
-         meter_no AS "meterNo",
-         beg_accu_iv AS "begVal",
-         beg_meas_dt AS "begDay", 
-         to_char(beg_meas_dt, 'yyyy-mm-dd hh24:mi:ss') as "begDayStr",
-         to_char(beg_meas_dt_t, 'yyyy-mm-dd') as "begDayStrT",
-         end_accu_iv AS "endVal",
-         end_meas_dt AS "endDay", 
-         to_char(end_meas_dt, 'yyyy-mm-dd hh24:mi:ss') as "endDayStr",
-         to_char(end_meas_dt_t, 'yyyy-mm-dd') as "endDayStrT",
-         fadjst_os AS "adjstV",
-         term_iv AS "useVal",
-         (term_iv + fadjst_os) AS "rstVal",
-         term_dy AS "useDays",
-         p.stat_cd AS "statCd",
-         trunc( (term_iv + fadjst_os) ) AS "rstValTr",
-         trunc(beg_accu_iv)  AS "begValTr",
-         trunc(end_accu_iv)  AS "endValTr",
-         '아이에스테크놀로지(주)' AS "comNm",
-         '무선검침' AS "accuType",         
-         '단독' AS "meterType",
-         null AS "shareMeter",
-         null AS "region",
-         case position('1' in p.stat_cd)			  
-		      when 1 then '통신 장애'
-		      when 2 then '계량기 장애'
-		      when 3 then 'Q3 초과'
-		      when 4 then '역류'
-		      when 5 then '누수'		      		      
-		      when 6 then '정상'
-		      when 7 then '정상'
-		      when 8 then 'BAT'
-		      else '정상'
-		end "statCdStr",		
-         p.read_opr AS "readOpr",
-		 p.check_day
-      FROM vi_m1_sv_point_list p 
-	   <choose>
-				<when test='dateOption == "0"'>
-					left join fn_meas_total_month_for_std_day2 (to_date(#{fromDate}, 'yyyy-mm-dd'),to_date(#{toDate}, 'yyyy-mm-dd')) measDay ON measDay.point_sq = p.point_sq					 	
-				</when>
-				<otherwise>
-					left join  fn_meas_total_month_for_check_day( to_date(#{toDate}, 'yyyy-mm-dd') )  measDay ON measDay.point_sq = p.point_sq
-				</otherwise>
-			</choose>
-     where 1=1 
-	         <choose>
-				<when test="upSiteSq != null and lv != null">
-					 and p.site_sq in (
-					    select site_sq from fn_prj_sites(#{upSiteSq}::integer, #{lv}::integer)
-					 )					 	
-				</when>
-				<when test="siteSq != null">
-					 and p.site_sq = #{siteSq}::integer		 	
-				</when>							
-			</choose>
-     	
-     	<choose>
-			<when test="upBlkSq != null and lv != null">
-				 and p.blk_sq in (
-				    select blk_sq from fn_prj_blockes(#{upBlkSq}::integer, #{lv}::integer)
-				 )					 	
-			</when>
-			<when test="blkSq != null and blkSq != -2">
-				 and p.blk_sq = #{blkSq}::integer		 	
-			</when>							
-			<when test="blkSq != null and blkSq == -2">
-				 and p.blk_sq IS NULL		 	
-			</when>
-		</choose>
-     	
-		<choose>
-			<when test="comSq != null and comSq != -2">
-			and p.company_sq = #{comSq}::integer
-			</when>
-			<when test="comSq != null and comSq == -2">
-			and p.company_sq IS NULL
-			</when>
-		</choose>	      
-	    
-	     <choose>
-			<when test="amiType != null and !amiType.equals('-2')">
-			and p.ami_type = #{amiType}
-			</when>
-			<when test="amiType != null and amiType.equals('-2')">
-			and p.ami_type IS NULL
-			</when>
-		</choose>
-		
-		 <choose>
-			<when test="readOpr != null and !readOpr.equals('-2')">
-			and p.read_opr = #{readOpr}
-			</when>
-			<when test="readOpr != null and readOpr.equals('-2')">
-			and p.read_opr IS NULL
-			</when>
-		</choose>
-		
-		<choose>
-			<when test="chkDay != null and !chkDay.equals('-2')">
-			and p.check_day = #{chkDay} :: integer
-			</when>
-			<when test="chkDay != null and chkDay.equals('-2')">
-			and p.check_day IS NULL
-			</when>
-		</choose>
-	     
-	     <choose>
-			<when test="useType != null and !useType.equals('-2')">
-			and p.use_type = #{useType}
-			</when>
-			<when test="useType != null and useType.equals('-2')">
-			and p.use_type IS NULL
-			</when>
-		</choose>
-		
-		<choose>
-			<when test="setYears != null and !setYears.equals('-2')">
-			and p.set_years = #{setYears}
-			</when>
-			<when test="setYears != null and setYears.equals('-2')">
-			and p.set_years IS NULL
-			</when>
-		</choose>
-
-	     <choose>
-			<when test="pipeDia != null and pipeDia != -2">
-			and p.pipe_dia = #{pipeDia}::numeric
-			</when>
-			<when test="pipeDia != null and pipeDia == -2">
-			and p.pipe_dia is null
-			</when>
-		</choose>
-		
-		<choose>
-			<when test="useCd != null">
-			and	p.use_cd = #{useCd}
-			</when>
-			<when test="useCd == null">
-			and	p.use_cd = '1'
-			</when>
-		</choose>
-		
-		<if test="statCd != null">
- 			and position('1' in p.stat_cd) = #{statCd}::integer
-		</if>
-		
-		<if test="pointSq != null">
-	    	and p.point_sq = #{pointSq}
-	    </if>
-
-       	<if test="isFee != null">	    
-         	and term_iv = (term_iv + fadjst_os)
-         	and err_flag = '0'
-	    </if>
-	    <if test='cust_nm != null and cust_nm != ""'>
-	       and p.cust_nm like  '%' || #{cust_nm} || '%'
-	     </if>
-	     <if test='admin_no != null and admin_no != ""'>
-	       and p.admin_id like  '%' || #{admin_no} || '%'
-	     </if>
-	     <if test='addr != null and addr != ""'>
-	       and (p.addr_old like '%' || #{addr} || '%' 
-	        or  p.addr_new like '%' || #{addr} || '%')
-	     </if>
- 	</sql>
+		WITH meter_aggregates AS (
+		    SELECT 
+		        point_sq,
+		        -- 실제 측정 시간 (last_dt)
+		        MIN(last_dt) AS beg_meas_dt,
+		        MAX(last_dt) AS end_meas_dt,
+		        -- 날짜 기준 (meas_dt)
+		        MIN(meas_dt) AS beg_meas_dt_t,
+		        MAX(meas_dt) AS end_meas_dt_t,
+		        -- 시작/끝 검침값
+		        (ARRAY_AGG(accu_iv ORDER BY meas_dt ASC))[1] AS beg_accu_iv,
+		        (ARRAY_AGG(accu_iv ORDER BY meas_dt DESC))[1] AS end_accu_iv,
+		        -- 조정량 (전체 합계 - 시작값)
+		        SUM(adjst_os) - (ARRAY_AGG(adjst_os ORDER BY meas_dt ASC))[1] AS fadjst_os,
+		        -- 사용량 (끝 - 시작)
+		        (ARRAY_AGG(accu_iv ORDER BY meas_dt DESC))[1] - (ARRAY_AGG(accu_iv ORDER BY meas_dt ASC))[1] AS term_iv,
+		        -- 기간 (일수)
+		        (MAX(meas_dt)::DATE - MIN(meas_dt)::DATE) AS term_dy
+		    FROM client_meas_day
+		    WHERE meas_dt &gt;= to_date(#{fromDate}, 'yyyy-mm-dd')::DATE 
+		      AND meas_dt &lt;= to_date(#{toDate}, 'yyyy-mm-dd')::DATE
+		    GROUP BY point_sq
+		),
+		meter_data AS (
+		    SELECT
+		        ROW_NUMBER() OVER (ORDER BY p.admin_id) AS "rownum",
+		        p.addr_new AS "addrNew",
+		        '2' AS "tmpVal",
+		        p.point_sq AS "pointSq",
+		        p.blk_sq AS "blkSq",
+		        p.site_sq AS "siteSq",
+		        p.blk_name AS "blockName",
+		        p.use_type AS "useType",
+		        p.pipe_dia AS "pipeDia",
+		        p.admin_id AS "adminId",
+		        p.cust_nm AS "custName",
+		        p.dev_no AS "devNo",
+		        p.meter_no AS "meterNo",
+		        m.beg_accu_iv AS "begVal",
+		        m.beg_meas_dt AS "begDay",
+		        TO_CHAR(m.beg_meas_dt, 'YYYY-MM-DD HH24:MI:SS') AS "begDayStr",
+		        TO_CHAR(m.beg_meas_dt_t, 'YYYY-MM-DD') AS "begDayStrT",
+		        m.end_accu_iv AS "endVal",
+		        m.end_meas_dt AS "endDay",
+		        TO_CHAR(m.end_meas_dt, 'YYYY-MM-DD HH24:MI:SS') AS "endDayStr",
+		        TO_CHAR(m.end_meas_dt_t, 'YYYY-MM-DD') AS "endDayStrT",
+		        m.fadjst_os AS "adjstV",
+		        m.term_iv AS "useVal",
+		        (m.term_iv + COALESCE(m.fadjst_os, 0)) AS "rstVal",
+		        m.term_dy AS "useDays",
+		        p.stat_cd AS "statCd",
+		        TRUNC(m.term_iv + COALESCE(m.fadjst_os, 0)) AS "rstValTr",
+		        TRUNC(m.beg_accu_iv) AS "begValTr",
+		        TRUNC(m.end_accu_iv) AS "endValTr",
+		        '아이에스테크놀로지(주)' AS "comNm",
+		        '무선검침' AS "accuType",
+		        '단독' AS "meterType",
+		        NULL AS "shareMeter",
+		        NULL AS "region",
+		        CASE POSITION('1' IN p.stat_cd)
+		            WHEN 1 THEN '통신 장애'
+		            WHEN 2 THEN '계량기 장애'
+		            WHEN 3 THEN 'Q3 초과'
+		            WHEN 4 THEN '역류'
+		            WHEN 5 THEN '누수'
+		            WHEN 6 THEN '정상'
+		            WHEN 7 THEN '정상'
+		            WHEN 8 THEN 'BAT'
+		            ELSE '정상'
+		        END AS "statCdStr",
+		        p.read_opr AS "readOpr",
+		        p.check_day,
+		        COUNT(*) OVER() AS "totalCount"
+		    FROM vi_m1_sv_point_list p
+		    LEFT JOIN meter_aggregates m ON m.point_sq = p.point_sq
+		    WHERE 1=1
+		        <choose>
+		            <when test="upSiteSq != null and lv != null">
+		                AND p.site_sq IN (
+		                    SELECT site_sq FROM fn_prj_sites(#{upSiteSq}::INTEGER, #{lv}::INTEGER)
+		                )
+		            </when>
+		            <when test="siteSq != null">
+		                AND p.site_sq = #{siteSq}::INTEGER
+		            </when>
+		        </choose>
+		        
+		        <choose>
+		            <when test="upBlkSq != null and lv != null">
+		                AND p.blk_sq IN (
+		                    SELECT blk_sq FROM fn_prj_blockes(#{upBlkSq}::INTEGER, #{lv}::INTEGER)
+		                )
+		            </when>
+		            <when test="blkSq != null and blkSq != -2">
+		                AND p.blk_sq = #{blkSq}::INTEGER
+		            </when>
+		            <when test="blkSq != null and blkSq == -2">
+		                AND p.blk_sq IS NULL
+		            </when>
+		        </choose>
+		        
+		        <choose>
+		            <when test="comSq != null and comSq != -2">
+		                AND p.company_sq = #{comSq}::INTEGER
+		            </when>
+		            <when test="comSq != null and comSq == -2">
+		                AND p.company_sq IS NULL
+		            </when>
+		        </choose>
+		        
+		        <choose>
+		            <when test="amiType != null and !amiType.equals('-2')">
+		                AND p.ami_type = #{amiType}
+		            </when>
+		            <when test="amiType != null and amiType.equals('-2')">
+		                AND p.ami_type IS NULL
+		            </when>
+		        </choose>
+		        
+		        <choose>
+		            <when test="readOpr != null and !readOpr.equals('-2')">
+		                AND p.read_opr = #{readOpr}
+		            </when>
+		            <when test="readOpr != null and readOpr.equals('-2')">
+		                AND p.read_opr IS NULL
+		            </when>
+		        </choose>
+		        
+		        <choose>
+		            <when test="chkDay != null and !chkDay.equals('-2')">
+		                AND p.check_day = #{chkDay}::INTEGER
+		            </when>
+		            <when test="chkDay != null and chkDay.equals('-2')">
+		                AND p.check_day IS NULL
+		            </when>
+		        </choose>
+		        
+		        <choose>
+		            <when test="useType != null and !useType.equals('-2')">
+		                AND p.use_type = #{useType}
+		            </when>
+		            <when test="useType != null and useType.equals('-2')">
+		                AND p.use_type IS NULL
+		            </when>
+		        </choose>
+		        
+		        <choose>
+		            <when test="setYears != null and !setYears.equals('-2')">
+		                AND p.set_years = #{setYears}
+		            </when>
+		            <when test="setYears != null and setYears.equals('-2')">
+		                AND p.set_years IS NULL
+		            </when>
+		        </choose>
+		        
+		        <choose>
+		            <when test="pipeDia != null and pipeDia != -2">
+		                AND p.pipe_dia = #{pipeDia}::NUMERIC
+		            </when>
+		            <when test="pipeDia != null and pipeDia == -2">
+		                AND p.pipe_dia IS NULL
+		            </when>
+		        </choose>
+		        
+		        <choose>
+		            <when test="useCd != null">
+		                AND p.use_cd = #{useCd}
+		            </when>
+		            <when test="useCd == null">
+		                AND p.use_cd = '1'
+		            </when>
+		        </choose>
+		        
+		        <if test="statCd != null">
+		            AND POSITION('1' IN p.stat_cd) = #{statCd}::INTEGER
+		        </if>
+		        
+		        <if test="pointSq != null">
+		            AND p.point_sq = #{pointSq}
+		        </if>
+		        
+		        <if test="isFee != null">
+		            AND m.term_iv = (m.term_iv + m.fadjst_os)
+		        </if>
+		        
+		        <if test='cust_nm != null and cust_nm != ""'>
+		            AND p.cust_nm LIKE '%' || #{cust_nm} || '%'
+		        </if>
+		        
+		        <if test='admin_no != null and admin_no != ""'>
+		            AND p.admin_id LIKE '%' || #{admin_no} || '%'
+		        </if>
+		        
+		        <if test='addr != null and addr != ""'>
+		            AND (p.addr_old LIKE '%' || #{addr} || '%' 
+		                OR p.addr_new LIKE '%' || #{addr} || '%')
+		        </if>
+		)
+		SELECT *
+		FROM meter_data
+		ORDER BY rownum
+	</sql>
  	
  	
 	<insert id="insertImport" parameterType="java.util.Map">
@@ -3371,7 +3463,7 @@
       union all
         select key, sq, val from (select 6 as key, blk_sq::character varying sq, blk_name::character varying val from tb_t group by blk_sq, blk_name order by blk_sq::numeric, blk_name) a
 	  union all
-        select key, sq, val from (select 7 as key, check_day::character varying sq, check_day::character varying val from tb_t group by check_day order by check_day) a
+        select key, sq, val from (select 7 as key, i::character varying sq, i::character varying val from generate_series(1, 31) as i order by i) a
 		) a
 		
 		<trim prefix="WHERE" prefixOverrides="AND|OR">
@@ -4993,6 +5085,112 @@
 		and b.admin_id like  '%' || #{admin_no} || '%'
 		</if>
 	</sql>
+
+	<!-- ==========================================
+	     라벨 프린터 출력 이력 관리
+	     ========================================== -->
+
+	<!-- 라벨 출력 이력 UPSERT (저장/업데이트) -->
+	<insert id="insertLabelPrintHistory" parameterType="java.util.Map">
+		INSERT INTO tb_m1_label_print_history (
+			admin_no, 
+			cust_name, 
+			zipcode, 
+			addr, 
+			first_print_dt,
+			last_print_dt,
+			print_count
+		) VALUES (
+			#{admin_no}, 
+			#{cust_name}, 
+			#{zipcode}, 
+			#{addr},
+			NOW(),
+			NOW(),
+			1
+		)
+		ON CONFLICT (admin_no) 
+		DO UPDATE SET
+			cust_name = EXCLUDED.cust_name,
+			zipcode = EXCLUDED.zipcode,
+			addr = EXCLUDED.addr,
+			last_print_dt = NOW(),
+			print_count = tb_m1_label_print_history.print_count + 1
+	</insert>
+
+	<!-- 여러 수용가의 출력 이력 조회 (IN절) -->
+	<select id="selectLabelPrintHistoryByAdminNos" parameterType="java.util.Map" resultType="java.util.Map">
+		SELECT 
+			admin_no,
+			cust_name,
+			zipcode,
+			addr,
+			first_print_dt,
+			last_print_dt,
+			print_count
+		FROM tb_m1_label_print_history
+		WHERE admin_no IN
+		<foreach collection="admin_nos" item="admin_no" open="(" separator="," close=")">
+			#{admin_no}
+		</foreach>
+		ORDER BY print_count DESC, last_print_dt DESC
+	</select>
+
+	<!-- 전체 출력 이력 조회 (페이징) -->
+	<select id="selectLabelPrintHistory_paging" parameterType="java.util.Map" resultType="java.util.Map">
+		<include refid="pageHeader"/>
+		SELECT 
+			admin_no,
+			cust_name,
+			zipcode,
+			addr,
+			first_print_dt,
+			last_print_dt,
+			print_count
+		FROM tb_m1_label_print_history
+		<where>
+			<if test="admin_no != null and admin_no != ''">
+				AND admin_no = #{admin_no}
+			</if>
+			<if test="cust_name != null and cust_name != ''">
+				AND cust_name LIKE '%' || #{cust_name} || '%'
+			</if>
+			<if test="print_dt_from != null and print_dt_from != ''">
+				AND last_print_dt &gt;= CAST(#{print_dt_from} AS timestamp)
+			</if>
+			<if test="print_dt_to != null and print_dt_to != ''">
+				AND last_print_dt &lt;= CAST(#{print_dt_to} AS timestamp)
+			</if>
+			<if test="min_print_count != null">
+				AND print_count &gt;= #{min_print_count}
+			</if>
+		</where>
+		ORDER BY last_print_dt DESC
+		<include refid="pageFooter"/>
+	</select>
+
+	<!-- 출력 이력 카운트 -->
+	<select id="countLabelPrintHistory" parameterType="java.util.Map" resultType="int">
+		SELECT COUNT(*) 
+		FROM tb_m1_label_print_history
+		<where>
+			<if test="admin_no != null and admin_no != ''">
+				AND admin_no = #{admin_no}
+			</if>
+			<if test="cust_name != null and cust_name != ''">
+				AND cust_name LIKE '%' || #{cust_name} || '%'
+			</if>
+			<if test="print_dt_from != null and print_dt_from != ''">
+				AND last_print_dt &gt;= CAST(#{print_dt_from} AS timestamp)
+			</if>
+			<if test="print_dt_to != null and print_dt_to != ''">
+				AND last_print_dt &lt;= CAST(#{print_dt_to} AS timestamp)
+			</if>
+			<if test="min_print_count != null">
+				AND print_count &gt;= #{min_print_count}
+			</if>
+		</where>
+	</select>
 
 
 </mapper>

@@ -34,11 +34,15 @@
 
 			var pointListData;
 
-			var alrimtokListData;
+		var alrimtokListData;
 
-			var leakSetting;
+		var leakSetting;
 
-			var stringByteLength;
+		var stringByteLength;
+
+		// 라벨 프린터 출력 관련 전역 변수
+		var labelPrintDataWithHistory = [];
+		var labelHistoryGrid;
 
 			$(function () {
 				/*
@@ -93,8 +97,6 @@
 					var custSq = $(this).attr('data-custSq');
 					var receive_consent = $(this).is(':checked') ? '1' : '0';
 
-					console.log('custSq', custSq, 'receive_consent', receive_consent);
-
 					var receive_consent_bool = receive_consent == '1' ? true : false;
 
 					// pointListData에서 해당 항목 찾아서 receive_consent 업데이트
@@ -104,7 +106,6 @@
 						});
 						if (dataItem) {
 							dataItem.receive_consent = receive_consent_bool;
-							console.log('Updated pointListData.receive_consent for custSq:', custSq, 'to:', receive_consent_bool);
 						}
 					}
 
@@ -174,7 +175,6 @@
 						$('.bcard.point-grid').aceWidget('startLoading');
 					},
 					function (result) {
-						console.log('loadData', params, result);
 						if (callback) {
 							$('.bcard.point-grid').aceWidget('stopLoading');
 							callback(result);
@@ -279,7 +279,6 @@
 						$('.bcard .ruleGrid').aceWidget('startLoading');
 					},
 					function (result) {
-						console.log('loadRuleData', params, result);
 						if (result.length > 0) {
 							refreshGrid(ruleGrid, result);
 						} else {
@@ -799,7 +798,7 @@
 				'누수가 맞다면 누수공사 완료 후, 감면대상 여부를 확인하고 공사일로부터 60일 이내에 누수감면 신청 바랍니다.\n\n' +
 				'★ 자가진단 방법 및 옥내누수감면 안내 ★\n' +
 				'https://www.pohang.go.kr/water/contents.do?mid=0302040000\n\n' +
-				'수도요금안내>요금납부방법안내>요금감면안내>옥내누수요금감면(누수자가진단)\n\n' +
+				'수도요금안내>요금납부방법안내>요금감면맟할인제도>옥내누수요금감면(누수자가진단)\n\n' +
 				'▶ 관련문의 : 054-270-5331 (평일 9시 ~ 18시)\n\n' +
 				'- 포항시 상하수도행정과 요금팀 -';
 			*/
@@ -851,7 +850,6 @@
 					items,
 					function (data, status, xhr) {
 						if (xhr.status === 200) {
-							console.log('알림톡 전송 성공: ', data);
 							const insertedList = data.insertIds || [];
 							const normalizedItems = items.map((item) => ({
 								...item,
@@ -884,10 +882,7 @@
 			}
 
 			function saveAlrimTok(items) {
-				console.log('saveAlrimTok items', items);
-
 				if (!items || items.length === 0) {
-					console.log('저장할 데이터가 없습니다.');
 					return;
 				}
 
@@ -898,21 +893,16 @@
 					async: true,
 					success: function (result) {
 						if (result && result.success) {
-							console.log('알림톡 발신 기록 저장 성공', result);
 							return result;
-						} else {
-							console.error('알림톡 발신 기록 저장 실패:', result);
 						}
 					},
 					error: function (result) {
-						console.error('알림톡 발신 기록 저장 오류:', result);
+						// 저장 오류
 					},
 				});
 			}
 
 			function openAlrimTokPopup() {
-				console.log('pointListData', pointListData);
-
 				// 메인 그리드에서 발신 체크박스가 체크된 항목의 cust_sq 수집
 				var checkedCustSqs = [];
 				$('#mainGrid input[name="send_status"]:checked').each(function () {
@@ -957,7 +947,6 @@
 						});
 						if (dataItem) {
 							dataItem.send_status = isChecked;
-							console.log('Updated send_status for admin_id:', adminId, 'to:', isChecked);
 						}
 					});
 
@@ -972,7 +961,6 @@
 
 			// 알림톡 전송 버튼 클릭 시 그리드 데이터를 가져와서 전송
 			function handleSendAlrimTok() {
-				console.log('handleSendAlrimTok alrimtokListData', alrimtokListData);
 				// 전화번호 형식
 				const PHONE_RE = /^010-\d{4}-\d{4}$/;
 				const hyphenize = (s) => {
@@ -993,7 +981,7 @@
 
 					const admin_id = String(row.admin_id || '').trim();
 					const name = String(row.cust_nm || '').trim();
-					let phone = '010-9081-7838'; //String(row.cust_phone || '').trim();
+					let phone = String(row.cust_phone || '').trim(); // '010-5538-0452';
 					phone = PHONE_RE.test(phone) ? phone : hyphenize(phone);
 					if (!PHONE_RE.test(phone)) continue; // 형식 불일치 스킵
 
@@ -1031,7 +1019,6 @@
 				const base = getContextPath();
 				if (base && base.endsWith('/')) base = base.slice(0, -1);
 				const url = base + '/api/alrimtok/test';
-				console.log('sendTestAlrimTok', name, phone, url);
 
 				ajaxPost(
 					url,
@@ -1270,7 +1257,6 @@
 					jAlert.error('오류', '조건이 맞지 않아 데이터를 다운로드할 수 없습니다.');
 					return;
 				}
-				console.log('dbParams:', dbParams);
 				var params = new Object();
 
 				params.qid = dbParams[dbParamsTb]['refer-sql'];
@@ -1502,61 +1488,288 @@
 				}
 			}
 
-			// 프린트 페이지 열기
-			function openPrintPage() {
-				// pointListData에서 프린트할 데이터 추출 (zipcode, 수용가명, 주소)
-				if (!pointListData || pointListData.length === 0) {
-					alert('프린트할 데이터가 없습니다.');
-					return;
+		// 프린트 페이지 열기
+		function openPrintPage() {
+			// pointListData에서 프린트할 데이터 추출 (zipcode, 수용가명, 주소)
+			if (!pointListData || pointListData.length === 0) {
+				alert('프린트할 데이터가 없습니다.');
+				return;
+			}
+
+			// 수신동의 미동의 데이터만 필터링
+			var printData = [];
+			for (var i = 0; i < pointListData.length; i++) {
+				var item = pointListData[i];
+
+				// 수신동의 확인 (미동의인 경우만 포함)
+				var receiveConsent = item.receive_consent;
+
+				// 수신동의가 미동의인 경우만 추가
+				if (receiveConsent !== true) {
+					// zipcode 추출 (빈 문자열이면 null로 설정)
+					var zipCodeValue = item.zipcode || item.zipCode || null;
+					if (zipCodeValue === '' || zipCodeValue === 'null' || zipCodeValue === '123-123') {
+						zipCodeValue = null;
+					}
+
+					printData.push({
+						admin_no: item.admin_id || '',
+						zipCode: zipCodeValue,
+						custName: item.cust_nm || item.custName || '',
+						addr: item.addr_new || item.addrNew || item.addr_old || item.addrOld || '',
+					});
 				}
+			}
 
-				// 수신동의 미동의 데이터만 필터링
-				var printData = [];
-				for (var i = 0; i < pointListData.length; i++) {
-					var item = pointListData[i];
+			// 필터링된 데이터가 없으면 알림
+			if (printData.length === 0) {
+				alert('수신 미동의 데이터가 없습니다.');
+				return;
+			}
 
-					// 수신동의 확인 (미동의인 경우만 포함)
-					var receiveConsent = item.receive_consent;
+			// 출력 이력 조회 후 확인 팝업 표시
+			loadPrintHistoryAndShowConfirm(printData);
+		}
 
-					// 수신동의가 미동의인 경우만 추가
-					if (receiveConsent !== true) {
-						// zipcode 추출 (빈 문자열이면 null로 설정)
-						var zipCodeValue = item.zipcode || item.zipCode || null;
-						if (zipCodeValue === '' || zipCodeValue === 'null' || zipCodeValue === '123-123') {
-							zipCodeValue = null;
+		// 출력 이력 조회 후 확인 팝업 표시
+		function loadPrintHistoryAndShowConfirm(printData) {
+			// 수용가번호 목록 추출
+			var adminNos = printData.map(function(item) {
+				return item.admin_no;
+			}).filter(function(no) {
+				return no && no.trim() !== '';
+			});
+
+			// 데이터 초기화 (이력 없이)
+			var initializeWithoutHistory = function() {
+				labelPrintDataWithHistory = printData.map(function(item) {
+					return {
+						admin_no: item.admin_no,
+						zipCode: item.zipCode,
+						custName: item.custName,
+						addr: item.addr,
+						print_count: 0,
+						last_print_dt: null,
+						selected: true
+					};
+				});
+				showLabelPrintConfirmPopup();
+			};
+
+			if (adminNos.length === 0) {
+				initializeWithoutHistory();
+				return;
+			}
+
+			// 출력 이력 조회
+			try {
+				getAjax(
+					'mars.icbm.map1.selectLabelPrintHistoryByAdminNos',
+					{ admin_nos: adminNos },
+					null,
+					function(historyData) {
+						// 이력 데이터를 Map으로 변환
+						var historyMap = {};
+						if (historyData && historyData.length > 0) {
+							historyData.forEach(function(item) {
+								historyMap[item.admin_no] = item;
+							});
 						}
 
-						printData.push({
-							zipCode: zipCodeValue,
-							custName: item.cust_nm || item.custName || '',
-							addr: item.addr_new || item.addrNew || item.addr_old || item.addrOld || '',
+						// printData에 이력 정보 병합
+						labelPrintDataWithHistory = printData.map(function(item) {
+							var history = historyMap[item.admin_no];
+							return {
+								admin_no: item.admin_no,
+								zipCode: item.zipCode,
+								custName: item.custName,
+								addr: item.addr,
+								print_count: history ? history.print_count : 0,
+								last_print_dt: history ? history.last_print_dt : null,
+								selected: true  // 기본 선택
+							};
 						});
+
+						// 확인 팝업 표시
+						showLabelPrintConfirmPopup();
+					},
+					function(error) {
+						// 에러 발생 시에도 팝업은 표시
+						initializeWithoutHistory();
 					}
-				}
-
-				// 필터링된 데이터가 없으면 알림
-				if (printData.length === 0) {
-					alert('수신 미동의 데이터가 없습니다.');
-					return;
-				}
-
-				// form을 만들어서 POST로 전달
-				var form = document.createElement('form');
-				form.method = 'POST';
-				form.action = getContextPath() + '/ISTC_F11_PRINT';
-				form.target = '_blank';
-
-				// 데이터를 JSON으로 인코딩하여 전달
-				var dataInput = document.createElement('input');
-				dataInput.type = 'hidden';
-				dataInput.name = 'printData';
-				dataInput.value = JSON.stringify(printData);
-				form.appendChild(dataInput);
-
-				document.body.appendChild(form);
-				form.submit();
-				document.body.removeChild(form);
+				);
+			} catch(e) {
+				// 예외 발생 시에도 팝업은 표시
+				initializeWithoutHistory();
 			}
+		}
+
+		// 출력 확인 팝업 표시
+		function showLabelPrintConfirmPopup() {
+			var totalCount = labelPrintDataWithHistory.length;
+			var newCount = labelPrintDataWithHistory.filter(function(item) {
+				return item.print_count === 0;
+			}).length;
+			var reprintCount = totalCount - newCount;
+
+			// 통계 정보 업데이트
+			document.getElementById('totalPrintCount').textContent = totalCount;
+			document.getElementById('newPrintCount').textContent = newCount;
+			document.getElementById('reprintCount').textContent = reprintCount;
+			updateSelectedCount();
+
+			// 테이블 생성
+			var tbody = document.getElementById('labelPrintTableBody');
+			tbody.innerHTML = '';
+
+			labelPrintDataWithHistory.forEach(function(item, index) {
+				var tr = document.createElement('tr');
+				tr.style.borderBottom = '1px solid #dee2e6';
+				
+				// 재출력인 경우 배경색 변경
+				if (item.print_count > 0) {
+					tr.style.background = '#fff3cd';
+				}
+
+				var lastPrintDtStr = '-';
+				if (item.last_print_dt) {
+					var dt = new Date(item.last_print_dt);
+					lastPrintDtStr = kutil.dateFormat(dt, 'yyyy-mm-dd HH:MM');
+				}
+
+				var printCountStr = item.print_count === 0 
+					? '<span style="color: #28a745; font-weight: bold;">신규</span>'
+					: '<span style="color: #dc3545; font-weight: bold;">' + item.print_count + '회</span>';
+
+				tr.innerHTML = 
+					'<td style="padding: 10px; text-align: center;">' +
+						'<input type="checkbox" class="print-item-checkbox" data-index="' + index + '" ' + 
+						(item.selected ? 'checked' : '') + '/>' +
+					'</td>' +
+					'<td style="padding: 10px; text-align: center;">' + (item.admin_no || '-') + '</td>' +
+					'<td style="padding: 10px; text-align: center;">' + (item.custName || '-') + '</td>' +
+					'<td style="padding: 10px; text-align: left; font-size: 12px;">' + (item.addr || '-') + '</td>' +
+					'<td style="padding: 10px; text-align: center;">' + printCountStr + '</td>' +
+					'<td style="padding: 10px; text-align: center; font-size: 12px;">' + lastPrintDtStr + '</td>';
+
+				tbody.appendChild(tr);
+			});
+
+			// 체크박스 이벤트 바인딩
+			$('.print-item-checkbox').on('change', function() {
+				var index = $(this).data('index');
+				labelPrintDataWithHistory[index].selected = $(this).is(':checked');
+				updateSelectedCount();
+			});
+
+			// 전체 선택 체크박스 이벤트
+			$('#selectAllPrintItems').off('change').on('change', function() {
+				var isChecked = $(this).is(':checked');
+				$('.print-item-checkbox').prop('checked', isChecked);
+				labelPrintDataWithHistory.forEach(function(item) {
+					item.selected = isChecked;
+				});
+				updateSelectedCount();
+			});
+
+			// 팝업 표시
+			document.getElementById('labelPrintConfirmPopup').style.display = 'block';
+		}
+
+		// 선택된 항목 수 업데이트
+		function updateSelectedCount() {
+			var selectedCount = labelPrintDataWithHistory.filter(function(item) {
+				return item.selected;
+			}).length;
+			document.getElementById('selectedPrintCount').textContent = selectedCount;
+		}
+
+		// 재출력 항목 제외
+		function excludeReprints() {
+			labelPrintDataWithHistory.forEach(function(item, index) {
+				if (item.print_count > 0) {
+					item.selected = false;
+					$('.print-item-checkbox[data-index="' + index + '"]').prop('checked', false);
+				}
+			});
+			updateSelectedCount();
+		}
+
+		// 출력 확인
+		function confirmLabelPrint() {
+			var selectedItems = labelPrintDataWithHistory.filter(function(item) {
+				return item.selected;
+			});
+
+			if (selectedItems.length === 0) {
+				alert('출력할 항목을 선택해주세요.');
+				return;
+			}
+
+			// 팝업 닫기
+			closeLabelPrintConfirmPopup();
+
+			// 실제 출력 (인쇄 페이지 열기)
+			var form = document.createElement('form');
+			form.method = 'POST';
+			form.action = getContextPath() + '/ISTC_F11_PRINT';
+			form.target = '_blank';
+
+			var dataInput = document.createElement('input');
+			dataInput.type = 'hidden';
+			dataInput.name = 'printData';
+			dataInput.value = JSON.stringify(selectedItems);
+			form.appendChild(dataInput);
+
+			document.body.appendChild(form);
+			form.submit();
+			document.body.removeChild(form);
+		}
+
+		// 팝업 닫기
+		function closeLabelPrintConfirmPopup() {
+			document.getElementById('labelPrintConfirmPopup').style.display = 'none';
+		}
+
+		// 라벨 출력 이력 저장 (인쇄 페이지에서 호출)
+		function saveLabelPrintHistory(printData) {
+			if (!printData || printData.length === 0) {
+				return;
+			}
+
+			try {
+				var items = printData.map(function(item) {
+					return {
+						admin_no: item.admin_no,
+						cust_name: item.custName || item.cust_name,
+						zipcode: item.zipCode || item.zipcode,
+						addr: item.addr
+					};
+				});
+
+				items.forEach(function(item) {
+					if (!item.admin_no) {
+						return;
+					}
+
+					$.ajax({
+						url: getContextPath() + '/api/suspected-leaks/save-label-print-history',
+						type: 'POST',
+						contentType: 'application/json; charset=UTF-8',
+						data: JSON.stringify(item),
+					async: false,
+					success: function(response) {
+						// 저장 성공
+					},
+					error: function(xhr, status, error) {
+						// 저장 실패
+					}
+				});
+			});
+		} catch(e) {
+			// 저장 오류
+		}
+		}
 		</script>
 
 		<style type="text/css"></style>
@@ -1585,7 +1798,7 @@
 					background: #fff;
 					width: 700px;
 					max-width: 90%;
-					margin: 80px auto;
+					margin: 150px auto;
 					padding: 25px 20px;
 					border-radius: 12px;
 					box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
@@ -1653,6 +1866,129 @@
 				</button>
 			</div>
 		</div>
+
+		<!-- 라벨 출력 확인 팝업 -->
+		<div id="labelPrintConfirmPopup" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); z-index: 1000">
+			<div style="
+				background: #fff;
+				width: 900px;
+				max-width: 95%;
+				max-height: 90vh;
+				margin: 40px auto;
+				padding: 25px;
+				border-radius: 12px;
+				box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+				overflow-y: auto;
+			">
+				<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+					<h3 style="margin: 0; color: #333;">
+						<i class="fa fa-print"></i> 라벨 출력 확인
+					</h3>
+					<button onclick="closeLabelPrintConfirmPopup()" style="
+						background: #f5f5f5;
+						border: none;
+						border-radius: 50%;
+						width: 32px;
+						height: 32px;
+						cursor: pointer;
+						font-size: 20px;
+						font-weight: bold;
+						color: #666;
+					">×</button>
+				</div>
+
+				<!-- 통계 정보 -->
+				<div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+					<div style="display: flex; justify-content: space-around; text-align: center;">
+						<div>
+							<div style="font-size: 24px; font-weight: bold; color: #007bff;" id="totalPrintCount">0</div>
+							<div style="font-size: 14px; color: #666;">전체 대상</div>
+						</div>
+						<div>
+							<div style="font-size: 24px; font-weight: bold; color: #28a745;" id="newPrintCount">0</div>
+							<div style="font-size: 14px; color: #666;">신규 출력</div>
+						</div>
+						<div>
+							<div style="font-size: 24px; font-weight: bold; color: #dc3545;" id="reprintCount">0</div>
+							<div style="font-size: 14px; color: #666;">재출력</div>
+						</div>
+						<div>
+							<div style="font-size: 24px; font-weight: bold; color: #6c757d;" id="selectedPrintCount">0</div>
+							<div style="font-size: 14px; color: #666;">선택된 항목</div>
+						</div>
+					</div>
+				</div>
+
+				<!-- 전체 선택 -->
+				<div style="margin-bottom: 15px; padding: 10px; background: #e9ecef; border-radius: 5px;">
+					<label style="margin: 0; cursor: pointer; font-weight: bold;">
+						<input type="checkbox" id="selectAllPrintItems" checked style="margin-right: 8px;"/>
+						전체 선택/해제
+					</label>
+					<button onclick="excludeReprints()" style="
+						float: right;
+						background: #ffc107;
+						border: none;
+						padding: 5px 15px;
+						border-radius: 5px;
+						cursor: pointer;
+						font-weight: bold;
+					">
+						재출력 항목 제외
+					</button>
+				</div>
+
+				<!-- 출력 목록 테이블 -->
+				<div style="max-height: 400px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 5px;">
+					<table id="labelPrintTable" style="width: 100%; border-collapse: collapse;">
+						<thead style="position: sticky; top: 0; background: #f8f9fa; z-index: 10;">
+							<tr>
+								<th style="padding: 10px; border-bottom: 2px solid #dee2e6; text-align: center; width: 50px;">선택</th>
+								<th style="padding: 10px; border-bottom: 2px solid #dee2e6; text-align: center; width: 80px;">수용가번호</th>
+								<th style="padding: 10px; border-bottom: 2px solid #dee2e6; text-align: center; width: 80px;">고객명</th>
+								<th style="padding: 10px; border-bottom: 2px solid #dee2e6; text-align: left;">주소</th>
+								<th style="padding: 10px; border-bottom: 2px solid #dee2e6; text-align: center; width: 80px;">출력횟수</th>
+								<th style="padding: 10px; border-bottom: 2px solid #dee2e6; text-align: center; width: 130px;">마지막 출력일</th>
+							</tr>
+						</thead>
+						<tbody id="labelPrintTableBody">
+							<!-- 동적으로 생성 -->
+						</tbody>
+					</table>
+				</div>
+
+				<!-- 버튼 영역 -->
+				<div style="margin-top: 20px; text-align: center;">
+					<button onclick="confirmLabelPrint()" style="
+						background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+						color: white;
+						border: none;
+						padding: 15px 40px;
+						font-size: 18px;
+						font-weight: bold;
+						border-radius: 8px;
+						cursor: pointer;
+						box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+					">
+						<i class="fa fa-print"></i> 선택 항목 출력
+					</button>
+					<button onclick="closeLabelPrintConfirmPopup()" style="
+						background: #6c757d;
+						color: white;
+						border: none;
+						padding: 15px 40px;
+						font-size: 18px;
+						font-weight: bold;
+						border-radius: 8px;
+						cursor: pointer;
+						margin-left: 10px;
+					">
+						취소
+					</button>
+				</div>
+			</div>
+		</div>
+
 		<div class="modal fade" id="hideSettingModal" tabindex="-1" role="dialog">
 			<div class="modal-dialog modal-dialog-scrollable modal-dialog-centered" role="document">
 				<div class="modal-content">

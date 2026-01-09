@@ -6,9 +6,14 @@ plugins {
 }
 
 group = 'com.istec'
-version = '1.1.40'
+version = 'Ver_Phis_250109'
+
+sourceCompatibility = '1.8'
+targetCompatibility = '1.8'
 
 war {
+    enabled = true
+    archiveClassifier = 'plain'
     manifest {
         attributes(
             'Implementation-Version': version
@@ -16,19 +21,31 @@ war {
     }
 }
 
+bootWar {
+    enabled = false
+}
+
 repositories {
     mavenCentral()
+}
+
+configurations {
+    all {
+        // 스프링 부트 기본 로깅(Logback 포함)을 통째로 제외
+        exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
+    }
 }
 
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:2.2.0'
     implementation 'org.springframework.boot:spring-boot-starter-security:2.6.4'
-    implementation 'org.springframework.boot:spring-boot-devtools'
+    developmentOnly 'org.springframework.boot:spring-boot-devtools'
     implementation 'org.springframework.security:spring-security-core:3.1.7.RELEASE'
     implementation "org.springframework.security:spring-security-config:3.2.3.RELEASE"
     implementation "org.springframework.security:spring-security-web:3.2.3.RELEASE"
     implementation 'org.postgresql:postgresql:42.2.23'
+    implementation 'p6spy:p6spy:3.9.1'
     implementation 'com.googlecode.json-simple:json-simple:1.1.1'
     implementation 'javax.servlet:javax.servlet-api:4.0.0'
     implementation 'javax.servlet.jsp:javax.servlet.jsp-api:2.3.3'
@@ -38,8 +55,14 @@ dependencies {
     implementation 'org.apache.poi:poi:3.17'
     implementation 'org.apache.poi:poi-ooxml:3.17'
     implementation 'org.apache.tomcat:tomcat-jdbc:9.0.56'
-    implementation 'org.apache.tomcat.embed:tomcat-embed-jasper'
+    providedRuntime 'org.apache.tomcat.embed:tomcat-embed-jasper'
     implementation 'javax.servlet:jstl:1.2'
+    implementation ('org.springframework.boot:spring-boot-starter-web') {
+        // 기본 로그 라이브러리인 Logback 제외
+        exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
+    }
+    // Log4j2 스타터 추가
+    implementation 'org.springframework.boot:spring-boot-starter-log4j2'
 
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'

@@ -39,6 +39,34 @@ public class SuspectedLeakController {
         return ResponseEntity.ok(suspectedLeakService.updateReceiveConsent(alertDto));
     }
 
+    // 라벨 프린트 히스토리 저장 (UPSERT)
+    @PostMapping("/save-label-print-history")
+    @ResponseBody
+    public ResponseEntity<?> saveLabelPrintHistory(@RequestBody Map<String, Object> params) {
+        try {
+            // 필수 파라미터 검증
+            String adminNo = (String) params.get("admin_no");
+            if (adminNo == null || adminNo.trim().isEmpty()) {
+                return ResponseEntity.badRequest().body("수용가번호는 필수입니다.");
+            }
+
+            // 히스토리 저장 (upsert)
+            suspectedLeakService.saveLabelPrintHistory(params);
+
+            Map<String, Object> response = new java.util.HashMap<>();
+            response.put("success", true);
+            response.put("message", "저장 성공");
+            response.put("admin_no", adminNo);
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> errorResponse = new java.util.HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", "저장 실패: " + e.getMessage());
+            return ResponseEntity.status(500).body(errorResponse);
+        }
+    }
+
     // 알림톡 송신 이력
     // @GetMapping("/send-history")
     // public List<Map<String, Object>> getLeaks(@RequestParam Map<String, Object> param) {
