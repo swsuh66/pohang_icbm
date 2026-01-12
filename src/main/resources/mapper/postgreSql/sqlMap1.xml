@@ -2636,6 +2636,242 @@
       <include refid="pageFooter"/>           
     </select>
     
+    <!-- ========== 최적화된 부과조회 쿼리 (2026-01-09 추가) ========== -->
+    <select id="customerList_paging_optimized" parameterType="java.util.Map" resultType="java.util.Map">
+    /*customerList_paging_optimized - 최적화 버전*/
+    WITH target_list AS (
+        /* 1. 조건에 맞는 대상만 먼저 추출 (LIMIT/OFFSET으로 빠르게) */
+        SELECT 
+            p.*,
+            COUNT(*) OVER() AS "totalCount"
+        FROM vi_m1_sv_point_list p
+        WHERE 1=1
+        <choose>
+            <when test="upSiteSq != null and lv != null">
+                AND p.site_sq IN (
+                    SELECT site_sq FROM fn_prj_sites(#{upSiteSq}::integer, #{lv}::integer)
+                )
+            </when>
+            <when test="siteSq != null">
+                AND p.site_sq = #{siteSq}::integer
+            </when>
+        </choose>
+        
+        <choose>
+            <when test="upBlkSq != null and lv != null">
+                AND p.blk_sq IN (
+                    SELECT blk_sq FROM fn_prj_blockes(#{upBlkSq}::integer, #{lv}::integer)
+                )
+            </when>
+            <when test="blkSq != null and blkSq != -2">
+                AND p.blk_sq = #{blkSq}::integer
+            </when>
+            <when test="blkSq != null and blkSq == -2">
+                AND p.blk_sq IS NULL
+            </when>
+        </choose>
+        
+        <choose>
+            <when test="comSq != null and comSq != -2">
+                AND p.company_sq = #{comSq}::integer
+            </when>
+            <when test="comSq != null and comSq == -2">
+                AND p.company_sq IS NULL
+            </when>
+        </choose>
+        
+        <choose>
+            <when test="amiType != null and !amiType.equals('-2')">
+                AND p.ami_type = #{amiType}
+            </when>
+            <when test="amiType != null and amiType.equals('-2')">
+                AND p.ami_type IS NULL
+            </when>
+        </choose>
+        
+        <choose>
+            <when test="readOpr != null and !readOpr.equals('-2')">
+                AND p.read_opr = #{readOpr}
+            </when>
+            <when test="readOpr != null and readOpr.equals('-2')">
+                AND p.read_opr IS NULL
+            </when>
+        </choose>
+        
+        <choose>
+            <when test="chkDay != null and !chkDay.equals('-2')">
+                AND p.check_day = #{chkDay}::integer
+            </when>
+            <when test="chkDay != null and chkDay.equals('-2')">
+                AND p.check_day IS NULL
+            </when>
+        </choose>
+        
+        <choose>
+            <when test="useType != null and !useType.equals('-2')">
+                AND p.use_type = #{useType}
+            </when>
+            <when test="useType != null and useType.equals('-2')">
+                AND p.use_type IS NULL
+            </when>
+        </choose>
+        
+        <choose>
+            <when test="setYears != null and !setYears.equals('-2')">
+                AND p.set_years = #{setYears}
+            </when>
+            <when test="setYears != null and setYears.equals('-2')">
+                AND p.set_years IS NULL
+            </when>
+        </choose>
+        
+        <choose>
+            <when test="pipeDia != null and pipeDia != -2">
+                AND p.pipe_dia = #{pipeDia}::numeric
+            </when>
+            <when test="pipeDia != null and pipeDia == -2">
+                AND p.pipe_dia IS NULL
+            </when>
+        </choose>
+        
+        <choose>
+            <when test="useCd != null">
+                AND p.use_cd = #{useCd}
+            </when>
+            <when test="useCd == null">
+                AND p.use_cd = '1'
+            </when>
+        </choose>
+        
+        <if test="statCd != null">
+            AND position('1' in p.stat_cd) = #{statCd}::integer
+        </if>
+        
+        <if test="pointSq != null">
+            AND p.point_sq = #{pointSq}
+        </if>
+        
+        <if test='cust_nm != null and cust_nm != ""'>
+            AND p.cust_nm LIKE '%' || #{cust_nm} || '%'
+        </if>
+        
+        <if test='admin_no != null and admin_no != ""'>
+            AND p.admin_id LIKE '%' || #{admin_no} || '%'
+        </if>
+        
+        <if test='addr != null and addr != ""'>
+            AND (p.addr_old LIKE '%' || #{addr} || '%' 
+                OR p.addr_new LIKE '%' || #{addr} || '%')
+        </if>
+        
+        ORDER BY p.admin_id
+        LIMIT (#{rnTop}::integer - #{rnBottom}::integer) OFFSET #{rnBottom}::integer
+    ),
+    meas_raw AS (
+        /* 2. 선정된 건에 대해서만 검침 데이터 계산 */
+        SELECT 
+            m.point_sq,
+            m.accu_iv,
+            m.meas_dt,
+            m.last_dt,
+            m.adjst_os,
+            ROW_NUMBER() OVER (PARTITION BY m.point_sq ORDER BY m.meas_dt DESC) as rn_desc,
+            ROW_NUMBER() OVER (PARTITION BY m.point_sq ORDER BY m.meas_dt ASC) as rn_asc,
+            SUM(m.adjst_os) OVER (PARTITION BY m.point_sq) as total_adjst_os
+        FROM tb_m1_meas_day m
+        INNER JOIN target_list tl ON m.point_sq = tl.point_sq
+        <choose>
+            <when test='dateOption == "0"'>
+                WHERE m.meas_dt <![CDATA[>=]]> to_date(#{fromDate}, 'yyyy-mm-dd')
+                  AND m.meas_dt <![CDATA[<=]]> to_date(#{toDate}, 'yyyy-mm-dd')
+            </when>
+            <otherwise>
+                WHERE m.meas_dt <![CDATA[>=]]> date_trunc('month', to_date(#{toDate}, 'yyyy-mm-dd'))
+                  AND m.meas_dt <![CDATA[<=]]> to_date(#{toDate}, 'yyyy-mm-dd')
+            </otherwise>
+        </choose>
+    ),
+    meas_final AS (
+        /* 3. 함수 계산 로직 재현 (음수 사용량 방지) */
+        SELECT 
+            a.point_sq,
+            b.last_dt as beg_meas_dt,
+            a.last_dt as end_meas_dt,
+            b.meas_dt as beg_meas_dt_t,
+            a.meas_dt as end_meas_dt_t,
+            b.accu_iv as beg_accu_iv,
+            a.accu_iv as end_accu_iv,
+            (a.total_adjst_os - COALESCE(b.adjst_os, 0)) as fadjst_os,
+            /* 음수 사용량 방지: 계량기 교체 등으로 음수가 나오면 조정값(fadjst_os) 포함 계산 */
+            CASE 
+                WHEN (a.accu_iv - COALESCE(b.accu_iv, 0)) <![CDATA[<]]> 0 
+                THEN a.accu_iv + (a.total_adjst_os - COALESCE(b.adjst_os, 0)) - COALESCE(b.accu_iv, 0)
+                ELSE (a.accu_iv - COALESCE(b.accu_iv, 0))
+            END as term_iv,
+            (a.meas_dt::DATE - COALESCE(b.meas_dt::DATE, a.meas_dt::DATE)) as term_dy
+        FROM (SELECT * FROM meas_raw WHERE rn_desc = 1) a
+        LEFT JOIN (SELECT * FROM meas_raw WHERE rn_asc = 1) b ON a.point_sq = b.point_sq
+    )
+    /* 4. 최종 결과 조립 */
+    SELECT 
+        ROW_NUMBER() OVER(ORDER BY t.admin_id) AS "rownum",
+        t.addr_new AS "addrNew",
+        '2' AS "tmpVal",
+        t.point_sq AS "pointSq",
+        t.blk_sq AS "blkSq",
+        t.site_sq AS "siteSq",
+        t.blk_name AS "blockName",
+        t.use_type AS "useType",
+        t.pipe_dia AS "pipeDia",
+        t.admin_id AS "adminId",
+        t.cust_nm AS "custName",
+        t.dev_no AS "devNo",
+        t.meter_no AS "meterNo",
+        COALESCE(m.beg_accu_iv, 0) AS "begVal",
+        m.beg_meas_dt AS "begDay",
+        TO_CHAR(m.beg_meas_dt, 'yyyy-mm-dd hh24:mi:ss') AS "begDayStr",
+        TO_CHAR(m.beg_meas_dt_t, 'yyyy-mm-dd') AS "begDayStrT",
+        COALESCE(m.end_accu_iv, 0) AS "endVal",
+        m.end_meas_dt AS "endDay",
+        TO_CHAR(m.end_meas_dt, 'yyyy-mm-dd hh24:mi:ss') AS "endDayStr",
+        TO_CHAR(m.end_meas_dt_t, 'yyyy-mm-dd') AS "endDayStrT",
+        COALESCE(m.fadjst_os, 0) AS "adjstV",
+        GREATEST(COALESCE(m.term_iv, 0), 0) AS "useVal",
+        GREATEST(COALESCE(m.term_iv + m.fadjst_os, 0), 0) AS "rstVal",
+        COALESCE(m.term_dy, 0) AS "useDays",
+        t.stat_cd AS "statCd",
+        TRUNC(GREATEST(COALESCE(m.term_iv + m.fadjst_os, 0), 0)) AS "rstValTr",
+        TRUNC(COALESCE(m.beg_accu_iv, 0)) AS "begValTr",
+        TRUNC(COALESCE(m.end_accu_iv, 0)) AS "endValTr",
+        '아이에스테크놀로지(주)' AS "comNm",
+        '무선검침' AS "accuType",
+        '단독' AS "meterType",
+        NULL AS "shareMeter",
+        NULL AS "region",
+        CASE POSITION('1' IN t.stat_cd)
+            WHEN 1 THEN '통신 장애'
+            WHEN 2 THEN '계량기 장애'
+            WHEN 3 THEN 'Q3 초과'
+            WHEN 4 THEN '역류'
+            WHEN 5 THEN '누수'
+            WHEN 6 THEN '정상'
+            WHEN 7 THEN '정상'
+            WHEN 8 THEN 'BAT'
+            ELSE '정상'
+        END AS "statCdStr",
+        t.read_opr AS "readOpr",
+        t.check_day,
+        (#{rnTop}::integer - #{rnBottom}::integer) AS "pageSize",
+        CASE WHEN (#{rnTop}::integer - #{rnBottom}::integer) <![CDATA[>]]> 0 
+             THEN (#{rnBottom}::integer / (#{rnTop}::integer - #{rnBottom}::integer)) + 1 
+             ELSE 1 END AS "pageNo",
+        t."totalCount"
+    FROM target_list t
+    LEFT JOIN meas_final m ON t.point_sq = m.point_sq
+    ORDER BY t.admin_id
+    </select>
+    <!-- ========== 최적화된 부과조회 쿼리 끝 ========== -->
+    
     <select id="customerList" parameterType="java.util.Map" resultType="java.util.Map">
 	/*customerList*/
       <include refid="customerList_sql"/>           

@@ -6,7 +6,7 @@ plugins {
 }
 
 group = 'com.istec'
-version = 'Ver_Phis_250109'
+version = 'Ver_Phis_250112'
 
 sourceCompatibility = '1.8'
 targetCompatibility = '1.8'

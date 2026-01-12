@@ -92,12 +92,16 @@
 	
 	function setInitDate() {
 		
-		var dt = new Date(Date.now());
-		var fromDate = kutil.dateFormat(dt, 'yyyy-mm-dd');
+		var today = new Date(Date.now());
+		var todayStr = kutil.dateFormat(today, 'yyyy-mm-dd');
 		
-		dt.setMonth(dt.getMonth() + 1);
-		dt.setDate(0);
-		var toDate = kutil.dateFormat(dt, 'yyyy-mm-dd');
+		// 시작일: 이번 달 1일
+		var firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+		var fromDate = kutil.dateFormat(firstDay, 'yyyy-mm-dd');
+		
+		// 종료일: 이번 달 마지막 날 vs 오늘 중 더 이른 날짜
+		var lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+		var toDate = (lastDay > today) ? todayStr : kutil.dateFormat(lastDay, 'yyyy-mm-dd');
 		
 		$('#fromDate').val(fromDate);
 		$('#toDate').val(toDate);
@@ -262,8 +266,8 @@
 			
 		}
 
-		/* 수용가 조회 */
-		getAjax('customerList_paging', params, function() {
+		/* 수용가 조회 (최적화 버전) */
+		getAjax('customerList_paging_optimized', params, function() {
 
 			/* 로딩 시작 */
 			$('.bcard.point-grid').aceWidget('startLoading');
