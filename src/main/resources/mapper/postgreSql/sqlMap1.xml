@@ -2782,12 +2782,12 @@
         INNER JOIN target_list tl ON m.point_sq = tl.point_sq
         <choose>
             <when test='dateOption == "0"'>
-                WHERE m.meas_dt <![CDATA[>=]]> to_date(#{fromDate}, 'yyyy-mm-dd')
-                  AND m.meas_dt <![CDATA[<=]]> to_date(#{toDate}, 'yyyy-mm-dd')
+                WHERE m.meas_dt <![CDATA[>=]]> to_date(#{fromDate}, 'yyyy-mm-dd')::DATE
+                  AND m.meas_dt <![CDATA[<=]]> to_date(#{toDate}, 'yyyy-mm-dd')::DATE
             </when>
             <otherwise>
-                WHERE m.meas_dt <![CDATA[>=]]> date_trunc('month', to_date(#{toDate}, 'yyyy-mm-dd'))
-                  AND m.meas_dt <![CDATA[<=]]> to_date(#{toDate}, 'yyyy-mm-dd')
+                WHERE m.meas_dt <![CDATA[>=]]> date_trunc('month', to_date(#{toDate}, 'yyyy-mm-dd'))::DATE
+                  AND m.meas_dt <![CDATA[<=]]> to_date(#{toDate}, 'yyyy-mm-dd')::DATE
             </otherwise>
         </choose>
     ),
@@ -2795,17 +2795,17 @@
         /* 3. 함수 계산 로직 재현 (음수 사용량 방지) */
         SELECT 
             a.point_sq,
-            b.last_dt as beg_meas_dt,
-            a.last_dt as end_meas_dt,
+            b.meas_dt as beg_meas_dt,
+            a.meas_dt as end_meas_dt,
             b.meas_dt as beg_meas_dt_t,
             a.meas_dt as end_meas_dt_t,
             b.accu_iv as beg_accu_iv,
             a.accu_iv as end_accu_iv,
             (a.total_adjst_os - COALESCE(b.adjst_os, 0)) as fadjst_os,
-            /* 음수 사용량 방지: 계량기 교체 등으로 음수가 나오면 조정값(fadjst_os) 포함 계산 */
+            /* 음수 사용량 방지: 계량기 교체 등으로 음수가 나오면 0으로 처리 */
             CASE 
                 WHEN (a.accu_iv - COALESCE(b.accu_iv, 0)) <![CDATA[<]]> 0 
-                THEN a.accu_iv + (a.total_adjst_os - COALESCE(b.adjst_os, 0)) - COALESCE(b.accu_iv, 0)
+                THEN 0
                 ELSE (a.accu_iv - COALESCE(b.accu_iv, 0))
             END as term_iv,
             (a.meas_dt::DATE - COALESCE(b.meas_dt::DATE, a.meas_dt::DATE)) as term_dy
