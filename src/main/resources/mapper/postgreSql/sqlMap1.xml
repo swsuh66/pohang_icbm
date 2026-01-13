@@ -5069,15 +5069,24 @@
 					c.read_responsi, 
 					c.cust_phone, 
 					c.remark,
-					COALESCE(wl.leak_rule, wld.leak_rule) AS leak_threshold
+					COALESCE(
+						-- 정확 또는 가장 가까운(작은) 구경의 룰
+						(SELECT leak_rule 
+						 FROM tb_m1_rule_waterleak 
+						 WHERE business_name = c.business_name 
+						   AND pipe_diameter <= c.pipe_diameter 
+						 ORDER BY pipe_diameter DESC 
+						 LIMIT 1),
+						-- 기타 룰
+						(SELECT leak_rule 
+						 FROM tb_m1_rule_waterleak 
+						 WHERE business_name = '기타' 
+						   AND pipe_diameter <= c.pipe_diameter 
+						 ORDER BY pipe_diameter DESC 
+						 LIMIT 1)
+					) AS leak_threshold
 				FROM tb_m1_info_customer c
 				JOIN tb_m1_info_point p ON c.cust_sq = p.cust_sq
-				LEFT JOIN tb_m1_rule_waterleak wl
-					ON wl.business_name = c.business_name
-					AND wl.pipe_diameter = c.pipe_diameter
-				LEFT JOIN tb_m1_rule_waterleak wld
-					ON wld.business_name = '기타'
-					AND wld.pipe_diameter = c.pipe_diameter
 				WHERE EXISTS (
 					SELECT 1 FROM meas_summary ms WHERE ms.point_sq = p.point_sq
 				)

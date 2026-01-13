@@ -581,24 +581,23 @@
 			];
 
 			var mainFields = [
+				{ name: 'send_status', title: '발신', type: 'text', align: 'center', width: 40, itemTemplate: colfnc, hasGroup: false, sortingDisabled: true },
 				{ name: 'num', title: '순번', type: 'text', align: 'center', width: 20, sortingDisabled: true },
-				{ name: 'cust_nm', title: '이름', type: 'text', align: 'left', width: 40, itemTemplate: colfnc, hasGroup: false, group: groups[0] },
-				{ name: 'admin_id', title: '수용가번호', type: 'text', width: 60, itemTemplate: colfnc, hasGroup: false },
-				{ name: 'read_responsi', title: '검침원', type: 'text', width: 30, itemTemplate: colfnc, hasGroup: false },
 				{ name: 'receive_consent', title: '수신동의', type: 'text', width: 30, itemTemplate: colfnc, hasGroup: false, sortingDisabled: true },
-				{ name: 'send_status', title: '발신', type: 'text', width: 30, itemTemplate: colfnc, hasGroup: false, sortingDisabled: true },
-				{ name: 'last_send_date', title: '최종발신일', type: 'text', width: 50, itemTemplate: colfnc, hasGroup: false },
-				{ name: 'leak_start_date', title: '누수시작일', type: 'text', width: 50, itemTemplate: colfnc, hasGroup: false },
+				{ name: 'last_send_date', title: '최종발신일', type: 'text', width: 60, itemTemplate: colfnc, hasGroup: false },
+				{ name: 'admin_id', title: '수용가번호', type: 'text', width: 75, itemTemplate: colfnc, hasGroup: false },
+				{ name: 'cust_nm', title: '수용가명', type: 'text', align: 'left', width: 40, itemTemplate: colfnc, hasGroup: false, group: groups[0] },
+				{ name: 'leak_start_date', title: '누수시작일', type: 'text', width: 70, itemTemplate: colfnc, hasGroup: false },
 				{ name: 'use_type', title: '업종', type: 'text', width: 40, itemTemplate: colfnc, hasGroup: false },
 				{ name: 'pipe_dia', title: '구경', type: 'text', width: 20, itemTemplate: colfnc, hasGroup: false },
-				{ name: 'leak_threshold', title: '기준값', type: 'text', width: 30, itemTemplate: colfnc, hasGroup: false },
-				{ name: 'max_term_cv', title: '최고사용량', type: 'text', width: 30, itemTemplate: colfnc, hasGroup: false },
-				{ name: 'max_term_cv_date', title: '최고시간', type: 'text', width: 50, itemTemplate: colfnc, hasGroup: false },
-				{ name: 'min_term_cv', title: '최소사용량', type: 'text', width: 30, itemTemplate: colfnc, hasGroup: false },
-				{ name: 'min_term_cv_date', title: '최소시간', type: 'text', width: 50, itemTemplate: colfnc, hasGroup: false },
-				{ name: 'stat_yn', title: '계량기누수여부', type: 'text', width: 40, itemTemplate: colfnc, hasGroup: false },
-				{ name: 'cust_phone', title: '전화번호', type: 'text', width: 40, itemTemplate: colfnc, hasGroup: false },
-				{ name: 'remark', title: '비고', type: 'text', width: 115, itemTemplate: colfnc, hasGroup: false },
+				{ name: 'leak_threshold', title: '기준값', type: 'text', width: 35, itemTemplate: colfnc, hasGroup: false },
+				{ name: 'max_term_cv_date', title: '최고시간', type: 'text', width: 70, itemTemplate: colfnc, hasGroup: false },
+				{ name: 'max_term_cv', title: '최고사용량', type: 'text', width: 45, itemTemplate: colfnc, hasGroup: false },
+				{ name: 'min_term_cv_date', title: '최소시간', type: 'text', width: 70, itemTemplate: colfnc, hasGroup: false },
+				{ name: 'min_term_cv', title: '최소사용량', type: 'text', width: 45, itemTemplate: colfnc, hasGroup: false },
+				{ name: 'stat_yn', title: '누수여부', type: 'text', width: 40, itemTemplate: colfnc, hasGroup: false },
+				{ name: 'cust_phone', title: '전화번호', type: 'text', width: 65, itemTemplate: colfnc, hasGroup: false },
+				{ name: 'remark', title: '비고', type: 'text', width: 50, itemTemplate: colfnc, hasGroup: false },
 			];
 
 			// 알림톡 전송 결과 그리드 필드
@@ -676,10 +675,18 @@
 						$existingCheckbox.off('click'); // 기존 이벤트 제거
 					} else {
 						// 체크박스 생성
-						var $checkbox = $('<input>').attr('type', 'checkbox').addClass('send-status-header-checkbox').css('cursor', 'pointer').css('margin-left', '10px');
+						var $checkbox = $('<input>').attr('type', 'checkbox').addClass('send-status-header-checkbox').css('cursor', 'pointer').css('margin-right', '5px');
 
-						// 헤더에 타이틀과 체크박스 함께 표시
-						$sendStatusHeader.html('발신 ').append($checkbox);
+						// 헤더 컨테이너를 중앙 정렬로 생성
+						var $wrapper = $('<div>').css({
+							'display': 'flex',
+							'align-items': 'center',
+							'justify-content': 'center',
+							'width': '100%'
+						}).append($checkbox).append('발신');
+
+						// 헤더에 체크박스가 먼저, 그 다음 타이틀 표시
+						$sendStatusHeader.empty().append($wrapper);
 					}
 
 					// 체크박스 참조 (기존 것이 있으면 그것을 사용)
