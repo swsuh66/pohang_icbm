@@ -334,6 +334,8 @@
 					case 'min_date':
 					case 'last_send_date':
 					case 'leak_start_date':
+					case 'max_term_cv_date':
+					case 'min_term_cv_date':
 						if (!value) return '-';
 						var dt = new Date(value);
 						return '' + kutil.dateFormat(dt, 'yyyy.mm.dd') + ' ' + kutil.dateFormat(dt, 'HH:MM');
@@ -589,10 +591,11 @@
 				{ name: 'leak_start_date', title: '누수시작일', type: 'text', width: 50, itemTemplate: colfnc, hasGroup: false },
 				{ name: 'use_type', title: '업종', type: 'text', width: 40, itemTemplate: colfnc, hasGroup: false },
 				{ name: 'pipe_dia', title: '구경', type: 'text', width: 20, itemTemplate: colfnc, hasGroup: false },
-				{ name: 'max_date', title: '최대시간', type: 'text', width: 50, itemTemplate: colfnc, hasGroup: false },
-				{ name: 'min_date', title: '최소시간', type: 'text', width: 50, itemTemplate: colfnc, hasGroup: false },
+				{ name: 'leak_threshold', title: '기준값', type: 'text', width: 30, itemTemplate: colfnc, hasGroup: false },
 				{ name: 'max_term_cv', title: '최고사용량', type: 'text', width: 30, itemTemplate: colfnc, hasGroup: false },
+				{ name: 'max_term_cv_date', title: '최고시간', type: 'text', width: 50, itemTemplate: colfnc, hasGroup: false },
 				{ name: 'min_term_cv', title: '최소사용량', type: 'text', width: 30, itemTemplate: colfnc, hasGroup: false },
+				{ name: 'min_term_cv_date', title: '최소시간', type: 'text', width: 50, itemTemplate: colfnc, hasGroup: false },
 				{ name: 'stat_yn', title: '계량기누수여부', type: 'text', width: 40, itemTemplate: colfnc, hasGroup: false },
 				{ name: 'cust_phone', title: '전화번호', type: 'text', width: 40, itemTemplate: colfnc, hasGroup: false },
 				{ name: 'remark', title: '비고', type: 'text', width: 115, itemTemplate: colfnc, hasGroup: false },
