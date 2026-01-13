@@ -5196,24 +5196,24 @@
 			<!-- 최종 발신일 필터: 입력한 날짜 이전(또는 발신 이력 없음)만 조회 -->
 			<if test="last_send_dt != null and last_send_dt != ''">
 				<![CDATA[
-				AND (t."last_send_dt" IS NULL OR t."last_send_dt" < #{last_send_dt}::timestamp)
+				AND (t."last_send_date" IS NULL OR t."last_send_date" < #{last_send_dt}::timestamp)
 				]]>
 			</if>
 
 			<!-- 제외기간 필터: startDt와 endDt 사이에 발신일이 있는 경우 제외 -->
 			<if test="startDt != null and startDt != '' and endDt != null and endDt != ''">
 				<![CDATA[
-				AND (t."last_send_dt" IS NULL OR t."last_send_dt" < CAST(#{startDt} AS timestamp) OR t."last_send_dt" > CAST(#{endDt} AS timestamp))
+				AND (t."last_send_date" IS NULL OR t."last_send_date" < CAST(#{startDt} AS timestamp) OR t."last_send_date" > CAST(#{endDt} AS timestamp))
 				]]>
 			</if>
 			<if test="startDt != null and startDt != '' and (endDt == null or endDt == '')">
 				<![CDATA[
-				AND (t."last_send_dt" IS NULL OR t."last_send_dt" < CAST(#{startDt} AS timestamp))
+				AND (t."last_send_date" IS NULL OR t."last_send_date" < CAST(#{startDt} AS timestamp))
 				]]>
 			</if>
 			<if test="(startDt == null or startDt == '') and endDt != null and endDt != ''">
 				<![CDATA[
-				AND (t."last_send_dt" IS NULL OR t."last_send_dt" > CAST(#{endDt} AS timestamp))
+				AND (t."last_send_date" IS NULL OR t."last_send_date" > CAST(#{endDt} AS timestamp))
 				]]>
 			</if>
 			</where>

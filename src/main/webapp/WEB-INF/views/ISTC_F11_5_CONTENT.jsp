@@ -169,9 +169,9 @@
 				</div>
 			</div>
 			<div class="row" style="margin-top: 5px">
-				<div class="col-12 col-sm-6 col-md-4 col-lg-3 col-xl-2">
+				<div class="col-12 col-sm-12 col-md-8 col-lg-6 col-xl-4">
 					<div class="dj-input-group">
-						<span class="info componentsFont">제외기간 </span>
+						<span class="info componentsFont" style="width: 130px; display: inline-block;">알림톡 재발신 제외기간 </span>
 						<input type="date" class="componentsSelect" id="startDt" onKeypress="javascript:if(event.keyCode == 13) { parent.searchGrid(); }" />
 						<span style="margin: 0 8px"> ~ </span>
 						<input type="date" class="componentsSelect" id="endDt" onKeypress="javascript:if(event.keyCode == 13) { parent.searchGrid(); }" />

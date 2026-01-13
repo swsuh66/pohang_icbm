@@ -590,6 +590,7 @@
 				{ name: 'leak_start_date', title: '누수시작일', type: 'text', width: 70, itemTemplate: colfnc, hasGroup: false },
 				{ name: 'use_type', title: '업종', type: 'text', width: 40, itemTemplate: colfnc, hasGroup: false },
 				{ name: 'pipe_dia', title: '구경', type: 'text', width: 20, itemTemplate: colfnc, hasGroup: false },
+				{ name: 'read_responsi', title: '검침원', type: 'text', width: 35, itemTemplate: colfnc, hasGroup: false },
 				{ name: 'leak_threshold', title: '기준값', type: 'text', width: 35, itemTemplate: colfnc, hasGroup: false },
 				{ name: 'max_term_cv_date', title: '최고시간', type: 'text', width: 70, itemTemplate: colfnc, hasGroup: false },
 				{ name: 'max_term_cv', title: '최고사용량', type: 'text', width: 45, itemTemplate: colfnc, hasGroup: false },
