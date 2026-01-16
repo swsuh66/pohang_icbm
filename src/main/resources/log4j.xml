@@ -6,8 +6,8 @@
         </Console>
 
         <RollingFile name="RollingFile"
-                     fileName="/wmeter/icbm/userlog.log"
-                     filePattern="/wmeter/icbm/userlog-%d{yyyy-MM-dd}-%i.log.gz">
+                     fileName="${sys:user.home}/logs/icbm/userlog.log"
+                     filePattern="${sys:user.home}/logs/icbm/userlog-%d{yyyy-MM-dd}-%i.log.gz">
             <PatternLayout pattern="[%d{yyyy-MM-dd HH:mm:ss.SSS}] %-5p %C{1}.%M(%F:%L) - %m%n" charset="UTF-8" />
             <Policies>
                 <SizeBasedTriggeringPolicy size="5000 KB" />

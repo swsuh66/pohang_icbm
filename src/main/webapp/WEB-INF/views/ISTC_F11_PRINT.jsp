@@ -230,7 +230,11 @@
                 }
                 
                 // zipCode 추출 (없으면 null로 설정하여 사각형 표시)
-                Object zipCodeObj = item.get("zipCode");
+                // zipcode 또는 zipCode 키 모두 확인
+                Object zipCodeObj = item.get("zipcode");
+                if (zipCodeObj == null) {
+                    zipCodeObj = item.get("zipCode");
+                }
                 String zipCode = null;
                 if (zipCodeObj != null) {
                     String zipCodeStr = String.valueOf(zipCodeObj).trim();

@@ -699,7 +699,7 @@
                 <li><a href="logout">로그아웃</a></li>
             </ul>
             <!-- <span class="system-version">버전 ${systemVersion}</span> -->
-             <span class="system-version">버전 Ver_Phis_250107</span>
+             <span class="system-version">버전 Ver_Phis_250114</span>
         </header>
 
         <div class="main-container" id="main-container">
