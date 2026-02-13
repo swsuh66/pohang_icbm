@@ -266,7 +266,7 @@
 	</map>
 	
 	
-	<map id="f5" meta-sql="f5-export" refer-sql="mars.icbm.map1.pointList">		
+	<map id="f5" meta-sql="f5-export" refer-sql="mars.icbm.map1.pointListExcel">		
 		<col>
 			<name>rownum</name>
 			<title>순번</title>

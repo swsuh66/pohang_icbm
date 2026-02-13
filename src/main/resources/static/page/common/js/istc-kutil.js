@@ -383,6 +383,35 @@ function templetDownLoad(data, pCallback, sCallback, fCallback) {
 	$.fileDownload(path, con);
 }
 
+/**
+ * 대용량 엑셀 다운로드 (스트리밍 방식) - 5만건 이상 권장
+ * DB에서 한 행씩 읽으면서 바로 엑셀에 쓰기 (메모리 최적화)
+ * 기존 templetDownLoad와 동일한 파라미터 사용
+ */
+function templetDownLoadStream(data, pCallback, sCallback, fCallback) {
+	var con = {
+		httpMethod: 'post',
+		data: data,
+		contentType: 'application/json;charset=UTF-8',
+		successCallback: function (url) {
+			if (sCallback) sCallback();
+			console.log(data.downloadFileName + ' 스트리밍 다운로드 완료');
+		},
+		prepareCallback: function (url) {
+			if (pCallback) pCallback();
+			console.log(data.downloadFileName + ' 스트리밍 다운로드 시작 (대용량 처리 중...)');
+		},
+		failCallback: function (responseHtml, url, err) {
+			if (fCallback) fCallback(err);
+			console.log(data.downloadFileName + ' 스트리밍 다운로드 중 장애발생');
+		},
+	};
+
+	var path = getContextPath() + '/file/templeteSXSSFStream';
+	console.log('스트리밍 다운로드 path:', path);
+	$.fileDownload(path, con);
+}
+
 //Data DownLoad
 function templetDownLoadDat(data, pCallback, sCallback, fCallback) {
 	var con = {

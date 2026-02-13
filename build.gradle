@@ -6,7 +6,7 @@ plugins {
 }
 
 group = 'com.istec'
-version = 'Ver_Phis_250112'
+version = 'Ver_Phis_260206'
 
 sourceCompatibility = '1.8'
 targetCompatibility = '1.8'
@@ -31,7 +31,7 @@ repositories {
 
 configurations {
     all {
-        // 스프링 부트 기본 로깅(Logback 포함)을 통째로 제외
+        // ??? ?? ?? ??(Logback ??)? ??? ??
         exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
     }
 }
@@ -55,13 +55,13 @@ dependencies {
     implementation 'org.apache.poi:poi:3.17'
     implementation 'org.apache.poi:poi-ooxml:3.17'
     implementation 'org.apache.tomcat:tomcat-jdbc:9.0.56'
-    providedRuntime 'org.apache.tomcat.embed:tomcat-embed-jasper'
+    implementation 'org.apache.tomcat.embed:tomcat-embed-jasper:9.0.63'
     implementation 'javax.servlet:jstl:1.2'
     implementation ('org.springframework.boot:spring-boot-starter-web') {
-        // 기본 로그 라이브러리인 Logback 제외
+        // ?? ?? ?????? Logback ??
         exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
     }
-    // Log4j2 스타터 추가
+    // Log4j2 ??? ??
     implementation 'org.springframework.boot:spring-boot-starter-log4j2'
 
     compileOnly 'org.projectlombok:lombok'
@@ -74,3 +74,8 @@ dependencies {
 test {
     useJUnitPlatform()
 }
+
+
+
+
+

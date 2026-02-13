@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.ibatis.session.ResultHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -54,4 +55,16 @@ public class QueryService {
 	public int delete(String qid, List<Map<String, Object>> listMap) {
 		return queryDao.delete(qid, listMap);
     }
+
+	/**
+	 * 스트리밍 조회 - 대용량 엑셀 다운로드용
+	 * ResultHandler를 사용하여 한 행씩 처리 (메모리 효율적)
+	 * @param qid 쿼리 ID
+	 * @param hashMap 파라미터
+	 * @param handler 결과 핸들러
+	 */
+	@Transactional(readOnly = true)
+	public void selectStream(String qid, Map<String, Object> hashMap, ResultHandler<HashMap<String, Object>> handler) {
+		queryDao.selectStream(qid, hashMap, handler);
+	}
 }

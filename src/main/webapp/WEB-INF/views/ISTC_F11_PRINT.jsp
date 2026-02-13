@@ -118,13 +118,15 @@
 
         .label {
             box-sizing: border-box;
-            padding: 4mm 5mm 9mm 5mm; /* 위 4mm, 좌우 5mm, 아래 9mm (5mm 추가) */
+            padding: 3mm 4mm 8mm 4mm; /* 위 3mm, 좌우 4mm, 아래 8mm (패딩 축소) */
             font-size: 13pt;
             line-height: 1.5;
             overflow: hidden;
             display: flex;
             flex-direction: column;
             justify-content: flex-start;
+            word-wrap: break-word;
+            word-break: keep-all;
 
             /* 처음 위치 맞출 때만 보더 켜고, 맞으면 주석 처리 */
             border: 1px dashed #cccccc;
@@ -132,24 +134,35 @@
         }
 
         .label strong {
-            font-size: 16pt;
+            font-size: 15pt;
             font-weight: bold;
-            margin-bottom: 1.5mm;
+            margin-top: 2mm;
+            margin-bottom: 1mm;
             display: block;
+            text-align: right;
             transition: all 0.2s ease;
+            word-wrap: break-word;
+            word-break: keep-all;
+            overflow-wrap: break-word;
+            line-height: 1.3;
         }
 
         .label .zipcode {
-            font-size: 12pt;
+            font-size: 13pt;
             color: #333;
+            margin-top: auto;
             margin-bottom: 0.8mm;
+            display: block;
+            text-align: right;
             transition: all 0.2s ease;
         }
 
         .label .zipcode-boxes {
-            display: inline-flex;
+            display: flex;
             gap: 2mm;
             align-items: center;
+            justify-content: flex-end;
+            margin-top: auto;
             margin-bottom: 0.8mm;
         }
 
@@ -163,11 +176,15 @@
         }
 
         .label .address {
-            font-size: 12pt;
+            font-size: 13pt;
             color: #555;
             line-height: 1.4;
             margin-top: 0;
+            margin-bottom: 1mm;
             transition: all 0.2s ease;
+            word-wrap: break-word;
+            word-break: keep-all;
+            overflow-wrap: break-word;
         }
     </style>
 </head>
@@ -250,10 +267,22 @@
                     customer.put("custName", String.valueOf(custNameObj));
                 }
                 
-                // addr 추출
+                // addr 추출 및 수용가 번호에 따라 구 추가
                 Object addrObj = item.get("addr");
                 if (addrObj != null) {
                     String addr = String.valueOf(addrObj);
+                    
+                    // admin_no의 첫 번째 문자에 따라 구 추가
+                    String adminNo = customer.get("admin_no");
+                    if (adminNo != null && !adminNo.isEmpty()) {
+                        String firstChar = adminNo.substring(0, 1);
+                        if ("1".equals(firstChar)) {
+                            addr = "포항시 북구 " + addr;
+                        } else if ("2".equals(firstChar)) {
+                            addr = "포항시 남구 " + addr;
+                        }
+                    }
+                    
                     customer.put("addrNew", addr);
                     customer.put("addrOld", addr);
                 }
@@ -418,18 +447,18 @@
         // strong 태그 (이름) 폰트 크기 조정
         var strongTags = document.querySelectorAll('.label strong');
         strongTags.forEach(function(strong) {
-            strong.style.fontSize = (parseFloat(fontSize) + 3) + 'pt';
+            strong.style.fontSize = (parseFloat(fontSize) + 2) + 'pt';
         });
         
         // 우편번호와 주소 폰트 크기 조정
         var zipCodes = document.querySelectorAll('.label .zipcode');
         zipCodes.forEach(function(zipcode) {
-            zipcode.style.fontSize = (parseFloat(fontSize) - 1) + 'pt';
+            zipcode.style.fontSize = parseFloat(fontSize) + 'pt';
         });
         
         var addresses = document.querySelectorAll('.label .address');
         addresses.forEach(function(address) {
-            address.style.fontSize = (parseFloat(fontSize) - 1) + 'pt';
+            address.style.fontSize = parseFloat(fontSize) + 'pt';
             address.style.lineHeight = lineHeight;
         });
     }
@@ -443,9 +472,68 @@
         adjustLabelSize();
     }
     
-    // 페이지 로드시 초기값 표시
+    // 텍스트가 라벨을 벗어나면 폰트 크기 자동 조정
+    function autoAdjustFontSize() {
+        var labels = document.querySelectorAll('.label');
+        
+        labels.forEach(function(label) {
+            var strong = label.querySelector('strong');
+            var address = label.querySelector('.address');
+            
+            // 주소가 2줄 이상인지 확인
+            if (address) {
+                var lineHeight = parseFloat(window.getComputedStyle(address).lineHeight);
+                var addressHeight = address.scrollHeight;
+                var numberOfLines = Math.round(addressHeight / lineHeight);
+                
+                // 주소가 2줄 이상이면 이름과의 간격을 좁게 조정
+                if (strong) {
+                    if (numberOfLines >= 2) {
+                        strong.style.marginTop = '0.5mm';
+                    } else {
+                        strong.style.marginTop = '2mm';
+                    }
+                }
+            }
+            
+            // 이름(strong) 폰트 크기 자동 조정
+            if (strong) {
+                var maxHeight = 15; // mm 단위로 최대 높이
+                var currentFontSize = 15; // 초기 폰트 크기
+                
+                strong.style.fontSize = currentFontSize + 'pt';
+                
+                // 텍스트가 두 줄 이상이면 폰트 크기 줄이기
+                while (strong.scrollHeight > strong.clientHeight && currentFontSize > 10) {
+                    currentFontSize -= 0.5;
+                    strong.style.fontSize = currentFontSize + 'pt';
+                }
+                
+                // 또는 텍스트 길이로 판단
+                var text = strong.textContent;
+                if (text.length > 20) {
+                    strong.style.fontSize = '12pt';
+                } else if (text.length > 15) {
+                    strong.style.fontSize = '13pt';
+                }
+            }
+            
+            // 주소 폰트 크기 자동 조정
+            if (address) {
+                var text = address.textContent.trim();
+                if (text.length > 40) {
+                    address.style.fontSize = '10pt';
+                } else if (text.length > 30) {
+                    address.style.fontSize = '11pt';
+                }
+            }
+        });
+    }
+    
+    // 페이지 로드시 초기값 표시 및 자동 조정
     window.addEventListener('load', function() {
         adjustLabelSize();
+        setTimeout(autoAdjustFontSize, 100);
     });
 </script>
 
@@ -461,10 +549,20 @@
             <c:if test="${i < total}">
                 <c:set var="cust" value="${customers[i]}" />
                 <div class="label">
+                    <span class="address">
+                        <c:choose>
+                            <c:when test="${not empty cust.addrNew}">
+                                ${cust.addrNew}
+                            </c:when>
+                            <c:when test="${not empty cust.addrOld}">
+                                ${cust.addrOld}
+                            </c:when>
+                        </c:choose>
+                    </span>
                     <strong>${cust.custName} 귀하</strong>
                     <c:choose>
                         <c:when test="${not empty cust.zipCode}">
-                            <span class="zipcode">(${cust.zipCode})</span>
+                            <span class="zipcode">${cust.zipCode}</span>
                         </c:when>
                         <c:otherwise>
                             <span class="zipcode-boxes">
@@ -476,16 +574,6 @@
                             </span>
                         </c:otherwise>
                     </c:choose>
-                    <span class="address">
-                        <c:choose>
-                            <c:when test="${not empty cust.addrNew}">
-                                ${cust.addrNew}
-                            </c:when>
-                            <c:when test="${not empty cust.addrOld}">
-                                ${cust.addrOld}
-                            </c:when>
-                        </c:choose>
-                    </span>
                 </div>
             </c:if>
         </c:forEach>

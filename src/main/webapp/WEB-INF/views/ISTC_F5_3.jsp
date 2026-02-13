@@ -466,7 +466,7 @@
 		params.downloadFileName = "Session_"+ kutil.dateFormat( new Date(), 'yymmddHHMMss');
 		$.extend(params, makeParams());
 
-		templetDownLoad(params, null, null, function() {
+		templetDownLoadStream(params, null, null, function() {
 			
 			jAlert.error('오류', '다운로드에 실패했습니다.');
 			

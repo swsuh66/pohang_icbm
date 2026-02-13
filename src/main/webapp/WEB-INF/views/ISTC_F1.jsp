@@ -590,7 +590,7 @@
 				jAlert.error('오류','해당 날짜에 데이터가 존재하지 않습니다.');
 				return;
 			} else {
-				templetDownLoad(params, null, null, function() {
+				templetDownLoadStream(params, null, null, function() {
 					jAlert.error('오류', '다운로드에 실패했습니다.');
 				});
 				$('#reportModal').modal('hide');

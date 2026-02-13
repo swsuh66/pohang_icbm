@@ -20,6 +20,7 @@
 				readOpr: null,
 				setYears: null,
 				comSq: null,
+				metcmp: null,
 				amiType: null,
 				pipeDia: null,
 				siteSq: null,
@@ -79,6 +80,7 @@
 					readOpr: null,
 					setYears: null,
 					comSq: null,
+					metcmp: null,
 					amiType: null,
 					pipeDia: null,
 				});
@@ -101,6 +103,8 @@
 				baseComponent('mars.icbm.map1.selectComponentes', 'readOpr', params);
 				params.key = 6;
 				baseComponent('mars.icbm.map1.selectComponentes', 'blkSq', params);
+				params.key = 8;
+				baseComponent('mars.icbm.map1.selectComponentes', 'metcmp', params);
 			}
 
 			/**
@@ -205,8 +209,17 @@
 				</div>
 				<div class="col-12 col-sm-6 col-md-4 col-lg-3 col-xl-2" id="comSq_Grp">
 					<div class="dj-input-group">
-						<span class="info componentsFont">회사</span>
+						<span class="info componentsFont">단말기 회사</span>
 						<select data-placeholder="전체" class="componentsSelect" id="comSq" name="comSq" onchange="baseComponentChangHandler(this);">
+							<option value="-1" selected>전체</option>
+							<option value="-2">미지정</option>
+						</select>
+					</div>
+				</div>
+				<div class="col-12 col-sm-6 col-md-4 col-lg-3 col-xl-2" id="metcmp_Grp">
+					<div class="dj-input-group">
+						<span class="info componentsFont">계량기 회사</span>
+						<select data-placeholder="전체" class="componentsSelect" id="metcmp" name="metcmp" onchange="baseComponentChangHandler(this);">
 							<option value="-1" selected>전체</option>
 							<option value="-2">미지정</option>
 						</select>

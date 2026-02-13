@@ -285,6 +285,36 @@ public class FileController {
 		fileService.excelCreateSXSSF(response, mappingList, data, fileName);
 	}
 
+	/**
+	 * 대용량 파일 다운로드 (스트리밍 SXSSF) - 5만건 이상 권장
+	 * DB에서 한 행씩 읽으면서 바로 엑셀에 쓰기 (메모리 최적화)
+	 */
+	@RequestMapping(value = "/file/templeteSXSSFStream", method= RequestMethod.POST)
+	public void execelTempletSXSSFStreaming(Map<String,Object> modelMap, 
+			HttpServletRequest request, HttpServletResponse response) throws IOException {
+
+		List<Object> mappingList = new ArrayList<Object>();
+		Map<String, Object> mappingInfo = null;		
+		Map<String, Object> selMap = makeParames(request);
+		String fileName = (String)selMap.get(Define.Key.FILE_NAME);
+		String length = (String)selMap.get(Define.Key.LENGTH);
+		String qid = (String)selMap.get(Define.Key.QID);		
+
+		log.info("스트리밍 엑셀 다운로드 시작 - qid: {}, fileName: {}", qid, fileName);
+
+		for(int i = 0 ; i < Integer.parseInt(length); i++) {
+			mappingInfo = new HashMap<>();
+			String value = (String)selMap.get("colMapping[" + i + "][name]");
+			String title = (String)selMap.get("colMapping[" + i + "][title]");
+			mappingInfo.put("name", value);
+			mappingInfo.put("title", title);
+			mappingList.add(mappingInfo);
+		}
+		
+		// 스트리밍 방식: DB 조회와 엑셀 쓰기를 동시에 처리
+		fileService.excelCreateSXSSFStreaming(response, qid, selMap, mappingList, fileName);
+	}
+
 	public List<HashMap<String, Object>> getAlrimTokData(Map<String, Object> params, String url) {
         System.out.println("getAlrimTokData url : " + url);
 

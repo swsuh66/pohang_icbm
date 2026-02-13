@@ -224,7 +224,7 @@ window.gb = {
 
 <!-- include istc js -->
 <script type="text/javascript" src="${contextPath}/resources/page/common/js/istc-sha256.js"></script>
-<script type="text/javascript" src="${contextPath}/resources/page/common/js/istc-kutil.js?v=1.1"></script>
+<script type="text/javascript" src="${contextPath}/resources/page/common/js/istc-kutil.js?v=1.3"></script>
 <script type="text/javascript" src="${contextPath}/resources/page/common/js/istc-common-utils.js"></script>
 <script type="text/javascript" src="${contextPath}/resources/page/common/js/istc-data-loader.js"></script>
 <script type="text/javascript" src="${contextPath}/resources/page/common/js/istc-alert.js"></script>

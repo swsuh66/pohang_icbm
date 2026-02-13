@@ -626,9 +626,195 @@
 
 	</sql>
 	
-	
-	
-	
+	<!-- 엑셀 다운로드 전용 쿼리 (간소화 버전 - 누수의심 계산 제외로 속도 향상) -->
+	<select id="pointListExcel" parameterType="java.util.Map" resultType="java.util.Map">
+	select
+		  (ROW_NUMBER() OVER()) AS "rownum",
+		  a.point_sq	 as "pointSq",
+		  a.site_sq   as "siteSq",			  
+		  a.site_nm0 as "siteNm0",
+      	  a.site_nm1 as "siteNm1",
+	      a.site_nm2 as "siteNm2",
+		  a.site_nm as "siteNm",
+		  a.blk_sq	 as "blkSq",
+		  a.set_years as "setYears",
+		  a.cust_sq	 as "custSq",
+		  a.use_cd	 as "useCd",
+		  case a.use_cd
+		    when '1' then '검침중'
+		    else '검침중지'
+		  end "useCdStr",
+		  a.check_day as "checkDay",
+		  a.admin_id	 as "adminId",
+		  a.cust_nm	 as "custNm",
+		  a.addr_old	 as "addrOld",
+		  a.addr_new	 as "addrNew",
+		  a.meter_no	 as "meterNo",
+		  a.use_type	 as "useType",
+		  a.pipe_dia	 as "pipeDia",
+		  a.blk_name1	 as "blkNm1",
+		  a.blk_name2	 as "blkNm2",
+		  a.blk_name as "blkNm",
+		  a.read_opr  as "readOpr",
+		  a.check_day as "chkDay",
+		  a.cust_phone as "custPhone",
+		  a.loc_lng	 as "locLng",
+		  a.loc_lat	 as "locLat",
+		  a.set_dt	 as "setDt",
+		  to_char(a.set_dt, 'yyyy-mm-dd') as "setDtStr",
+		  a.p_remark	 as "pointRemark",
+		  a.ins_dt	 as "insDt",
+		  a.upd_dt	 as "updDt",
+		  b.meas_dt   as "measDt",
+		  to_char(b.meas_dt, 'yyyy-mm-dd hh24:mi') as "measDtStr",
+		  trunc(b.accu_iv)   as "accuIv",
+		  b.adjst_os  as "adjstV",
+		  b.stat_cd   as "statCd",
+		  case position('1' in a.stat_cd)			  
+		      when 1 then '통신 장애'
+		      when 2 then '계량기 장애'
+		      when 3 then 'Q3 초과'
+		      when 4 then '역류'
+		      when 5 then '누수'		      		      
+		      when 6 then '정상'
+		      when 7 then '정상'
+		      when 8 then 'BAT'
+		      else '정상'
+		  end "statCdStr",
+		  a.ami_type as "amiType",
+		  a.dev_no   as "devNo",
+		  a.sub_dev_no   as "subDevNo",
+		  b.raw_cnt_0d as "rawCnt_0d",
+		  b.term_cv_0d as "termCv_0d",
+		  b.raw_cnt_1d as "rawCnt_1d",
+		  b.term_cv_1d as "termCv_1d",
+		  b.raw_cnt_7d as "rawCnt_7d",
+		  b.term_cv_7d as "termCv_7d",
+		  b.raw_cnt_30d as "rawCnt_30d",
+		  b.term_cv_30d as "termCv_30d",
+		  b.delay_rcv as "delayRcv",
+		  b.bat2_iv as "bat2Iv",
+		  case
+	        when b.bat2_stat = '1' then '장애'
+	        when b.bat2_stat = '0' then '정상'		        
+	      end "bat2Stat",
+		  a.company_sq as "comSq",
+	      a.company_nm as "comNm",
+	      a.company_cd as "comCd",
+		  a.inform_cd as "informCd",
+		  a.send_cd as "sendCd",
+		  a.send_dt as "sendDt",
+		  b.temperature,
+		  a.remark,
+		  a.note,
+		  w.modem_id as "modemId",
+		  c.cust_status as "custStatus",
+		  '-' as "leakSuspect"
+	from vi_m1_sv_point_list a
+	left outer join vi_m1_sv_meas_now b on b.POINT_SQ = a.POINT_SQ
+	left outer join tb_m1_wizit_modem_info w on w.dev_no = a.dev_no
+	left outer join tb_m1_info_customer c on c.cust_sq = a.cust_sq
+	where 1=1
+		and a.use_cd = '1'
+		<choose>
+	        <when test="upSiteSq != null and lv != null">
+	            and a.site_sq in (
+	                select site_sq from fn_prj_sites(#{upSiteSq}::integer, #{lv}::integer)
+	            )
+	        </when>
+	        <when test="siteSq != null">
+	            and a.site_sq = #{siteSq}::integer
+	        </when>
+	    </choose>
+		<choose>
+			<when test="upBlkSq != null and lv != null">
+				 and a.blk_sq in (
+				    select blk_sq from fn_prj_blockes(#{upBlkSq}::integer, #{lv}::integer)
+				 )					 	
+			</when>
+			<when test="blkSq != null and blkSq != -2">
+				 and a.blk_sq = #{blkSq}::integer		 	
+			</when>							
+			<when test="blkSq != null and blkSq == -2">
+				 and a.blk_sq IS NULL		 	
+			</when>
+		</choose>
+		<choose>
+			<when test="comSq != null and comSq != -2">
+			and a.company_sq = #{comSq}::integer
+			</when>
+			<when test="comSq != null and comSq == -2">
+			and a.company_sq IS NULL
+			</when>
+		</choose>
+	    <choose>
+			<when test="amiType != null and !amiType.equals('-2')">
+			and a.ami_type = #{amiType}
+			</when>
+			<when test="amiType != null and amiType.equals('-2')">
+			and a.ami_type IS NULL
+			</when>
+		</choose>
+		<choose>
+			<when test="readOpr != null and !readOpr.equals('-2')">
+			and a.read_opr = #{readOpr}
+			</when>
+			<when test="readOpr != null and readOpr.equals('-2')">
+			and a.read_opr IS NULL
+			</when>
+		</choose>
+		<choose>
+			<when test="chkDay != null and !chkDay.equals('-2')">
+			and a.check_day = #{chkDay}
+			</when>
+			<when test="chkDay != null and chkDay.equals('-2')">
+			and a.check_day IS NULL
+			</when>
+		</choose>
+	    <choose>
+			<when test="useType != null and !useType.equals('-2')">
+			and a.use_type = #{useType}
+			</when>
+			<when test="useType != null and useType.equals('-2')">
+			and a.use_type IS NULL
+			</when>
+		</choose>
+		<choose>
+			<when test="setYears != null and !setYears.equals('-2')">
+			and a.set_years = #{setYears}
+			</when>
+			<when test="setYears != null and setYears.equals('-2')">
+			and a.set_years IS NULL
+			</when>
+		</choose>
+	    <choose>
+			<when test="pipeDia != null and pipeDia != -2">
+			and a.pipe_dia = #{pipeDia}::numeric
+			</when>
+			<when test="pipeDia != null and pipeDia == -2">
+			and a.pipe_dia is null
+			</when>
+		</choose>
+		<if test='useCd != null and useCd != ""'>
+			and a.use_cd = #{useCd}
+		</if>
+		<if test='cust_nm != null and cust_nm != ""'>
+	        and c.cust_name like '%' || #{cust_nm} || '%'
+	    </if>
+	    <if test='admin_no != null and admin_no != ""'>
+	        and c.admin_no like '%' || #{admin_no} || '%'
+	    </if>
+	    <if test='addr != null and addr != ""'>
+	        and (c.addr like '%' || #{addr} || '%' or c.addr_new like '%' || #{addr} || '%')
+	    </if>
+		<if test='meter_no != null and meter_no != ""'>
+			and (
+			a.sub_dev_no like '%' || #{meter_no} || '%'
+			or a.dev_no like '%' || #{meter_no} || '%'
+			or a.meter_no like '%' || #{meter_no} || '%'
+			)
+		</if>
+	</select>
 	
 	
 	<select id="settingList" parameterType="java.util.Map" resultType="java.util.Map">
@@ -2020,6 +2206,7 @@
 	    select *
 	    from fn_tb_meas_point_his_day_mov(#{pointSq}, to_date(#{begDate}, 'yyyy-mm-dd'), to_date(#{endDate}, 'yyyy-mm-dd'))
 	),
+	/* 누수의심 계산 - client_meas_raw 사용 (BRIN 인덱스 활용) */
 	leak_suspects as (
 	    select distinct
 	        m.point_sq,
@@ -2028,7 +2215,7 @@
 	    from main_data md
 	    cross join lateral (
 	        select m.point_sq
-	        from tb_m1_meas_raw m
+	        from client_meas_raw m
 	        join tb_m1_info_point p on p.point_sq = m.point_sq
 	        join tb_m1_info_customer c on c.cust_sq = p.cust_sq
 	        left join tb_m1_waterleak_setting2 s
@@ -2103,6 +2290,7 @@
 		        a.ni_rsrp,
 		        a.ni_rsrq,
 		        a.temperature,
+		        a.con,
 		        b.admin_id,
 		        b.cust_sq,
 		        b.cust_nm,
@@ -2110,6 +2298,7 @@
 		        b.pipe_dia,
 		        b.site_sq,
 		        b.use_cd,
+		        b.remark,
 		        w.q1_15, w.q1_20, w.q1_25, w.q1_32, w.q1_40, 
 		        w.q1_50, w.q1_75, w.q1_100, w.q1_150, w.q1_200, w.q1_250,
 		        w.sca_coef
@@ -2260,6 +2449,7 @@
 				and d.meas_dt = to_date(#{begRawDate}, 'yyyy-mm-dd')				
 			</if>
 		),
+		/* 누수의심 계산 - client_meas_raw 사용 (BRIN 인덱스 활용) */
 		leak_suspects as (
 		    select distinct
 		        m.point_sq,
@@ -2268,7 +2458,7 @@
 		    from raw_data rd
 		    cross join lateral (
 		        select m.point_sq
-		        from tb_m1_meas_raw m
+		        from client_meas_raw m
 		        join tb_m1_info_customer c on c.cust_sq = rd.cust_sq
 		        left join tb_m1_waterleak_setting2 s
 		            on s.pipe_diameter = c.pipe_diameter
@@ -2338,6 +2528,8 @@
 ]]>
 			
 			, rd.temperature
+			, rd.remark as "remark"
+			, rd.con as "con"
 			from
 		     raw_data rd
 		     left join leak_suspects ls on ls.point_sq = rd.point_sq and ls.meas_dt = rd.meas_dt
@@ -2929,27 +3121,43 @@
     </select>
  	
  	<sql id="customerList_sql">
-		WITH meter_aggregates AS (
+		/* customerList_sql - ROW_NUMBER 최적화 버전 (ARRAY_AGG 제거) */
+		WITH meas_ranked AS (
+		    /* 1단계: ROW_NUMBER로 첫번째/마지막 행 표시 (ARRAY_AGG보다 효율적) */
 		    SELECT 
 		        point_sq,
-		        -- 실제 측정 시간 (last_dt)
-		        MIN(last_dt) AS beg_meas_dt,
-		        MAX(last_dt) AS end_meas_dt,
-		        -- 날짜 기준 (meas_dt)
-		        MIN(meas_dt) AS beg_meas_dt_t,
-		        MAX(meas_dt) AS end_meas_dt_t,
-		        -- 시작/끝 검침값
-		        (ARRAY_AGG(accu_iv ORDER BY meas_dt ASC))[1] AS beg_accu_iv,
-		        (ARRAY_AGG(accu_iv ORDER BY meas_dt DESC))[1] AS end_accu_iv,
-		        -- 조정량 (전체 합계 - 시작값)
-		        SUM(adjst_os) - (ARRAY_AGG(adjst_os ORDER BY meas_dt ASC))[1] AS fadjst_os,
-		        -- 사용량 (끝 - 시작)
-		        (ARRAY_AGG(accu_iv ORDER BY meas_dt DESC))[1] - (ARRAY_AGG(accu_iv ORDER BY meas_dt ASC))[1] AS term_iv,
-		        -- 기간 (일수)
-		        (MAX(meas_dt)::DATE - MIN(meas_dt)::DATE) AS term_dy
+		        accu_iv,
+		        adjst_os,
+		        last_dt,
+		        meas_dt,
+		        ROW_NUMBER() OVER (PARTITION BY point_sq ORDER BY meas_dt ASC) AS rn_asc,
+		        ROW_NUMBER() OVER (PARTITION BY point_sq ORDER BY meas_dt DESC) AS rn_desc,
+		        SUM(adjst_os) OVER (PARTITION BY point_sq) AS total_adjst_os
 		    FROM client_meas_day
 		    WHERE meas_dt &gt;= to_date(#{fromDate}, 'yyyy-mm-dd')::DATE 
 		      AND meas_dt &lt;= to_date(#{toDate}, 'yyyy-mm-dd')::DATE
+		),
+		meter_aggregates AS (
+		    /* 2단계: 첫번째/마지막 값만 추출하여 집계 */
+		    SELECT 
+		        point_sq,
+		        -- 실제 측정 시간 (last_dt)
+		        MAX(CASE WHEN rn_asc = 1 THEN last_dt END) AS beg_meas_dt,
+		        MAX(CASE WHEN rn_desc = 1 THEN last_dt END) AS end_meas_dt,
+		        -- 날짜 기준 (meas_dt)
+		        MAX(CASE WHEN rn_asc = 1 THEN meas_dt END) AS beg_meas_dt_t,
+		        MAX(CASE WHEN rn_desc = 1 THEN meas_dt END) AS end_meas_dt_t,
+		        -- 시작/끝 검침값
+		        MAX(CASE WHEN rn_asc = 1 THEN accu_iv END) AS beg_accu_iv,
+		        MAX(CASE WHEN rn_desc = 1 THEN accu_iv END) AS end_accu_iv,
+		        -- 조정량 (전체 합계 - 시작값)
+		        MAX(total_adjst_os) - MAX(CASE WHEN rn_asc = 1 THEN adjst_os END) AS fadjst_os,
+		        -- 사용량 (끝 - 시작)
+		        MAX(CASE WHEN rn_desc = 1 THEN accu_iv END) - MAX(CASE WHEN rn_asc = 1 THEN accu_iv END) AS term_iv,
+		        -- 기간 (일수)
+		        MAX(CASE WHEN rn_desc = 1 THEN meas_dt END)::DATE - MAX(CASE WHEN rn_asc = 1 THEN meas_dt END)::DATE AS term_dy
+		    FROM meas_ranked
+		    WHERE rn_asc = 1 OR rn_desc = 1
 		    GROUP BY point_sq
 		),
 		meter_data AS (

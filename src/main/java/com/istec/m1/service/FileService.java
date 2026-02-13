@@ -83,7 +83,7 @@ public class FileService {
 	private final TbM1InfoCustomerMapper tbM1InfoCustomerMapper;
 	private final TbM1InfoPointMapper tbM1InfoPointMapper;	
 
-	private static final Logger log = LoggerFactory.getLogger(FileService.class);
+        private static final Logger log = LoggerFactory.getLogger(FileService.class);
 
 	@Autowired
 	public FileService(
@@ -135,7 +135,9 @@ public class FileService {
 	
 	
 	/**
-	 * ���������� ���ϴ�.  test �ڵ��Դϴ�.
+	 * 대용량 엑셀 다운로드 (SXSSF 방식)
+	 * - flushRows()로 메모리를 디스크로 주기적 flush
+	 * - dispose()로 임시파일 정리
 	 * @throws IOException 
 	 */	
 	public void excelCreateSXSSF(HttpServletResponse response, List<Object> mapping, List<HashMap<String, Object>> data, String fileName ) throws IOException  {
@@ -146,30 +148,26 @@ public class FileService {
 		
 		OutputStream outs = null;
 		
-		List<String> headeres = null;
+		// flush 주기 설정 (2000행마다 디스크로 flush - I/O 최소화)
+		final int FLUSH_ROW_SIZE = 2000;
 		
-		
-		// ���� ���
-    	try {
+		try {
     		
-    		headeres = new ArrayList<>();
-    		
-    		outs = response.getOutputStream();
+    		// 버퍼링된 출력 스트림 사용
+    		outs = new java.io.BufferedOutputStream(response.getOutputStream(), 65536);
     		XSSFWorkbook xssfWorkbook = new XSSFWorkbook();
-    		workbook = new SXSSFWorkbook(xssfWorkbook); 
-    		workbook.setCompressTempFiles(true);
+    		workbook = new SXSSFWorkbook(xssfWorkbook, FLUSH_ROW_SIZE); 
+    		workbook.setCompressTempFiles(false); // 압축 비활성화 (속도 우선)
 
     		SXSSFSheet sheet1 = (SXSSFSheet) workbook.createSheet(); 
-    		sheet1.setRandomAccessWindowSize(100); // �޸� �� 100���� ����, �ʰ� �� Disk�� flush
+    		sheet1.setRandomAccessWindowSize(FLUSH_ROW_SIZE); // 메모리에 유지할 row 수
     		
-    		//List<Object> mapping = (List<Object>) mappingInfo.get(Define.Key.COL_MAPPING);
-			//2024-12-06 김용희 텍스트 타입.
+			// 텍스트 타입 스타일 설정
 			XSSFDataFormat format = xssfWorkbook.createDataFormat();
 			XSSFCellStyle cellStyle = xssfWorkbook.createCellStyle();
 			cellStyle.setDataFormat(format.getFormat("@"));
    
-    		
-    		// ���
+    		// 헤더 생성
     		row = (SXSSFRow) sheet1.createRow(0);
         	
         	int idx = 0;
@@ -188,7 +186,7 @@ public class FileService {
                 
         	}        	
 
-        	// ������
+        	// 데이터 삽입
             for(int i = 0; i < data.size() ; i++) {
             	
             	row = (SXSSFRow) sheet1.createRow(i + 1);
@@ -215,11 +213,16 @@ public class FileService {
 					cell.setCellStyle(cellStyle);
                     idx++;
                     
-            	}   
+            	}
             	
-            	
-            	
+            	// 주기적으로 메모리를 디스크로 flush (대용량 처리 시 OOM 방지)
+            	if ((i + 1) % FLUSH_ROW_SIZE == 0) {
+            		sheet1.flushRows(FLUSH_ROW_SIZE);
+            	}
             }
+            
+            // 남은 row flush
+            sheet1.flushRows();
             
             response.reset();
         	response.setHeader("Content-Disposition", "attachment; filename=\"" + fileName + ".xlsx\"");
@@ -227,21 +230,138 @@ public class FileService {
         	workbook.write(outs);
 			
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			log.error("엑셀 다운로드 오류: {}", e.getMessage(), e);
+			throw e;
 		} finally {
+			// 디스크에 생성된 임시파일 삭제 (필수!)
+			if (workbook != null) {
+				workbook.dispose();
+			}
         	
-        	if(outs != null) outs.close();
-            response.getOutputStream().flush();
-            response.getOutputStream().close();
-            
-            //dm.removeDBAccessInfo(sqlId);
+        	if(outs != null) {
+        		try {
+        			outs.flush();
+        			outs.close();
+        		} catch (IOException e) {
+        			log.warn("OutputStream 정리 중 오류: {}", e.getMessage());
+        		}
+        	}
         }   
 
-	};
+	}
 
 	/**
-	 * CSV �Ǵ� Text ������ �н��ϴ�.
+	 * 대용량 엑셀 다운로드 (스트리밍 방식) - 5만건 이상 권장
+	 * DB에서 한 행씩 읽으면서 바로 엑셀에 쓰기 (메모리 최적화)
+	 * - ResultHandler로 스트리밍 조회
+	 * - flushRows()로 주기적 메모리 flush
+	 * - dispose()로 임시파일 정리
+	 * @param response HTTP 응답
+	 * @param qid 쿼리 ID
+	 * @param params 쿼리 파라미터
+	 * @param mapping 컬럼 매핑 정보
+	 * @param fileName 다운로드 파일명
+	 */
+	public void excelCreateSXSSFStreaming(
+			HttpServletResponse response, 
+			String qid, 
+			Map<String, Object> params,
+			List<Object> mapping, 
+			String fileName) throws IOException {
+		
+		final int FLUSH_ROW_SIZE = 2000; // 2000행마다 flush (I/O 최소화)
+		
+		SXSSFWorkbook workbook = null;
+		OutputStream outs = null;
+		
+		long startTime = System.currentTimeMillis();
+		
+		try {
+			// 버퍼링된 출력 스트림 사용 (I/O 성능 향상)
+			outs = new java.io.BufferedOutputStream(response.getOutputStream(), 65536);
+			
+			// XSSFWorkbook 없이 직접 SXSSFWorkbook 생성 (더 빠름)
+			workbook = new SXSSFWorkbook(FLUSH_ROW_SIZE);
+			workbook.setCompressTempFiles(false); // 압축 비활성화 (속도 우선)
+			
+			SXSSFSheet sheet = (SXSSFSheet) workbook.createSheet();
+			sheet.setRandomAccessWindowSize(FLUSH_ROW_SIZE);
+			
+			// 컬럼 키 배열 미리 생성 (루프 내 반복 작업 최소화)
+			final int columnCount = mapping.size();
+			final String[] columnKeys = new String[columnCount];
+			
+			// 헤더 생성 + 컬럼 키 캐싱
+			SXSSFRow headerRow = (SXSSFRow) sheet.createRow(0);
+			for (int i = 0; i < columnCount; i++) {
+				@SuppressWarnings("unchecked")
+				Map<String, Object> objItem = (Map<String, Object>) mapping.get(i);
+				String title = (String) objItem.get(Define.Key.TB_INFO_TITLE);
+				String key = (String) objItem.get(Define.Key.TB_INFO_NAME);
+				
+				headerRow.createCell(i).setCellValue(title);
+				columnKeys[i] = key;
+			}
+			
+			// 스트리밍 조회 및 엑셀 쓰기
+			final int[] rowNum = {1};
+			final SXSSFSheet finalSheet = sheet;
+			
+			queryService.selectStream(qid, params, resultContext -> {
+				HashMap<String, Object> rowData = resultContext.getResultObject();
+				
+				SXSSFRow dataRow = (SXSSFRow) finalSheet.createRow(rowNum[0]);
+				
+				// 캐싱된 컬럼 키 사용 (Map 조회 최소화)
+				for (int i = 0; i < columnCount; i++) {
+					Object value = rowData.get(columnKeys[i]);
+					dataRow.createCell(i).setCellValue(value != null ? value.toString() : "");
+				}
+				
+				// 주기적으로 메모리를 디스크로 flush
+				if (rowNum[0] % FLUSH_ROW_SIZE == 0) {
+					try {
+						finalSheet.flushRows(FLUSH_ROW_SIZE);
+					} catch (IOException e) {
+						log.error("flushRows 오류: {}", e.getMessage());
+					}
+				}
+				
+				rowNum[0]++;
+			});
+			
+			// 남은 row flush
+			sheet.flushRows();
+			
+			long elapsed = System.currentTimeMillis() - startTime;
+			log.info("엑셀 스트리밍 다운로드 완료: 총 {}행, 소요시간: {}ms", rowNum[0] - 1, elapsed);
+			
+			response.reset();
+			response.setHeader("Content-Disposition", "attachment; filename=\"" + fileName + ".xlsx\"");
+			
+			workbook.write(outs);
+			
+		} catch (IOException e) {
+			log.error("스트리밍 엑셀 다운로드 오류: {}", e.getMessage(), e);
+			throw e;
+		} finally {
+			// 임시파일 삭제
+			if (workbook != null) {
+				workbook.dispose();
+			}
+			if (outs != null) {
+				try {
+					outs.flush();
+					outs.close();
+				} catch (IOException e) {
+					log.warn("OutputStream 정리 중 오류: {}", e.getMessage());
+				}
+			}
+		}
+	}
+
+	/**
+	 * CSV 또는 Text 파일을 파싱합니다.
 	 */
 	public List<List<String>> txtRead(MultipartFile file, String delimiter, String charSet) {		
 
@@ -1217,8 +1337,9 @@ public class FileService {
 	}
 	
 	/**
-	 * 에러 엑셀다운로드
-	 * 하드코딩 언젠가 바꾸겠습니다.
+	 * 에러 엑셀다운로드 (SXSSF 방식)
+	 * - flushRows()로 메모리를 디스크로 주기적 flush
+	 * - dispose()로 임시파일 정리
 	 */	
 	public byte[] errorExcelCreate(List<Map<String, Object>> data) throws IOException  {
 		
@@ -1226,24 +1347,20 @@ public class FileService {
 		SXSSFRow row = null; 
 		SXSSFCell cell = null;
 		
-		OutputStream outs = null;
-		
-		List<String> headeres = null;
-		
+		// flush 주기 설정 (2000행마다 - I/O 최소화)
+		final int FLUSH_ROW_SIZE = 2000;
 		
     	try {
     		
-    		headeres = new ArrayList<>();
-    		
     		ByteArrayOutputStream outss = new ByteArrayOutputStream();
     				
-    		workbook = new SXSSFWorkbook(); 
-    		workbook.setCompressTempFiles(true);
+    		workbook = new SXSSFWorkbook(FLUSH_ROW_SIZE); 
+    		workbook.setCompressTempFiles(false); // 압축 비활성화 (속도 우선)
 
     		SXSSFSheet sheet1 = (SXSSFSheet) workbook.createSheet(); 
-    		sheet1.setRandomAccessWindowSize(100);
+    		sheet1.setRandomAccessWindowSize(FLUSH_ROW_SIZE);
     		
-    		//List<Object> mapping = (List<Object>) mappingInfo.get(Define.Key.COL_MAPPING);
+    		// 헤더 매핑
     		List<String> mapping = new ArrayList<>();
     		mapping.add("순번");
     		mapping.add("수용가명");
@@ -1268,10 +1385,9 @@ public class FileService {
     		mapping.add("단말 설치일");
     		mapping.add("에러메시지");
     		
+    		// 헤더 생성
     		row = (SXSSFRow) sheet1.createRow(0);
         	
-        	
-        	//cell = (SXSSFCell) row.createCell(0);
         	int idx = 0;
         	for(String obj : mapping) {
         		cell = (SXSSFCell) row.createCell(idx);
@@ -1279,6 +1395,7 @@ public class FileService {
                 idx++;
         	}
         	
+        	// 데이터 삽입
         	int idx2 = 1;
         	for (Map<String, Object> obj : data) {
         		row = (SXSSFRow) sheet1.createRow(idx2);
@@ -1353,7 +1470,6 @@ public class FileService {
         				idx3 = 21;
         			}
         			
-        			
         			SXSSFCell cell2 = (SXSSFCell) row.createCell(idx3);
         			Object value = obj.get(key);
         			if(value != null) 
@@ -1362,17 +1478,29 @@ public class FileService {
         				cell2.setCellValue("");
 				}
         		
+        		// 주기적으로 메모리를 디스크로 flush (대용량 처리 시 OOM 방지)
+        		if (idx2 % FLUSH_ROW_SIZE == 0) {
+        			sheet1.flushRows(FLUSH_ROW_SIZE);
+        		}
+        		
         		idx2++;
 			}
     		
+        	// 남은 row flush
+        	sheet1.flushRows();
+        	
         	workbook.write(outss);
         	return outss.toByteArray();
         	
 		} catch (IOException e) {
-			e.printStackTrace();
+			log.error("에러 엑셀 생성 오류: {}", e.getMessage(), e);
 			return null;
+		} finally {
+			// 디스크에 생성된 임시파일 삭제 (필수!)
+			if (workbook != null) {
+				workbook.dispose();
+			}
 		}
-    	 
 
 	} 
 }

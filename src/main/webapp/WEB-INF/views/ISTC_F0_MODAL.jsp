@@ -293,7 +293,32 @@
 	       getAjax((qType == '0' ? 'pointHisdataRaw' : 'pointHisdata'), _params, function() {
 	           $('#infoModal').aceWidget('startLoading');
 	       }, function(result) {
-	            jgexp.download2(useGrid, transforms, result);   //페이징 기준 없이 그리드 전체 내용 다운로드
+	            if (qType == '0') {
+	                var includeCon = $('#conExportToggle').is(':checked');
+	                var csv = jgexp.data2csv(useGrid, transforms, result);
+	                var lines = csv.split('\r\n');
+	                var newCsv = '';
+	                for (var i = 0; i < lines.length; i++) {
+	                    if (lines[i].length === 0) continue;
+	                    if (i === 0) {
+	                        newCsv += lines[i] + ',비고';
+	                        if (includeCon) newCsv += ',CON';
+	                        newCsv += '\r\n';
+	                    } else {
+	                        var idx = i - 1;
+	                        var remarkVal = (idx < result.length && result[idx] && result[idx].remark) ? '"' + result[idx].remark.replace(/"/g, '""') + '"' : '';
+	                        newCsv += lines[i] + ',' + remarkVal;
+	                        if (includeCon) {
+	                            var conVal = (idx < result.length && result[idx] && result[idx].con) ? result[idx].con : '';
+	                            newCsv += ',' + conVal;
+	                        }
+	                        newCsv += '\r\n';
+	                    }
+	                }
+	                jgexp.download(useGrid, transforms, newCsv);
+	            } else {
+	                jgexp.download2(useGrid, transforms, result);
+	            }
 	            $('#infoModal').aceWidget('stopLoading');
 	       }, function() {
 	           $('#infoModal').aceWidget('stopLoading');
@@ -855,13 +880,17 @@
 							</div>
 						</div>
 					<div class="row">
-						<div class="col-md-no-padding col-md-6">
+						<div class="col-md-no-padding col-md-4">
 							<label class="labelItem" for="statCdStr">최종검침상태</label>
 							<input type="text" class="form-control" id="statCdStr" disabled />
 						</div>
-						<div class="col-md-no-padding col-md-6">
+						<div class="col-md-no-padding col-md-4">
 							<label class="labelItem" for="modemId">지시부번호</label>
 							<input type="text" class="form-control" id="modemId" disabled />
+						</div>
+						<div class="col-md-no-padding col-md-4">
+							<label class="labelItem" for="metcmp">계량기 회사</label>
+							<input type="text" class="form-control" id="metcmp" disabled />
 						</div>
 					</div>
 					<div class="row">
@@ -1023,6 +1052,12 @@
 									<div class="dj-btn-group">
 										<div class="d-flex align-items-center px-lg-0">
 											<a href="#none" title="이전 수용가" class="btn dj-btn-outline-gray btn-sm" onclick="beforeData();">이전 수용가</a>
+										</div>
+										<div class="d-flex align-items-center px-lg-0 mr-2">
+											<label class="d-flex align-items-center mb-0" style="cursor:pointer; font-size:12px; white-space:nowrap;">
+												<input type="checkbox" id="conExportToggle" style="margin-right:4px;" />
+												CON값 보기
+											</label>
 										</div>
 										<div class="d-flex align-items-center px-lg-0">
 											<div class="card-toolbar align-self-center no-border">

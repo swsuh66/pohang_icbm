@@ -457,7 +457,7 @@
 
             $.extend(params, tParams);
 
-            templetDownLoad(params, null, null, function () {
+            templetDownLoadStream(params, null, null, function () {
 
                 jAlert.error('오류', '다운로드에 실패했습니다.');
 
