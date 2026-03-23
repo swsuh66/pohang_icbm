@@ -331,7 +331,14 @@
          */
         function resetComponentes() {
 
-            $('.form-control').val('').trigger('chosen:updated');
+            $('.form-control').each(function() {
+                if ($(this).is('select')) {
+                    $(this).val($(this).find('option:first').val());
+                } else {
+                    $(this).val('');
+                }
+            });
+            $('.form-control').trigger('chosen:updated');
 
             $.extend(searchComponentes, {
 
@@ -699,7 +706,7 @@
                 <li><a href="logout">로그아웃</a></li>
             </ul>
             <!-- <span class="system-version">버전 ${systemVersion}</span> -->
-             <span class="system-version">버전 Ver_Phis_250128</span>
+             <span class="system-version">버전 Ver_Phis_260223</span>
         </header>
 
         <div class="main-container" id="main-container">

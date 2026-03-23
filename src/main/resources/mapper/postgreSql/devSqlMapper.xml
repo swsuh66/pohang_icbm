@@ -37,13 +37,6 @@
       order by "rownum_"      
    </sql>
 
-	<select id="sqlTest" parameterType="java.util.Map" resultType="java.util.Map">           
-      ${sql}           
-    </select>
-    
-	<update id="sqlTest1" parameterType="java.util.Map">           
-      ${sql}           
-    </update>
 
 
     <update id="img_file_reset" parameterType="java.util.Map">           
@@ -289,6 +282,14 @@
            , company_nm as "name"
         from tb_m1_info_company 
        where 1=1 
+    </select>
+
+    <select id="executeDailyCustomerSync" parameterType="java.util.Map" resultType="java.util.Map" timeout="300">
+      SELECT * FROM daily_customer_sync()
+    </select>
+
+    <select id="executeManualCheckDaySync" parameterType="java.util.Map" resultType="java.util.Map" timeout="300">
+      SELECT * FROM manual_check_day_sync()
     </select>
 
     

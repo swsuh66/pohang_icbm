@@ -507,7 +507,7 @@
 						callback(result);		
 					
 				},
-				error: function(result) {
+				error: function(error) {
 					
 					if (errCallback)
 						errCallback(error);

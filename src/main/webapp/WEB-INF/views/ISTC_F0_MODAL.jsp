@@ -295,6 +295,7 @@
 	       }, function(result) {
 	            if (qType == '0') {
 	                var includeCon = $('#conExportToggle').is(':checked');
+	                var isWizit = (window._comSq == 6);
 	                var csv = jgexp.data2csv(useGrid, transforms, result);
 	                var lines = csv.split('\r\n');
 	                var newCsv = '';
@@ -303,6 +304,7 @@
 	                    if (i === 0) {
 	                        newCsv += lines[i] + ',비고';
 	                        if (includeCon) newCsv += ',CON';
+	                        if (includeCon && isWizit) newCsv += ',WIZIT_CON';
 	                        newCsv += '\r\n';
 	                    } else {
 	                        var idx = i - 1;
@@ -311,6 +313,10 @@
 	                        if (includeCon) {
 	                            var conVal = (idx < result.length && result[idx] && result[idx].con) ? result[idx].con : '';
 	                            newCsv += ',' + conVal;
+	                        }
+	                        if (includeCon && isWizit) {
+	                            var wizitConVal = (idx < result.length && result[idx] && result[idx].wizitCon) ? result[idx].wizitCon : '';
+	                            newCsv += ',' + wizitConVal;
 	                        }
 	                        newCsv += '\r\n';
 	                    }
@@ -558,7 +564,7 @@
 	                    args.pointSq = _params.pointSq;
 	                    args.siteSq = _params.siteSq;
 
-						loadModalData(false, args);
+						loadModalData(false, args, true);
 	                },
 	                 onRefreshed: function (args) {
 					$.each(args.grid._headerGrid[0].rows[0].cells, function (i, obj) {
@@ -713,7 +719,7 @@
 			}
 
 	        /* 수용가 정보, 검침 그리드 데이터 로드 */
-	        function loadModalData(useGparams, item) {
+	        function loadModalData(useGparams, item, isPageChange) {
 				console.log("loadModalData", useGparams, item);
 	        	$('#infoModal').modal('show'); //infoModal
 
@@ -726,6 +732,14 @@
 	            params.begDate = begDate;
 
 	            $.extend(params, useGrid.loadParams());
+
+	            /* 페이지 변경이 아닌 경우 1페이지로 초기화 */
+	            if (!isPageChange) {
+	                params.pageIndex = 1;
+	                params.rnBottom = 0;
+	                params.rnTop = params.pageSize || 50;
+	            }
+
 	            if (!endDate || endDate.length == 0) {
 	                /* 날짜 초기화 */
 	                //$('#fromDate', window.parent.document).val(kutil.dateFormat(new Date(), 'yyyy-mm-dd'));
@@ -767,6 +781,11 @@
 	            getAjax('mars.icbm.map1.pointList', params, null, function (result) {
 
 	                parent.updateValueFields(result);
+
+	                /* 위지트 여부 저장 (company_sq == 6) */
+	                if (result && result.length > 0) {
+	                    window._comSq = result[0].comSq;
+	                }
 
 	            }, null);
 
@@ -1050,9 +1069,9 @@
 
 								<li class="full-width item-vertical-center">
 									<div class="dj-btn-group">
-										<div class="d-flex align-items-center px-lg-0">
-											<a href="#none" title="이전 수용가" class="btn dj-btn-outline-gray btn-sm" onclick="beforeData();">이전 수용가</a>
-										</div>
+									<!-- <div class="d-flex align-items-center px-lg-0">
+										<a href="#none" title="이전 수용가" class="btn dj-btn-outline-gray btn-sm" onclick="beforeData();">이전 수용가</a>
+									</div> -->
 										<div class="d-flex align-items-center px-lg-0 mr-2">
 											<label class="d-flex align-items-center mb-0" style="cursor:pointer; font-size:12px; white-space:nowrap;">
 												<input type="checkbox" id="conExportToggle" style="margin-right:4px;" />

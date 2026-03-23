@@ -297,7 +297,7 @@
                         callback(result);
 
                 },
-                error: function (result) {
+                error: function (error) {
 
                     if (errCallback)
                         errCallback(error);
@@ -370,7 +370,7 @@
                     dbParams = data;
 
                 },
-                error: function (result) {
+                error: function (error) {
 
                     jAlert.error('오류', '데이터를 가져오는데 실패하였습니다.');
 

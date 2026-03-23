@@ -56,6 +56,11 @@ public class QueryService {
 		return queryDao.delete(qid, listMap);
     }
 
+	@Transactional(timeout = 300)
+	public List<HashMap<String, Object>> selectLongRunning(String qid, Map<String, Object> hashMap) {
+		return queryDao.select(qid, hashMap);
+	}
+
 	/**
 	 * 스트리밍 조회 - 대용량 엑셀 다운로드용
 	 * ResultHandler를 사용하여 한 행씩 처리 (메모리 효율적)

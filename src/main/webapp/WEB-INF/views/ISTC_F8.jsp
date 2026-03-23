@@ -464,7 +464,7 @@
 					success: function (result) {
 						if (callback) callback(result);
 					},
-					error: function (result) {
+					error: function (error) {
 						if (errCallback) errCallback(error);
 
 						jAlert.error('오류', '서버에 오류가 있습니다.');
@@ -483,7 +483,7 @@
 					success: function (data) {
 						dbParams = data;
 					},
-					error: function (result) {
+					error: function (error) {
 						jAlert.error('오류', '데이터를 가져오는데 실패하였습니다.');
 					},
 				});
@@ -505,7 +505,7 @@
 							});
 						}
 					},
-					error: function (result) {
+					error: function (error) {
 						jAlert.error('오류', '데이터를 가져오는데 실패하였습니다.');
 					},
 				});
@@ -539,7 +539,7 @@
 							});
 						}
 					},
-					error: function (result) {
+					error: function (error) {
 						jAlert.error('오류', '데이터를 가져오는데 실패하였습니다.');
 					},
 				});

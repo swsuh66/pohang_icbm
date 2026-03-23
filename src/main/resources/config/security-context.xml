@@ -20,7 +20,6 @@
 	<http pattern="/**/*.css" security="none" />
 	<http pattern="/NbIot/**" security="none" />
 	<http pattern="/api/**" security="none" />
-	<http pattern="/DSC" security="none" />
 	<http pattern="/SVC" security="none" />
 	<http pattern="/senserCreate" security="none" />
 	<http pattern="/senserLog" security="none" />

@@ -84,7 +84,14 @@
         };
     
         function resetComponentes() {
-            $('.componentsSelect').val('').trigger('chosen:updated');
+            $('.componentsSelect').each(function() {
+                if ($(this).is('select')) {
+                    $(this).val($(this).find('option:first').val());
+                } else {
+                    $(this).val('');
+                }
+            });
+            $('.componentsSelect').trigger('chosen:updated');
         	$.extend(searchComponentes, {
 
         		statCd : null,
@@ -94,7 +101,8 @@
         		setYears : null,
         		comSq : null,
         		amiType : null,
-        		pipeDia : null
+        		pipeDia : null,
+        		chkDay : null
 
         	});
         };

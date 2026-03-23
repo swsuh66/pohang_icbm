@@ -615,13 +615,18 @@ public class FileService {
 		if (cell == null) return null;
 
 		try {
-
-			String value = cell.getStringCellValue().trim();
-			if (value == null || value.isEmpty()) return null;
-
-			return new BigDecimal(value);
+			switch (cell.getCellType()) {
+				case Cell.CELL_TYPE_NUMERIC:
+					return BigDecimal.valueOf(cell.getNumericCellValue());
+				case Cell.CELL_TYPE_STRING:
+					String value = cell.getStringCellValue().trim();
+					if (value.isEmpty()) return null;
+					return new BigDecimal(value);
+				default:
+					return null;
+			}
 		} catch (Exception e) {
-			System.err.println("Error converting cell to BigDecimal: " + e.getMessage());
+			log.warn("BigDecimal 변환 실패 (cellIndex={}): {}", cellIndex, e.getMessage());
 			return null;
 		}
 	}
@@ -883,20 +888,21 @@ public class FileService {
 					
 					tbM1InfoImportMapper.insertImport(importMap);
 
-					// tb_m1_info_customer
-					Map<String, Object> customerMap = new HashMap<>();					
-					customerMap.put("adminNo", adminNo);
-					customerMap.put("custName", custNm);
-					customerMap.put("addr", addr);
-					customerMap.put("addrNew", addrNew);
-					customerMap.put("pipeDiameter", pipeDia);
-					customerMap.put("meterNo", meterNo);
-					customerMap.put("readResponsi", readOpr);
-					customerMap.put("custPhone", custPhone);
-					customerMap.put("setYears", setYears);
-					customerMap.put("checkDay", checkDay);
-					
-					Long custSq = tbM1InfoCustomerMapper.insertCustomer(customerMap);	
+				// tb_m1_info_customer
+				Map<String, Object> customerMap = new HashMap<>();					
+				customerMap.put("adminNo", adminNo);
+				customerMap.put("custName", custNm);
+				customerMap.put("addr", addr);
+				customerMap.put("addrNew", addrNew);
+				customerMap.put("businessName", useType);
+				customerMap.put("pipeDiameter", pipeDia);
+				customerMap.put("meterNo", meterNo);
+				customerMap.put("readResponsi", readOpr);
+				customerMap.put("custPhone", custPhone);
+				customerMap.put("setYears", setYears);
+				customerMap.put("checkDay", checkDay);
+				
+				Long custSq = tbM1InfoCustomerMapper.insertCustomer(customerMap);
 					if (custSq == null) {
 						log.warn("custSq is null at row {}", i);
 						throw new NullPointerException("custSq is null");

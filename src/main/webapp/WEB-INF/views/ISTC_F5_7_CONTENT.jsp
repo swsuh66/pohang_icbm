@@ -70,7 +70,15 @@
 				$('#sub_dev_no').val('');
 				$('#tel_num').val('');
 				$('#imsi').val('');
-				$('#modem_control').val('');
+				$('#modem_control').val($('#modem_control').find('option:first').val());
+				$.extend(searchComponentes, {
+					modem_id: null,
+					dev_no: null,
+					sub_dev_no: null,
+					tel_num: null,
+					imsi: null,
+					modem_control: null,
+				});
 			}
 
 			// 기본컴포넌트 생성.

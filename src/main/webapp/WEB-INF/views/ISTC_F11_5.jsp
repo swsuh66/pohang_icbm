@@ -907,7 +907,7 @@
 							return result;
 						}
 					},
-					error: function (result) {
+					error: function (error) {
 						// 저장 오류
 					},
 				});
@@ -1257,7 +1257,7 @@
 					success: function (data) {
 						dbParams = data;
 					},
-					error: function (result) {
+					error: function (error) {
 						jAlert.error('오류', '데이터를 가져오는데 실패하였습니다.');
 					},
 				});
@@ -1373,7 +1373,7 @@
 					success: function (result) {
 						if (callback) callback(result);
 					},
-					error: function (result) {
+					error: function (error) {
 						if (errCallback) errCallback(error);
 
 						var msg = '삭제 오류.<br>';

@@ -32,6 +32,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
+
 import com.istec.m1.service.QueryService;
 
 /**
@@ -62,59 +63,6 @@ public class devController {
 		return "test_upload";
 	}
 	
-	/**
-	 * test select
-	 * 
-	 */
-	@RequestMapping(value = "/sqlTest", method = RequestMethod.POST)
-	public String sqlTest(@RequestParam Map<String, Object> paramMap, Model model) { //name 이 key값으로 들어온다.
-		
-		//setModel(model, request);
-		
-		try {
-			Map<String, Object> param = new HashMap<String,Object >();
-			param.put("sql", paramMap.get("testsql"));
-			
-			List<HashMap<String, Object>> data = querysv.select("mars.icbm.devSqlMapper.sqlTest", param);
-			/* 
-			for (HashMap<String,Object> item : data) {
-				for (String key : item.keySet()) {
-					String value = nullCheck(item.get(key));
-					
-					value = value.replaceAll("\r\n", "<br><br>");
-					item.put(key, value);
-				}
-			}
-*/
-			model.addAttribute("data", data);
-		} catch (Exception e) {
-			
-			model.addAttribute("msg", e.getMessage());
-		}
-       
-		return "DSC";
-	}
-	
-	/**
-	 * test update
-	 * 
-	 */
-	@RequestMapping(value = "/sqlTest1", method = RequestMethod.POST)
-	public String sqlTest1(@RequestParam Map<String, Object> paramMap, Model model) { //name 이 key값으로 들어온다.
-		
-		//setModel(model, request);
-		try {
-			Map<String, Object> param = new HashMap<String,Object >();
-			param.put("sql", paramMap.get("testsql"));
-			
-			int count = querysv.update("mars.icbm.devSqlMapper.sqlTest1", param);
-			model.addAttribute("count", count);
-		} catch (Exception e) {
-			model.addAttribute("msg", e.getMessage());
-		}
-       
-		return "DSC";
-	}
 	
 	/**
 	 * 브이로그 라이센스 key값 가져오기
@@ -181,6 +129,44 @@ public class devController {
 			result.put("isSucces", "N");
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(result);
 		}
+	}
+
+	/*
+	 * WIMS 연동 (daily_customer_sync 실행)
+	 */
+	@RequestMapping(value = "/data/wimsSync", method = RequestMethod.POST)
+	@ResponseBody
+	public Map<String, Object> wimsSync(@RequestBody Map<String, Object> paramMap, Model model) {
+		Map<String, Object> result = new HashMap<>();
+		try {
+			List<HashMap<String, Object>> data = querysv.selectLongRunning("mars.icbm.devSqlMapper.executeDailyCustomerSync", new HashMap<>());
+			if (data != null && data.size() > 0) {
+				Map<String, Object> syncResult = data.get(0);
+				result.put("isSuccess", "Y");
+				result.put("syncResult", syncResult.get("sync_result"));
+				result.put("updatedCount", syncResult.get("updated_count"));
+				result.put("backupCount", syncResult.get("backup_count"));
+			} else {
+				result.put("isSuccess", "N");
+				result.put("msg", "동기화 결과를 가져올 수 없습니다.");
+			}
+
+			boolean syncCheckDay = "true".equals(String.valueOf(paramMap.get("syncCheckDay")));
+			if (syncCheckDay) {
+				List<HashMap<String, Object>> checkDayData = querysv.selectLongRunning("mars.icbm.devSqlMapper.executeManualCheckDaySync", new HashMap<>());
+				if (checkDayData != null && checkDayData.size() > 0) {
+					Map<String, Object> checkDayResult = checkDayData.get(0);
+					result.put("checkDaySyncResult", checkDayResult.get("sync_result"));
+					result.put("checkDayUpdatedCount", checkDayResult.get("updated_count"));
+					result.put("checkDayBackupCount", checkDayResult.get("backup_count"));
+				}
+			}
+		} catch (Exception e) {
+			logger.error("WIMS 동기화 오류", e);
+			result.put("isSuccess", "N");
+			result.put("msg", "WIMS 연동 오류: " + e.getMessage());
+		}
+		return result;
 	}
 
 	/*

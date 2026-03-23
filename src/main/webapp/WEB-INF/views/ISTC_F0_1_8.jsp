@@ -9,7 +9,15 @@
 		<script type="text/javascript"></script>
 		<script>
 			function resetComponentes() {
-				$('.componentsSelect').val('').trigger('chosen:updated');
+				$('.componentsSelect').each(function() {
+					if ($(this).is('select')) {
+						$(this).val($(this).find('option:first').val());
+					} else {
+						$(this).val('');
+					}
+				});
+				$('.componentsSelect').trigger('chosen:updated');
+				$('#receive_consent').val($('#receive_consent').find('option:first').val());
 			}
 		</script>
 	</head>

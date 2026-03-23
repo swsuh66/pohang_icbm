@@ -798,6 +798,9 @@
 		<if test='useCd != null and useCd != ""'>
 			and a.use_cd = #{useCd}
 		</if>
+		<if test="statCd != null">
+	    	and position('1' in a.stat_cd) = #{statCd}::integer
+	    </if>
 		<if test='cust_nm != null and cust_nm != ""'>
 	        and c.cust_name like '%' || #{cust_nm} || '%'
 	    </if>
@@ -2291,6 +2294,7 @@
 		        a.ni_rsrq,
 		        a.temperature,
 		        a.con,
+		        a.wizit_con,
 		        b.admin_id,
 		        b.cust_sq,
 		        b.cust_nm,
@@ -2530,6 +2534,7 @@
 			, rd.temperature
 			, rd.remark as "remark"
 			, rd.con as "con"
+			, rd.wizit_con as "wizitCon"
 			from
 		     raw_data rd
 		     left join leak_suspects ls on ls.point_sq = rd.point_sq and ls.meas_dt = rd.meas_dt

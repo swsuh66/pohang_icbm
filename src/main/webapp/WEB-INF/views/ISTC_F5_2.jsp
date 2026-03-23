@@ -837,7 +837,7 @@
 					callback(result);
 
 			},
-			error: function(result) {
+			error: function(error) {
 
 				if (errCallback)
 					errCallback(error);
@@ -868,7 +868,7 @@
 					callback(result);
 
 			},
-			error: function(result) {
+			error: function(error) {
 
 				if (errCallback)
 					errCallback(error);
@@ -899,7 +899,7 @@
 					callback(result);
 
 			},
-			error: function(result) {
+			error: function(error) {
 
 				if (errCallback)
 					errCallback(error);
@@ -1226,6 +1226,66 @@
 		}, null);
 	};
 
+	function wimsSync() {
+		$.confirm({
+			title: 'WIMS 연동',
+			content: '<p>연동하시겠습니까?</p>' +
+				'<div style="margin-top:10px;">' +
+				'<label><input type="checkbox" id="syncCheckDayChk"> 검침일도 함께 동기화</label>' +
+				'</div>',
+			type: 'blue',
+			typeAnimated: true,
+			buttons: {
+				yes: {
+					text: '예',
+					btnClass: 'btn-blue',
+					action: function() {
+						var syncCheckDay = this.$content.find('#syncCheckDayChk').is(':checked');
+						var loadingDialog = $.dialog({
+							title: 'WIMS 연동 중',
+							content: '<div style="text-align:center; padding:20px 0;">' +
+								'<i class="fa fa-spinner fa-spin fa-3x text-blue"></i>' +
+								'<p style="margin-top:15px; font-size:14px;">연동 중입니다. 잠시만 기다려주세요...</p>' +
+								'</div>',
+							type: 'blue',
+							typeAnimated: true,
+							closeIcon: false
+						});
+						$.ajax({
+							url: getContextPath() + '/data/wimsSync',
+							contentType: 'application/json',
+							data: JSON.stringify({ syncCheckDay: syncCheckDay }),
+							type: 'POST',
+							timeout: 300000,
+							success: function(result) {
+								loadingDialog.close();
+								if (result.isSuccess == 'Y') {
+									var msg = 'WIMS 연동 완료<br>업데이트: ' + result.updatedCount + '건 / 백업: ' + result.backupCount + '건';
+									if (syncCheckDay && result.checkDayUpdatedCount != null) {
+										msg += '<br><br>검침일 동기화: ' + result.checkDayUpdatedCount + '건';
+									}
+									jAlert.info('알림', msg);
+									mainGrid.search();
+								} else {
+									jAlert.error('오류', result.msg || 'WIMS 연동에 실패했습니다.');
+								}
+							},
+							error: function(xhr, status, error) {
+								loadingDialog.close();
+								console.error(error);
+								jAlert.error('오류', 'WIMS 연동 중 오류가 발생했습니다.');
+							}
+						});
+					}
+				},
+				no: {
+					text: '아니오',
+					action: function() {}
+				}
+			}
+		});
+	};
+
 	function img_clear() {
 		$.ajax({
 			url : "file/image_clear",
@@ -1363,6 +1423,7 @@
 		<h6></h6>
 		<div class="sub-cont-header-area">
 			<div class="dj-btn-group">
+				<button type="button" class="btn dj-btn-primary btn-sm" onclick="wimsSync();"><i class="fa fa-sync-alt mr-1"></i>WIMS 연동</button>
 				<button type="button" class="btn dj-btn-outline-gray btn-sm" onclick="openConfigModal();"><i class="ico i-set"></i>기타 설정</button>
 				<button type="button" class="btn dj-btn-outline-gray btn-sm" onclick="img_clear();">이미지 데이터 업로드</button>
 				<button type="button" class="btn dj-btn-outline-gray btn-sm" onclick="openImgModal();">이미지 업로드</button>
