@@ -489,12 +489,13 @@
 	           substring(a.stat_cd, 8, 1) = '1' then '계량기 장애'
 	      else '정상'
 	  end "meterStatus",
-	  coalesce(ls.leak_status, '-') as "leakSuspect"
-  from search_filtered_points sfp
-  join vi_m1_sv_point_list a on a.point_sq = sfp.point_sq
-  left outer join vi_m1_sv_meas_now b on b.POINT_SQ = a.POINT_SQ
-  left outer join tb_m1_wizit_modem_info w on w.dev_no = a.dev_no
-  left outer join tb_m1_info_customer c on c.cust_sq = a.cust_sq
+	  coalesce(ls.leak_status, '-') as "leakSuspect",
+	  c.metcmp as "metcmp"
+ from search_filtered_points sfp
+ join vi_m1_sv_point_list a on a.point_sq = sfp.point_sq
+ left outer join vi_m1_sv_meas_now b on b.POINT_SQ = a.POINT_SQ
+ left outer join tb_m1_wizit_modem_info w on w.dev_no = a.dev_no
+ left outer join tb_m1_info_customer c on c.cust_sq = a.cust_sq
   left join leak_suspects ls on ls.point_sq = a.point_sq
 		    
   where 1=1	
@@ -888,23 +889,25 @@
 				a.company_sq_tmp company_sq2,
 				a.ami_type  ami_type2
 		    from (
-				select a.*, a.company_nm as company_nm_tmp, a.company_sq as company_sq_tmp 
-				from vi_m1_sv_point_list a
-				where 1=1
-				<choose>
-					<when test="upSiteSq != null and lv != null">
-						and a.site_sq in (
-							select site_sq from fn_prj_sites(#{upSiteSq}::integer, #{lv}::integer)
-						)					 	
-					</when>
-					<when test="siteSq != null">
-						and a.site_sq = #{siteSq}::integer		 	
-					</when>							
-				</choose>
-			) a
+			select a.*, a.company_nm as company_nm_tmp, a.company_sq as company_sq_tmp,
+			       mc.metcmp
+			from vi_m1_sv_point_list a
+			left join tb_m1_info_customer mc on mc.cust_sq = a.cust_sq
+			where 1=1
+			<choose>
+				<when test="upSiteSq != null and lv != null">
+					and a.site_sq in (
+						select site_sq from fn_prj_sites(#{upSiteSq}::integer, #{lv}::integer)
+					)					 	
+				</when>
+				<when test="siteSq != null">
+					and a.site_sq = #{siteSq}::integer		 	
+				</when>							
+			</choose>
 		) a
-		where
-		  1=1
+	) a
+	where
+	  1=1
      	<choose>
 			<when test="upBlkSq != null and lv != null">
 				 and a.blk_sq in (
@@ -1027,18 +1030,27 @@
 		    	
 		    </foreach>
 	    </if> 
-	     <if test="leakFg != null">
-	    	AND c.waterleak_flag = #{leakFg}
-	     </if>
-	     
-	     <if test="sendCd != null">
-	    	AND a.send_cd = #{sendCd}
-	     </if>
-	     
-	     <!--  신규 필터 -->
-	     <if test='cust_nm != null and cust_nm != ""'>
-	       and a.cust_nm like  '%' || #{cust_nm} || '%'
-	     </if>
+	 <if test="leakFg != null">
+    	AND c.waterleak_flag = #{leakFg}
+	 </if>
+	 
+	 <if test="sendCd != null">
+    	AND a.send_cd = #{sendCd}
+	 </if>
+	 
+	 <choose>
+		<when test='metcmp != null and !metcmp.equals("-2")'>
+		and a.metcmp = #{metcmp}
+		</when>
+		<when test='metcmp != null and metcmp.equals("-2")'>
+		and a.metcmp IS NULL
+		</when>
+	 </choose>
+	 
+	 <!--  신규 필터 -->
+	 <if test='cust_nm != null and cust_nm != ""'>
+	   and a.cust_nm like  '%' || #{cust_nm} || '%'
+	 </if>
 	     <if test='admin_no != null and admin_no != ""'>
 	       and a.admin_id like  '%' || #{admin_no} || '%'
 	     </if>
@@ -3962,8 +3974,10 @@
         select key, sq, val from (select 5 as key, read_opr::character varying sq, read_opr::character varying val from tb_t group by read_opr order by read_opr) a
       union all
         select key, sq, val from (select 6 as key, blk_sq::character varying sq, blk_name::character varying val from tb_t group by blk_sq, blk_name order by blk_sq::numeric, blk_name) a
-	  union all
+      union all
         select key, sq, val from (select 7 as key, i::character varying sq, i::character varying val from generate_series(1, 31) as i order by i) a
+      union all
+        select key, sq, val from (select 8 as key, metcmp::character varying sq, metcmp::character varying val from tb_m1_info_customer where metcmp is not null and metcmp != '' group by metcmp order by metcmp) a
 		) a
 		
 		<trim prefix="WHERE" prefixOverrides="AND|OR">
