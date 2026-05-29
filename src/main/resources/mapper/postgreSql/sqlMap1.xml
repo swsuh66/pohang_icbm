@@ -125,9 +125,240 @@
 
 	
 	<select id="rawDayList_paging" parameterType="java.util.Map" resultType="java.util.Map">
-      <include refid="pageHeader"/>      
-      <include refid="rawDayList_sql"/>      
-      <include refid="pageFooter"/>           
+	WITH filtered_points AS (
+		SELECT
+			b.point_sq,
+			b.blk_name,
+			b.use_type,
+			b.pipe_dia,
+			b.admin_id,
+			b.cust_nm,
+			b.addr_new,
+			substr(b.read_opr,1,3) as read_opr,
+			b.site_sq,
+			b.dev_no,
+			b.meter_no,
+			ROW_NUMBER() OVER(
+				<choose>
+					<when test="sortField != null">
+						ORDER BY "${sortField}" <if test="sortOrder != null"> ${sortOrder} </if>
+					</when>
+					<otherwise>
+						ORDER BY b.point_sq
+					</otherwise>
+				</choose>
+			) as rn,
+			COUNT(*) OVER() as total_count
+		FROM vi_m1_sv_point_list b
+		WHERE b.use_cd = '1'
+		<choose>
+			<when test="upSiteSq != null and lv != null">
+				 and b.site_sq in (
+				    select site_sq from fn_prj_sites(#{upSiteSq}::integer, #{lv}::integer)
+				 )
+			</when>
+			<when test="siteSq != null">
+				 and b.site_sq = #{siteSq}::integer
+			</when>
+		</choose>
+		<choose>
+			<when test="upBlkSq != null and lv != null">
+				 and b.blk_sq in (
+				    select blk_sq from fn_prj_blockes(#{upBlkSq}::integer, #{lv}::integer)
+				 )
+			</when>
+			<when test="blkSq != null and blkSq != -2">
+				 and b.blk_sq = #{blkSq}::integer
+			</when>
+			<when test="blkSq != null and blkSq == -2">
+				 and b.blk_sq IS NULL
+			</when>
+		</choose>
+		<choose>
+			<when test="comSq != null and comSq != -2">
+			and b.company_sq = #{comSq}::integer
+			</when>
+			<when test="comSq != null and comSq == -2">
+			and b.company_sq IS NULL
+			</when>
+		</choose>
+		<choose>
+			<when test="amiType != null and !amiType.equals('-2')">
+			and b.ami_type = #{amiType}
+			</when>
+			<when test="amiType != null and amiType.equals('-2')">
+			and b.ami_type IS NULL
+			</when>
+		</choose>
+		<choose>
+			<when test="readOpr != null and !readOpr.equals('-2')">
+			and b.read_opr = #{readOpr}
+			</when>
+			<when test="readOpr != null and readOpr.equals('-2')">
+			and b.read_opr IS NULL
+			</when>
+		</choose>
+		<choose>
+			<when test="chkDay != null and !chkDay.equals('-2')">
+			and b.check_day = #{chkDay}
+			</when>
+			<when test="chkDay != null and chkDay.equals('-2')">
+			and b.check_day IS NULL
+			</when>
+		</choose>
+		<choose>
+			<when test="useType != null and !useType.equals('-2')">
+			and b.use_type = #{useType}
+			</when>
+			<when test="useType != null and useType.equals('-2')">
+			and b.use_type IS NULL
+			</when>
+		</choose>
+		<choose>
+			<when test="setYears != null and !setYears.equals('-2')">
+			and b.set_years = #{setYears}
+			</when>
+			<when test="setYears != null and setYears.equals('-2')">
+			and b.set_years IS NULL
+			</when>
+		</choose>
+		<choose>
+			<when test="pipeDia != null and pipeDia != -2">
+			and b.pipe_dia = #{pipeDia}::numeric
+			</when>
+			<when test="pipeDia != null and pipeDia == -2">
+			and b.pipe_dia is null
+			</when>
+		</choose>
+		<if test="statCd != null">
+	    	and position('1' in b.stat_cd) = #{statCd}::integer
+	    </if>
+		<if test="pointSq != null">
+	    	and b.point_sq = #{pointSq}
+	    </if>
+	    <if test="leakFg != null">
+	    	AND b.waterleak_flag = #{leakFg}
+	    </if>
+	    <if test="sendCd != null">
+	    	AND b.send_cd = #{sendCd}
+	    </if>
+	    <if test='cust_nm != null and cust_nm != ""'>
+	       and b.cust_nm like '%' || #{cust_nm} || '%'
+	    </if>
+	    <if test='admin_no != null and admin_no != ""'>
+	       and b.admin_id like '%' || #{admin_no} || '%'
+	    </if>
+	    <if test='tap_gb != null and tap_gb != ""'>
+	       and b.tap_gb = #{tap_gb}
+	    </if>
+	    <if test='bungu_cd != null and bungu_cd != ""'>
+	       and b.bungu_cd = #{bungu_cd}
+	    </if>
+	    <if test='(addr_1 != null and addr_1 != "")'>
+	       and b.site_sq in (
+	       	  select site_sq from fn_prj_sites(#{addr_1} :: integer, '4' :: integer)
+	       )
+	    </if>
+	    <if test='addr != null and addr != ""'>
+	       and (b.addr_old like '%' || #{addr} || '%'
+	        or  b.addr_new like '%' || #{addr} || '%')
+	    </if>
+	),
+	paged_points AS (
+		SELECT * FROM filtered_points
+		WHERE rn <![CDATA[>]]> ${rnBottom} AND rn <![CDATA[<=]]> ${rnTop}
+	),
+	day_pivot AS (
+		SELECT
+			d.point_sq,
+			sum(case when extract(day from d.meas_dt) = 1 then d.accu_iv end) as iv_d1,
+			sum(case when extract(day from d.meas_dt) = 2 then d.accu_iv end) as iv_d2,
+			sum(case when extract(day from d.meas_dt) = 3 then d.accu_iv end) as iv_d3,
+			sum(case when extract(day from d.meas_dt) = 4 then d.accu_iv end) as iv_d4,
+			sum(case when extract(day from d.meas_dt) = 5 then d.accu_iv end) as iv_d5,
+			sum(case when extract(day from d.meas_dt) = 6 then d.accu_iv end) as iv_d6,
+			sum(case when extract(day from d.meas_dt) = 7 then d.accu_iv end) as iv_d7,
+			sum(case when extract(day from d.meas_dt) = 8 then d.accu_iv end) as iv_d8,
+			sum(case when extract(day from d.meas_dt) = 9 then d.accu_iv end) as iv_d9,
+			sum(case when extract(day from d.meas_dt) = 10 then d.accu_iv end) as iv_d10,
+			sum(case when extract(day from d.meas_dt) = 11 then d.accu_iv end) as iv_d11,
+			sum(case when extract(day from d.meas_dt) = 12 then d.accu_iv end) as iv_d12,
+			sum(case when extract(day from d.meas_dt) = 13 then d.accu_iv end) as iv_d13,
+			sum(case when extract(day from d.meas_dt) = 14 then d.accu_iv end) as iv_d14,
+			sum(case when extract(day from d.meas_dt) = 15 then d.accu_iv end) as iv_d15,
+			sum(case when extract(day from d.meas_dt) = 16 then d.accu_iv end) as iv_d16,
+			sum(case when extract(day from d.meas_dt) = 17 then d.accu_iv end) as iv_d17,
+			sum(case when extract(day from d.meas_dt) = 18 then d.accu_iv end) as iv_d18,
+			sum(case when extract(day from d.meas_dt) = 19 then d.accu_iv end) as iv_d19,
+			sum(case when extract(day from d.meas_dt) = 20 then d.accu_iv end) as iv_d20,
+			sum(case when extract(day from d.meas_dt) = 21 then d.accu_iv end) as iv_d21,
+			sum(case when extract(day from d.meas_dt) = 22 then d.accu_iv end) as iv_d22,
+			sum(case when extract(day from d.meas_dt) = 23 then d.accu_iv end) as iv_d23,
+			sum(case when extract(day from d.meas_dt) = 24 then d.accu_iv end) as iv_d24,
+			sum(case when extract(day from d.meas_dt) = 25 then d.accu_iv end) as iv_d25,
+			sum(case when extract(day from d.meas_dt) = 26 then d.accu_iv end) as iv_d26,
+			sum(case when extract(day from d.meas_dt) = 27 then d.accu_iv end) as iv_d27,
+			sum(case when extract(day from d.meas_dt) = 28 then d.accu_iv end) as iv_d28,
+			sum(case when extract(day from d.meas_dt) = 29 then d.accu_iv end) as iv_d29,
+			sum(case when extract(day from d.meas_dt) = 30 then d.accu_iv end) as iv_d30,
+			sum(case when extract(day from d.meas_dt) = 31 then d.accu_iv end) as iv_d31
+		FROM tb_m1_meas_day d
+		WHERE d.point_sq IN (SELECT point_sq FROM paged_points)
+		  AND d.meas_dt >= date_trunc('month', to_date(#{baseDate}, 'yyyy-mm-dd'))
+		  AND d.meas_dt <![CDATA[<]]> date_trunc('month', to_date(#{baseDate}, 'yyyy-mm-dd')) + INTERVAL '1 month'
+		GROUP BY d.point_sq
+	)
+	SELECT
+		p.rn as "rownum",
+		p.rn as "rownum_",
+		p.point_sq as "pointSq",
+		p.blk_name as "blkNm",
+		p.use_type as "useType",
+		p.pipe_dia as "pipeDia",
+		p.admin_id as "adminId",
+		p.cust_nm as "custName",
+		p.addr_new as "addr",
+		p.read_opr as "readOpr",
+		p.site_sq as "siteSq",
+		p.dev_no as "devNo",
+		p.meter_no as "meterNo",
+		dp.iv_d1 as "D01",
+		dp.iv_d2 as "D02",
+		dp.iv_d3 as "D03",
+		dp.iv_d4 as "D04",
+		dp.iv_d5 as "D05",
+		dp.iv_d6 as "D06",
+		dp.iv_d7 as "D07",
+		dp.iv_d8 as "D08",
+		dp.iv_d9 as "D09",
+		dp.iv_d10 as "D10",
+		dp.iv_d11 as "D11",
+		dp.iv_d12 as "D12",
+		dp.iv_d13 as "D13",
+		dp.iv_d14 as "D14",
+		dp.iv_d15 as "D15",
+		dp.iv_d16 as "D16",
+		dp.iv_d17 as "D17",
+		dp.iv_d18 as "D18",
+		dp.iv_d19 as "D19",
+		dp.iv_d20 as "D20",
+		dp.iv_d21 as "D21",
+		dp.iv_d22 as "D22",
+		dp.iv_d23 as "D23",
+		dp.iv_d24 as "D24",
+		dp.iv_d25 as "D25",
+		dp.iv_d26 as "D26",
+		dp.iv_d27 as "D27",
+		dp.iv_d28 as "D28",
+		dp.iv_d29 as "D29",
+		dp.iv_d30 as "D30",
+		dp.iv_d31 as "D31",
+		p.total_count as "totalCount",
+		${rnTop} / (${rnTop} - ${rnBottom}) as "pageNo",
+		${rnTop} - ${rnBottom} as "pageSize"
+	FROM paged_points p
+	LEFT JOIN day_pivot dp ON p.point_sq = dp.point_sq
+	ORDER BY p.rn
     </select>
     
     <select id="rawDayList" parameterType="java.util.Map" resultType="java.util.Map">           
@@ -2221,7 +2452,7 @@
 	    select *
 	    from fn_tb_meas_point_his_day_mov(#{pointSq}, to_date(#{begDate}, 'yyyy-mm-dd'), to_date(#{endDate}, 'yyyy-mm-dd'))
 	),
-	/* 누수의심 계산 - client_meas_raw 사용 (BRIN 인덱스 활용) */
+	/* 누수의심 계산 - tb_m1_meas_raw 사용 (보정된 term_cv 기준) */
 	leak_suspects as (
 	    select distinct
 	        m.point_sq,
@@ -2230,7 +2461,7 @@
 	    from main_data md
 	    cross join lateral (
 	        select m.point_sq
-	        from client_meas_raw m
+	        from tb_m1_meas_raw m
 	        join tb_m1_info_point p on p.point_sq = m.point_sq
 	        join tb_m1_info_customer c on c.cust_sq = p.cust_sq
 	        left join tb_m1_waterleak_setting2 s
@@ -2465,7 +2696,7 @@
 				and d.meas_dt = to_date(#{begRawDate}, 'yyyy-mm-dd')				
 			</if>
 		),
-		/* 누수의심 계산 - client_meas_raw 사용 (BRIN 인덱스 활용) */
+		/* 누수의심 계산 - tb_m1_meas_raw 사용 (보정된 term_cv 기준) */
 		leak_suspects as (
 		    select distinct
 		        m.point_sq,
@@ -2474,7 +2705,7 @@
 		    from raw_data rd
 		    cross join lateral (
 		        select m.point_sq
-		        from client_meas_raw m
+		        from tb_m1_meas_raw m
 		        join tb_m1_info_customer c on c.cust_sq = rd.cust_sq
 		        left join tb_m1_waterleak_setting2 s
 		            on s.pipe_diameter = c.pipe_diameter
@@ -4558,8 +4789,135 @@
 			</choose>
 		</if>
 	</sql>
-	
-    
+
+	<!-- 위지트 모뎀 부번호 불일치 조회 -->
+	<select id="wizitSubDevMismatchList_paging" parameterType="java.util.Map" resultType="java.util.Map">
+		<include refid="pageHeader"/>
+		<include refid="wizitSubDevMismatchList_sql"/>
+		<include refid="pageFooter"/>
+	</select>
+
+	<select id="wizitSubDevMismatchList" parameterType="java.util.Map" resultType="java.util.Map">
+		<include refid="wizitSubDevMismatchList_sql"/>
+	</select>
+
+	<sql id="wizitSubDevMismatchList_sql">
+		select
+			(ROW_NUMBER() OVER(order by w.modem_id)) AS "rownum",
+			w.modem_id        as "modemId",
+			w.dev_no          as "devNo",
+			w.sub_dev_no      as "wizitSubDevNo",
+			d.sub_dev_no      as "cmapSubDevNo",
+			d.point_sq        as "pointSq",
+			p.point_nm        as "pointNm",
+			c.cust_name       as "custNm",
+			c.admin_no        as "custNo"
+		from tb_m1_wizit_modem_info w
+		join tb_m1_cmap_device d on d.dev_no = w.dev_no
+		left join tb_m1_info_point p on p.point_sq = d.point_sq
+		left join tb_m1_info_customer c on c.cust_sq = p.cust_sq
+		where w.sub_dev_no is distinct from d.sub_dev_no
+		<if test='search_dev_no != null and search_dev_no != ""'>
+			and w.dev_no like '%' || #{search_dev_no} || '%'
+		</if>
+		<if test='search_modem_id != null and search_modem_id != ""'>
+			and w.modem_id like '%' || #{search_modem_id} || '%'
+		</if>
+		<if test='search_cust_nm != null and search_cust_nm != ""'>
+			and c.cust_name like '%' || #{search_cust_nm} || '%'
+		</if>
+	</sql>
+
+	<!-- 개별 동기화 백업 -->
+	<insert id="backupCmapSubDevNo" parameterType="java.util.Map">
+		insert into tb_m1_cmap_device_subdev_backup (dev_no, sub_dev_no_old, sub_dev_no_new, point_sq, backup_type)
+		select dev_no, sub_dev_no, #{wizitSubDevNo}, point_sq, 'SYNC'
+		  from tb_m1_cmap_device
+		 where dev_no = #{devNo}
+	</insert>
+
+	<!-- 개별 동기화: cmap_device의 sub_dev_no를 wizit 기준으로 업데이트 -->
+	<update id="syncCmapSubDevNo" parameterType="java.util.Map">
+		update tb_m1_cmap_device
+		   set sub_dev_no = #{wizitSubDevNo}
+		     , upd_dt = now()
+		 where dev_no = #{devNo}
+	</update>
+
+	<!-- 전체 동기화 백업 -->
+	<insert id="backupAllCmapSubDevNo" parameterType="java.util.Map">
+		insert into tb_m1_cmap_device_subdev_backup (dev_no, sub_dev_no_old, sub_dev_no_new, point_sq, backup_type)
+		select d.dev_no, d.sub_dev_no, w.sub_dev_no, d.point_sq, 'SYNC_ALL'
+		  from tb_m1_cmap_device d
+		  join tb_m1_wizit_modem_info w on w.dev_no = d.dev_no
+		 where w.sub_dev_no is distinct from d.sub_dev_no
+	</insert>
+
+	<!-- 전체 동기화: wizit_modem_info 기준으로 cmap_device의 sub_dev_no 일괄 업데이트 -->
+	<update id="syncAllCmapSubDevNo" parameterType="java.util.Map">
+		update tb_m1_cmap_device d
+		   set sub_dev_no = w.sub_dev_no
+		     , upd_dt = now()
+		  from tb_m1_wizit_modem_info w
+		 where w.dev_no = d.dev_no
+		   and w.sub_dev_no is distinct from d.sub_dev_no
+	</update>
+
+	<!-- 개별 되돌리기 -->
+	<update id="restoreCmapSubDevNo" parameterType="java.util.Map">
+		update tb_m1_cmap_device
+		   set sub_dev_no = (
+		       select sub_dev_no_old
+		         from tb_m1_cmap_device_subdev_backup
+		        where backup_sq = #{backupSq} and restored = false
+		       )
+		     , upd_dt = now()
+		 where dev_no = #{devNo}
+	</update>
+
+	<!-- 되돌리기 완료 표시 -->
+	<update id="markRestoredBackup" parameterType="java.util.Map">
+		update tb_m1_cmap_device_subdev_backup
+		   set restored = true, restore_dt = now()
+		 where backup_sq = #{backupSq}
+	</update>
+
+	<!-- 전체 되돌리기: 미복원 백업 전체를 원래 값으로 복원 -->
+	<update id="restoreAllCmapSubDevNo" parameterType="java.util.Map">
+		update tb_m1_cmap_device d
+		   set sub_dev_no = b.sub_dev_no_old
+		     , upd_dt = now()
+		  from tb_m1_cmap_device_subdev_backup b
+		 where b.dev_no = d.dev_no
+		   and b.restored = false
+	</update>
+
+	<!-- 전체 되돌리기 완료 표시 -->
+	<update id="markAllRestoredBackup" parameterType="java.util.Map">
+		update tb_m1_cmap_device_subdev_backup
+		   set restored = true, restore_dt = now()
+		 where restored = false
+	</update>
+
+	<!-- 백업 이력 조회 -->
+	<select id="backupSubDevNoHistory" parameterType="java.util.Map" resultType="java.util.Map">
+		select b.backup_sq    as "backupSq",
+		       b.dev_no       as "devNo",
+		       b.sub_dev_no_old as "subDevNoOld",
+		       b.sub_dev_no_new as "subDevNoNew",
+		       b.backup_dt    as "backupDt",
+		       b.backup_type  as "backupType",
+		       b.restored     as "restored",
+		       c.cust_name    as "custNm",
+		       c.admin_no     as "custNo"
+		  from tb_m1_cmap_device_subdev_backup b
+		  join tb_m1_cmap_device d on d.dev_no = b.dev_no
+		  left join tb_m1_info_point p on p.point_sq = d.point_sq
+		  left join tb_m1_info_customer c on c.cust_sq = p.cust_sq
+		 where b.restored = false
+		 order by b.backup_dt desc
+	</select>
+
     
     
     <select id="newPointList" parameterType="java.util.Map" resultType="java.util.Map">
@@ -4567,9 +4925,267 @@
     </select>
 	
 	<select id="newPointList_paging" parameterType="java.util.Map" resultType="java.util.Map">
-      <include refid="pageHeader"/>      
-      <include refid="newPointList_sql"/>      
-      <include refid="pageFooter"/>           
+	WITH base_points AS (
+		SELECT
+			a.point_sq,
+			a.site_sq,
+			a.blk_sq,
+			a.cust_sq,
+			a.use_cd,
+			a.loc_lng,
+			a.loc_lat,
+			a.p_remark,
+			a.ins_dt,
+			a.upd_dt,
+			a.inform_cd,
+			a.send_cd,
+			a.send_dt,
+			c.set_years,
+			c.admin_no,
+			c.cust_name,
+			c.addr,
+			c.addr_new,
+			c.meter_no,
+			c.business_name,
+			c.pipe_diameter,
+			c.read_responsi,
+			c.check_day,
+			c.cust_phone,
+			c.img_src_gum,
+			c.img_src_bf,
+			c.img_src_af,
+			c.img_src_add,
+			c.note,
+			k3.blk_nm,
+			s3.site_nm,
+			dev.ami_type,
+			dev.dev_no,
+			dev.sub_dev_no,
+			dev.ins_dt as dev_ins_dt,
+			dev.company_sq as dev_company_sq,
+			com1.company_sq,
+			com1.company_nm,
+			com1.company_cd,
+			ROW_NUMBER() OVER(
+				<choose>
+					<when test="sortField != null">
+						ORDER BY "${sortField}" <if test="sortOrder != null"> ${sortOrder} </if>
+					</when>
+					<otherwise>
+						ORDER BY a.point_sq
+					</otherwise>
+				</choose>
+			) as rn,
+			COUNT(*) OVER() as total_count
+		FROM
+			tb_m1_info_point a
+			LEFT JOIN tb_m1_info_customer c ON c.cust_sq = a.cust_sq
+			LEFT JOIN tb_m1_info_block k3 ON k3.blk_sq = a.blk_sq
+			LEFT JOIN vi_m1_sv_site_list s3 ON s3.site_sq = a.site_sq
+			LEFT JOIN tb_m1_cmap_device dev ON dev.point_sq = a.point_sq
+			LEFT JOIN tb_m1_info_company com1 ON com1.company_sq = dev.company_sq
+		WHERE 1=1
+		<choose>
+			<when test="upSiteSq != null and lv != null">
+				 and a.site_sq in (
+				    select site_sq from fn_prj_sites(#{upSiteSq}::integer, #{lv}::integer)
+				 )
+			</when>
+			<when test="siteSq != null">
+				 and a.site_sq = #{siteSq}::integer
+			</when>
+		</choose>
+		<choose>
+			<when test="upBlkSq != null and lv != null">
+				 and k3.blk_sq in (
+				    select blk_sq from fn_prj_blockes(#{upBlkSq}::integer, #{lv}::integer)
+				 )
+			</when>
+			<when test="blkSq != null and blkSq != -2">
+				 and k3.blk_sq = #{blkSq}::integer
+			</when>
+			<when test="blkSq != null and blkSq == -2">
+				 and k3.blk_sq IS NULL
+			</when>
+		</choose>
+		<choose>
+			<when test="comSq != null and comSq != -2">
+			and com1.company_sq = #{comSq}::integer
+			</when>
+			<when test="comSq != null and comSq == -2">
+			and com1.company_sq IS NULL
+			</when>
+		</choose>
+		<choose>
+			<when test="amiType != null and !amiType.equals('-2')">
+			and dev.ami_type = #{amiType}
+			</when>
+			<when test="amiType != null and amiType.equals('-2')">
+			and dev.ami_type IS NULL
+			</when>
+		</choose>
+		<choose>
+			<when test="readOpr != null and !readOpr.equals('-2')">
+			and c.read_responsi = #{readOpr}
+			</when>
+			<when test="readOpr != null and readOpr.equals('-2')">
+			and c.read_responsi IS NULL
+			</when>
+		</choose>
+		<choose>
+			<when test="chkDay != null and !chkDay.equals('-2')">
+			and c.check_day = #{chkDay}
+			</when>
+			<when test="chkDay != null and chkDay.equals('-2')">
+			and c.check_day IS NULL
+			</when>
+		</choose>
+		<choose>
+			<when test="useType != null and !useType.equals('-2')">
+			and c.business_name = #{useType}
+			</when>
+			<when test="useType != null and useType.equals('-2')">
+			and c.business_name IS NULL
+			</when>
+		</choose>
+		<choose>
+			<when test="setYears != null and !setYears.equals('-2')">
+			and c.set_years = #{setYears}
+			</when>
+			<when test="setYears != null and setYears.equals('-2')">
+			and c.set_years IS NULL
+			</when>
+		</choose>
+		<choose>
+			<when test="pipeDia != null and pipeDia != -2">
+			and c.pipe_diameter = #{pipeDia}::numeric
+			</when>
+			<when test="pipeDia != null and pipeDia == -2">
+			and c.pipe_diameter is null
+			</when>
+		</choose>
+			and a.use_cd = '1'
+		<if test="pointSq != null">
+	    	and a.point_sq = #{pointSq}
+	    </if>
+	    <if test='cust_nm != null and cust_nm != ""'>
+	       and c.cust_name like '%' || #{cust_nm} || '%'
+	    </if>
+	    <if test='admin_no != null and admin_no != ""'>
+	       and c.admin_no like '%' || #{admin_no} || '%'
+	    </if>
+	    <if test='addr != null and addr != ""'>
+	       and (c.addr like '%' || #{addr} || '%'
+	        or  c.addr_new like '%' || #{addr} || '%')
+	    </if>
+	    <if test='meter_no != null and meter_no != ""'>
+	       and (
+			   dev.sub_dev_no like '%' || #{meter_no} || '%'
+			or dev.dev_no like '%' || #{meter_no} || '%'
+			or c.meter_no like '%' || #{meter_no} || '%'
+		   )
+	    </if>
+	    <if test='searchInputP != null and searchInputP != ""'>
+	       and (c.admin_no like '%' || #{searchInputP} || '%'
+		       or  c.cust_name like '%' || #{searchInputP} || '%')
+	    </if>
+	),
+	paged_points AS (
+		SELECT * FROM base_points
+		WHERE rn <![CDATA[>]]> ${rnBottom} AND rn <![CDATA[<=]]> ${rnTop}
+	)
+	SELECT
+		p.rn as "rownum",
+		p.rn as "rownum_",
+		p.point_sq as "pointSq",
+		p.site_sq as "siteSq",
+		p.site_nm as "siteNm0",
+		p.site_nm as "siteNm1",
+		p.site_nm as "siteNm2",
+		p.site_nm as "siteNm",
+		p.blk_sq as "blkSq",
+		p.set_years as "setYears",
+		p.cust_sq as "custSq",
+		p.use_cd as "useCd",
+		case p.use_cd
+		    when '1' then '검침중'
+		    else '검침중지'
+		end "useCdStr",
+		p.check_day as "checkDay",
+		p.admin_no as "adminId",
+		p.cust_name as "custNm",
+		p.addr as "addrOld",
+		p.addr_new as "addrNew",
+		p.meter_no as "meterNo",
+		p.business_name as "useType",
+		p.pipe_diameter as "pipeDia",
+		p.blk_nm as "blkNm1",
+		p.blk_nm as "blkNm2",
+		p.blk_nm as "blkNm",
+		p.read_responsi as "readOpr",
+		p.check_day as "chkDay",
+		p.cust_phone as "custPhone",
+		p.loc_lng as "locLng",
+		p.loc_lat as "locLat",
+		p.dev_ins_dt as "setDt",
+		to_char(p.dev_ins_dt, 'yyyy-mm-dd') as "setDtStr",
+		p.p_remark as "pointRemark",
+		p.ins_dt as "insDt",
+		p.upd_dt as "updDt",
+		b.meas_dt as "measDt",
+		to_char(b.meas_dt, 'yyyy-mm-dd hh24:mi') as "measDtStr",
+		trunc(b.accu_iv) as "accuIv",
+		b.adjst_os as "adjstV",
+		b.stat_cd as "statCd",
+		b.stat_cd as "deviceStatCd",
+		case position('1' in b.stat_cd)
+		    when 1 then '통신 장애'
+		    when 2 then '계량기 장애'
+		    when 3 then 'Q3 초과'
+		    when 4 then '역류'
+		    when 5 then '누수'
+		    when 6 then '정상'
+		    when 7 then '정상'
+		    when 8 then 'BAT'
+		    else '정상'
+		end "statCdStr",
+		p.ami_type as "amiType",
+		p.dev_no as "devNo",
+		p.sub_dev_no as "subDevNo",
+		b.raw_cnt_0d as "rawCnt_0d",
+		b.term_cv_0d as "termCv_0d",
+		b.raw_cnt_1d as "rawCnt_1d",
+		b.term_cv_1d as "termCv_1d",
+		b.raw_cnt_7d as "rawCnt_7d",
+		b.term_cv_7d as "termCv_7d",
+		b.raw_cnt_30d as "rawCnt_30d",
+		b.term_cv_30d as "termCv_30d",
+		b.raw_cnt_90d as "rawCnt_90d",
+		b.term_cv_90d as "termCv_90d",
+		b.delay_rcv as "delayRcv",
+		b.bat2_iv as "bat2Iv",
+		case
+	        when b.bat2_stat = '1' then '장애'
+	        when b.bat2_stat = '0' then '정상'
+	    end "bat2Stat",
+		p.company_sq as "comSq",
+		p.company_nm as "comNm",
+		p.company_cd as "comCd",
+		p.inform_cd as "informCd",
+		p.send_cd as "sendCd",
+		p.send_dt as "sendDt",
+		b.temperature,
+		p.img_src_gum,
+		p.img_src_bf,
+		p.img_src_af,
+		p.img_src_add,
+		p.note,
+		p.total_count as "totalCount",
+		${rnTop} / (${rnTop} - ${rnBottom}) as "pageNo",
+		${rnTop} - ${rnBottom} as "pageSize"
+	FROM paged_points p
+	LEFT JOIN vi_m1_sv_meas_now b ON b.point_sq = p.point_sq
+	ORDER BY p.rn
     </select>
     
 	<sql id="newPointList_sql">
@@ -5316,23 +5932,33 @@
 	</select>
 	<sql id="select_waterLeakList_sql3">
 		<![CDATA[
-			WITH 
-			-- 1단계: client_meas_raw만 빠르게 집계 (파티션 1개)
-			meas_summary AS (
+			WITH
+			-- 1단계: accu_cv 차이로 실제 시간당 사용량(real_term_cv) 계산
+			raw_with_real_term AS (
 				SELECT
 					r.point_sq,
-					MAX(r.meas_dt) AS max_meas_dt,
-					MIN(r.meas_dt) AS min_meas_dt,
-					MAX(r.term_cv) AS max_term_cv,
-					MIN(r.term_cv) AS min_term_cv,
-					MAX(r.stat_cd) AS stat_cd
+					r.meas_dt,
+					r.stat_cd,
+					r.accu_cv - lag(r.accu_cv) OVER (PARTITION BY r.point_sq ORDER BY r.meas_dt) AS real_term_cv
 				FROM client_meas_raw r
-				WHERE r.meas_dt >= NOW() - interval '72 hour'
+				WHERE r.meas_dt >= NOW() - interval '73 hour'
 				  AND r.meas_dt < NOW()
-				  AND r.term_cv IS NOT NULL
-				GROUP BY r.point_sq
 			),
-			-- 2단계: meas_summary의 point만 고객 조회 (수백 건)
+			-- 2단계: 72시간 내 실제 term_cv로 집계
+			meas_summary AS (
+				SELECT
+					point_sq,
+					MAX(meas_dt) AS max_meas_dt,
+					MIN(meas_dt) AS min_meas_dt,
+					MAX(real_term_cv) AS max_term_cv,
+					MIN(real_term_cv) AS min_term_cv,
+					MAX(stat_cd) AS stat_cd
+				FROM raw_with_real_term
+				WHERE real_term_cv IS NOT NULL
+				  AND meas_dt >= NOW() - interval '72 hour'
+				GROUP BY point_sq
+			),
+			-- 3단계: meas_summary의 point만 고객 조회
 			customer_filtered AS (
 				SELECT
 					p.point_sq,
@@ -5349,14 +5975,12 @@
 					c.cust_phone, 
 					c.remark,
 					COALESCE(
-						-- 정확 또는 가장 가까운(작은) 구경의 룰
 						(SELECT leak_rule 
 						 FROM tb_m1_rule_waterleak 
 						 WHERE business_name = c.business_name 
 						   AND pipe_diameter <= c.pipe_diameter 
 						 ORDER BY pipe_diameter DESC 
 						 LIMIT 1),
-						-- 기타 룰
 						(SELECT leak_rule 
 						 FROM tb_m1_rule_waterleak 
 						 WHERE business_name = '기타' 
@@ -5370,7 +5994,7 @@
 					SELECT 1 FROM meas_summary ms WHERE ms.point_sq = p.point_sq
 				)
 			),
-			-- 3단계: 누수 필터링 (최소값 비교)
+			-- 4단계: 누수 필터링 (최소값 비교)
 			leak_suspects AS (
 				SELECT
 					cf.*,
@@ -5383,7 +6007,18 @@
 				JOIN meas_summary ms ON ms.point_sq = cf.point_sq
 				WHERE ms.min_term_cv > cf.leak_threshold
 			),
-			-- 4단계: 알림톡 이력 (leak_suspects의 admin_no만)
+			-- 5단계: max/min term_cv 발생 시각 조회
+			term_cv_dates AS (
+				SELECT
+					rt.point_sq,
+					MIN(CASE WHEN rt.real_term_cv = ls.max_term_cv THEN rt.meas_dt END)::timestamp AS max_term_cv_date,
+					MIN(CASE WHEN rt.real_term_cv = ls.min_term_cv THEN rt.meas_dt END)::timestamp AS min_term_cv_date
+				FROM leak_suspects ls
+				JOIN raw_with_real_term rt ON rt.point_sq = ls.point_sq
+				  AND rt.meas_dt >= NOW() - interval '72 hour'
+				GROUP BY rt.point_sq
+			),
+			-- 6단계: 알림톡 이력 (leak_suspects의 admin_no만)
 			alrim AS (
 				SELECT
 					h.admin_no,
@@ -5403,21 +6038,9 @@
 					ls.min_meas_dt::timestamp           AS "min_date",
 					ls.min_meas_dt::timestamp           AS "leak_start_date",
 					ls.max_term_cv                      AS "max_term_cv",
-					(SELECT MIN(r.meas_dt)::timestamp 
-					 FROM client_meas_raw r 
-					 WHERE r.point_sq = ls.point_sq 
-					   AND r.term_cv = ls.max_term_cv
-					   AND r.meas_dt >= NOW() - interval '72 hour'
-					   AND r.meas_dt < NOW()
-					)                                   AS "max_term_cv_date",
+					td.max_term_cv_date                 AS "max_term_cv_date",
 					ls.min_term_cv                      AS "min_term_cv",
-					(SELECT MIN(r.meas_dt)::timestamp 
-					 FROM client_meas_raw r 
-					 WHERE r.point_sq = ls.point_sq 
-					   AND r.term_cv = ls.min_term_cv
-					   AND r.meas_dt >= NOW() - interval '72 hour'
-					   AND r.meas_dt < NOW()
-					)                                   AS "min_term_cv_date",
+					td.min_term_cv_date                 AS "min_term_cv_date",
 					ls.leak_threshold                   AS "leak_threshold",
 					ls.cust_sq                          AS "cust_sq",
 					ls.cust_name                        AS "cust_nm",
@@ -5433,6 +6056,7 @@
 					ls.remark                           AS "remark",
 					al.last_ins_dt::timestamp           AS "last_send_date"
 				FROM leak_suspects ls
+				LEFT JOIN term_cv_dates td ON td.point_sq = ls.point_sq
 				LEFT JOIN alrim al ON al.admin_no = ls.admin_no
 				ORDER BY ls.point_sq
 			) AS t
