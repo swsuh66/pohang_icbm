@@ -151,6 +151,7 @@
 							<i class="ico i-import"></i>Import
 						</button>
 						<button type="button" class="btn dj-btn-outline-green btn-sm" onclick="dataDownload();"><i class="ico i-excel"></i>엑셀다운</button>
+						<button type="button" class="btn dj-btn-outline-red btn-sm" onclick="openDeviceCheckModal();"><i class="fa fa-exclamation-triangle"></i> 단말 점검</button>
 					</div>
 				</div>
 			</div>

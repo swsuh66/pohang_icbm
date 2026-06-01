@@ -1086,6 +1086,7 @@
 				params['cust_phone'] = $('#cust_phone').val();
 				params['startDt'] = $('#startDt').val(); // 제외기간 시작일
 				params['endDt'] = $('#endDt').val(); // 제외기간 종료일
+				params['comSq'] = $('#comSq').val();
 				/*
 				params['stdDate'] = '2025-07-28 00:00:00';
 				params['stdTime'] = '00:00:00';

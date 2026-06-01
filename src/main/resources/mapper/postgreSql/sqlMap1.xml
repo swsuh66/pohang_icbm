@@ -4984,6 +4984,7 @@
 			LEFT JOIN vi_m1_sv_site_list s3 ON s3.site_sq = a.site_sq
 			LEFT JOIN tb_m1_cmap_device dev ON dev.point_sq = a.point_sq
 			LEFT JOIN tb_m1_info_company com1 ON com1.company_sq = dev.company_sq
+			LEFT JOIN vi_m1_sv_meas_now meas ON meas.point_sq = a.point_sq
 		WHERE 1=1
 		<choose>
 			<when test="upSiteSq != null and lv != null">
@@ -5065,6 +5066,9 @@
 			</when>
 		</choose>
 			and a.use_cd = '1'
+		<if test="statCd != null">
+			and position('1' in meas.stat_cd) = #{statCd}::integer
+		</if>
 		<if test="pointSq != null">
 	    	and a.point_sq = #{pointSq}
 	    </if>
@@ -5974,6 +5978,7 @@
 					c.read_responsi, 
 					c.cust_phone, 
 					c.remark,
+					d.company_sq,
 					COALESCE(
 						(SELECT leak_rule 
 						 FROM tb_m1_rule_waterleak 
@@ -5990,6 +5995,7 @@
 					) AS leak_threshold
 				FROM tb_m1_info_customer c
 				JOIN tb_m1_info_point p ON c.cust_sq = p.cust_sq
+				LEFT JOIN tb_m1_cmap_device d ON d.point_sq = p.point_sq
 				WHERE EXISTS (
 					SELECT 1 FROM meas_summary ms WHERE ms.point_sq = p.point_sq
 				)
@@ -6054,7 +6060,8 @@
 					ls.read_responsi                    AS "read_responsi",
 					ls.cust_phone                       AS "cust_phone",
 					ls.remark                           AS "remark",
-					al.last_ins_dt::timestamp           AS "last_send_date"
+					al.last_ins_dt::timestamp           AS "last_send_date",
+					ls.company_sq                       AS "comSq"
 				FROM leak_suspects ls
 				LEFT JOIN term_cv_dates td ON td.point_sq = ls.point_sq
 				LEFT JOIN alrim al ON al.admin_no = ls.admin_no
@@ -6096,6 +6103,15 @@
 				AND t."read_responsi" ILIKE '%' || #{read_responsi} || '%'
 				]]>
 			</if>
+
+			<!-- 단말회사 comSq -> 컬럼 별칭 "comSq" -->
+			<choose>
+				<when test="comSq != null and comSq != -1 and comSq != '-1'">
+				<![CDATA[
+				AND t."comSq" = #{comSq}::integer
+				]]>
+				</when>
+			</choose>
 
 			<!-- 최종 발신일 필터: 입력한 날짜 이전(또는 발신 이력 없음)만 조회 -->
 			<if test="last_send_dt != null and last_send_dt != ''">

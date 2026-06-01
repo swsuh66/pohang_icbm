@@ -168,13 +168,22 @@
                         --></select>
 					</div>
 				</div>
-				<div class="col-12 col-sm-6 col-md-4 col-lg-3 col-xl-2">
-					<div class="dj-input-group">
-						<span class="info componentsFont">검침원</span>
-						<input type="text" class="componentsSelect" id="read_responsi" onKeypress="javascript:if(event.keyCode == 13) { parent.searchGrid(); }" />
-					</div>
+			<div class="col-12 col-sm-6 col-md-4 col-lg-3 col-xl-2">
+				<div class="dj-input-group">
+					<span class="info componentsFont">검침원</span>
+					<input type="text" class="componentsSelect" id="read_responsi" onKeypress="javascript:if(event.keyCode == 13) { parent.searchGrid(); }" />
 				</div>
 			</div>
+			<div class="col-12 col-sm-6 col-md-4 col-lg-3 col-xl-2">
+				<div class="dj-input-group">
+					<span class="info componentsFont">단말회사</span>
+					<select data-placeholder="전체" class="componentsSelect" id="comSq" name="comSq"
+							onchange="baseComponentChangHandler(this);">
+						<option value="-1" selected>전체</option>
+					</select>
+				</div>
+			</div>
+		</div>
 			<div class="row" style="margin-top: 5px">
 				<div class="col-12 col-sm-12 col-md-8 col-lg-6 col-xl-4">
 					<div class="dj-input-group">
