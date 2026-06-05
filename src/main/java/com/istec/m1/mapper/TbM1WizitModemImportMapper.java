@@ -14,4 +14,7 @@ public interface TbM1WizitModemImportMapper {
     int updateWizitModem(Map<String, Object> map);
 
     TbM1WizitModemInfoImportDto selectById(String modemId);
+
+    int existsModemId(String modemId);
+    String selectModemIdByDevNo(String devNo);
 }

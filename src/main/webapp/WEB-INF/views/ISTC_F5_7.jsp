@@ -518,6 +518,7 @@
 	 * ============================================ */
 	var deviceCheckData = [];
 	var backupHistoryData = [];
+	var dcShowAll = false;
 
 	function openDeviceCheckModal() {
 		var modalHtml = ''
@@ -538,6 +539,15 @@
 			+ '<input id="dcSearchModemId" type="text" placeholder="모뎀ID" style="padding:6px 10px;font-size:12px;border:1px solid #d1d5db;border-radius:6px;width:140px;outline:none;" onkeydown="if(event.keyCode===13)searchDeviceCheck();" />'
 			+ '<button type="button" style="padding:6px 14px;font-size:12px;font-weight:500;border:none;background:#2563eb;color:#fff;border-radius:6px;cursor:pointer;" onmouseover="this.style.background=\'#1d4ed8\'" onmouseout="this.style.background=\'#2563eb\'" onclick="searchDeviceCheck();"><i class="fa fa-search" style="margin-right:3px;"></i>조회</button>'
 			+ '<button type="button" style="padding:6px 14px;font-size:12px;font-weight:500;border:1px solid #d1d5db;background:#fff;color:#374151;border-radius:6px;cursor:pointer;" onmouseover="this.style.background=\'#f9fafb\'" onmouseout="this.style.background=\'#fff\'" onclick="resetDeviceCheckSearch();"><i class="fa fa-redo" style="margin-right:3px;"></i>초기화</button>'
+			+ '<div style="margin-left:auto;display:flex;align-items:center;gap:6px;">'
+			+ '<span style="font-size:11px;color:#6b7280;">불일치만</span>'
+			+ '<label id="dcToggleLabel" style="position:relative;display:inline-block;width:36px;height:20px;margin:0;cursor:pointer;">'
+			+ '<input id="dcToggleAll" type="checkbox" style="opacity:0;width:0;height:0;" onchange="toggleDeviceCheckAll(this);" />'
+			+ '<span style="position:absolute;top:0;left:0;right:0;bottom:0;background:#2563eb;border-radius:10px;transition:background 0.2s;"></span>'
+			+ '<span id="dcToggleKnob" style="position:absolute;top:2px;left:2px;width:16px;height:16px;background:#fff;border-radius:50%;transition:transform 0.2s;"></span>'
+			+ '</label>'
+			+ '<span style="font-size:11px;color:#6b7280;">전체</span>'
+			+ '</div>'
 			+ '</div>'
 			/* 바디 */
 			+ '<div id="deviceCheckBody" style="padding:20px 24px;overflow-y:auto;flex:1;background:#f9fafb;">'
@@ -564,11 +574,27 @@
 		searchDeviceCheck();
 	}
 
+	function toggleDeviceCheckAll(el) {
+		dcShowAll = el.checked;
+		var knob = document.getElementById('dcToggleKnob');
+		var label = document.getElementById('dcToggleLabel');
+		var slider = label.querySelector('span:first-of-type');
+		if (dcShowAll) {
+			knob.style.transform = 'translateX(16px)';
+			slider.style.background = '#16a34a';
+		} else {
+			knob.style.transform = 'translateX(0)';
+			slider.style.background = '#2563eb';
+		}
+		searchDeviceCheck();
+	}
+
 	function searchDeviceCheck() {
 		var params = {
 			search_dev_no: ($('#dcSearchDevNo').val() || '').trim(),
 			search_cust_nm: ($('#dcSearchCustNm').val() || '').trim(),
-			search_modem_id: ($('#dcSearchModemId').val() || '').trim()
+			search_modem_id: ($('#dcSearchModemId').val() || '').trim(),
+			mismatch_only: dcShowAll ? 'N' : 'Y'
 		};
 
 		$('#deviceCheckBody').html(
@@ -618,47 +644,82 @@
 			return;
 		}
 
-		var html = ''
-			+ '<div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;">'
-			+ '<div style="display:flex;align-items:center;gap:10px;">'
-			+ '<i class="fa fa-exclamation-triangle" style="color:#d97706;font-size:14px;"></i>'
-			+ '<span style="font-size:13px;color:#92400e;">부번호 불일치 <strong style="color:#dc2626;">' + list.length + '건</strong> &mdash; 동기화 시 서버 값이 위지트 값으로 변경됩니다.</span>'
-			+ '</div>'
-			+ '<button type="button" style="padding:5px 12px;font-size:11px;font-weight:500;border:1px solid #16a34a;background:#fff;color:#16a34a;border-radius:5px;cursor:pointer;white-space:nowrap;" onmouseover="this.style.background=\'#f0fdf4\'" onmouseout="this.style.background=\'#fff\'" onclick="downloadMismatchExcel();"><i class="fa fa-file-excel" style="margin-right:4px;"></i>엑셀 다운로드</button>'
-			+ '</div>';
+		var mismatchCnt = 0;
+		var matchCnt = 0;
+		for (var k = 0; k < list.length; k++) {
+			if (list[k].mismatch === 'Y') mismatchCnt++;
+			else matchCnt++;
+		}
+
+		var html = '';
+		if (dcShowAll) {
+			html += '<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;">'
+				+ '<div style="display:flex;align-items:center;gap:10px;">'
+				+ '<i class="fa fa-list" style="color:#2563eb;font-size:14px;"></i>'
+				+ '<span style="font-size:13px;color:#1e40af;">전체 <strong>' + list.length + '건</strong> (일치 <strong style="color:#16a34a;">' + matchCnt + '</strong> / 불일치 <strong style="color:#dc2626;">' + mismatchCnt + '</strong>)</span>'
+				+ '</div>'
+				+ '<button type="button" style="padding:5px 12px;font-size:11px;font-weight:500;border:1px solid #16a34a;background:#fff;color:#16a34a;border-radius:5px;cursor:pointer;white-space:nowrap;" onmouseover="this.style.background=\'#f0fdf4\'" onmouseout="this.style.background=\'#fff\'" onclick="downloadMismatchExcel();"><i class="fa fa-file-excel" style="margin-right:4px;"></i>엑셀 다운로드</button>'
+				+ '</div>';
+		} else {
+			html += '<div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;">'
+				+ '<div style="display:flex;align-items:center;gap:10px;">'
+				+ '<i class="fa fa-exclamation-triangle" style="color:#d97706;font-size:14px;"></i>'
+				+ '<span style="font-size:13px;color:#92400e;">부번호 불일치 <strong style="color:#dc2626;">' + list.length + '건</strong> &mdash; 동기화 시 서버 값이 위지트 값으로 변경됩니다.</span>'
+				+ '</div>'
+				+ '<button type="button" style="padding:5px 12px;font-size:11px;font-weight:500;border:1px solid #16a34a;background:#fff;color:#16a34a;border-radius:5px;cursor:pointer;white-space:nowrap;" onmouseover="this.style.background=\'#f0fdf4\'" onmouseout="this.style.background=\'#fff\'" onclick="downloadMismatchExcel();"><i class="fa fa-file-excel" style="margin-right:4px;"></i>엑셀 다운로드</button>'
+				+ '</div>';
+		}
 
 		html += '<div style="border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;">';
 		html += '<table style="width:100%;border-collapse:collapse;font-size:12px;">';
 		html += '<thead><tr style="background:#f9fafb;">';
 		html += '<th style="padding:10px 8px;text-align:center;font-weight:600;color:#6b7280;border-bottom:1px solid #e5e7eb;width:38px;">No</th>';
+		if (dcShowAll) html += '<th style="padding:10px 8px;text-align:center;font-weight:600;color:#6b7280;border-bottom:1px solid #e5e7eb;width:50px;">상태</th>';
 		html += '<th style="padding:10px 8px;font-weight:600;color:#6b7280;border-bottom:1px solid #e5e7eb;">수용가</th>';
 		html += '<th style="padding:10px 8px;font-weight:600;color:#6b7280;border-bottom:1px solid #e5e7eb;">주번호</th>';
 		html += '<th style="padding:10px 8px;font-weight:600;color:#6b7280;border-bottom:1px solid #e5e7eb;"><i class="fa fa-building" style="color:#7c3aed;margin-right:4px;font-size:10px;"></i>위지트</th>';
 		html += '<th style="padding:10px 8px;font-weight:600;color:#6b7280;border-bottom:1px solid #e5e7eb;"><i class="fa fa-server" style="color:#2563eb;margin-right:4px;font-size:10px;"></i>서버</th>';
-		html += '<th style="padding:10px 8px;font-weight:600;color:#6b7280;border-bottom:1px solid #e5e7eb;"><i class="fa fa-arrow-right" style="color:#16a34a;margin-right:4px;font-size:10px;"></i>동기화 후</th>';
-		html += '<th style="padding:10px 8px;text-align:center;font-weight:600;color:#6b7280;border-bottom:1px solid #e5e7eb;width:60px;">조치</th>';
+		if (!dcShowAll) {
+			html += '<th style="padding:10px 8px;font-weight:600;color:#6b7280;border-bottom:1px solid #e5e7eb;"><i class="fa fa-arrow-right" style="color:#16a34a;margin-right:4px;font-size:10px;"></i>동기화 후</th>';
+			html += '<th style="padding:10px 8px;text-align:center;font-weight:600;color:#6b7280;border-bottom:1px solid #e5e7eb;width:60px;">조치</th>';
+		}
 		html += '</tr></thead><tbody>';
 
 		for (var i = 0; i < list.length; i++) {
 			var item = list[i];
-			var bgColor = (i % 2 === 0) ? '#fff' : '#f9fafb';
-			html += '<tr style="background:' + bgColor + ';" onmouseover="this.style.background=\'#f0f9ff\'" onmouseout="this.style.background=\'' + bgColor + '\'">';
+			var isMismatch = (item.mismatch === 'Y');
+			var bgColor = isMismatch ? ((i % 2 === 0) ? '#fff' : '#fef2f2') : ((i % 2 === 0) ? '#fff' : '#f9fafb');
+			var hoverColor = isMismatch ? '#fef2f2' : '#f0f9ff';
+			html += '<tr style="background:' + bgColor + ';" onmouseover="this.style.background=\'' + hoverColor + '\'" onmouseout="this.style.background=\'' + bgColor + '\'">';
 			html += '<td style="padding:9px 8px;text-align:center;color:#9ca3af;border-bottom:1px solid #f3f4f6;">' + (i + 1) + '</td>';
+			if (dcShowAll) {
+				if (isMismatch) {
+					html += '<td style="padding:9px 8px;text-align:center;border-bottom:1px solid #f3f4f6;"><span style="background:#fef2f2;color:#dc2626;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:600;">불일치</span></td>';
+				} else {
+					html += '<td style="padding:9px 8px;text-align:center;border-bottom:1px solid #f3f4f6;"><span style="background:#f0fdf4;color:#16a34a;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:600;">일치</span></td>';
+				}
+			}
 			html += '<td style="padding:9px 8px;border-bottom:1px solid #f3f4f6;"><span style="font-weight:500;color:#111827;">' + (item.custNm || '-') + '</span><br><span style="font-size:10px;color:#9ca3af;">' + (item.custNo || '') + '</span></td>';
 			html += '<td style="padding:9px 8px;border-bottom:1px solid #f3f4f6;"><code style="background:#f3f4f6;padding:2px 6px;border-radius:3px;font-size:11px;color:#374151;">' + (item.devNo || '-') + '</code></td>';
 			html += '<td style="padding:9px 8px;border-bottom:1px solid #f3f4f6;"><span style="background:#f5f3ff;color:#6d28d9;padding:3px 8px;border-radius:4px;font-size:11px;font-family:monospace;">' + (item.wizitSubDevNo || '-') + '</span></td>';
 			html += '<td style="padding:9px 8px;border-bottom:1px solid #f3f4f6;"><span style="background:#eff6ff;color:#1d4ed8;padding:3px 8px;border-radius:4px;font-size:11px;font-family:monospace;">' + (item.cmapSubDevNo || '-') + '</span></td>';
-			html += '<td style="padding:9px 8px;border-bottom:1px solid #f3f4f6;"><span style="background:#f0fdf4;color:#15803d;padding:3px 8px;border-radius:4px;font-size:11px;font-family:monospace;"><i class="fa fa-check" style="font-size:9px;margin-right:3px;color:#22c55e;"></i>' + (item.wizitSubDevNo || '-') + '</span></td>';
-			html += '<td style="padding:9px 8px;text-align:center;border-bottom:1px solid #f3f4f6;">'
-				+ '<button style="padding:5px 10px;font-size:11px;border:none;background:#2563eb;color:#fff;border-radius:5px;cursor:pointer;" onmouseover="this.style.background=\'#1d4ed8\'" onmouseout="this.style.background=\'#2563eb\'" onclick="confirmSyncOne(' + i + ');">'
-				+ '<i class="fa fa-sync-alt"></i></button></td>';
+			if (!dcShowAll) {
+				html += '<td style="padding:9px 8px;border-bottom:1px solid #f3f4f6;"><span style="background:#f0fdf4;color:#15803d;padding:3px 8px;border-radius:4px;font-size:11px;font-family:monospace;"><i class="fa fa-check" style="font-size:9px;margin-right:3px;color:#22c55e;"></i>' + (item.wizitSubDevNo || '-') + '</span></td>';
+				html += '<td style="padding:9px 8px;text-align:center;border-bottom:1px solid #f3f4f6;">'
+					+ '<button style="padding:5px 10px;font-size:11px;border:none;background:#2563eb;color:#fff;border-radius:5px;cursor:pointer;" onmouseover="this.style.background=\'#1d4ed8\'" onmouseout="this.style.background=\'#2563eb\'" onclick="confirmSyncOne(' + i + ');">'
+					+ '<i class="fa fa-sync-alt"></i></button></td>';
+			}
 			html += '</tr>';
 		}
 
 		html += '</tbody></table></div>';
 		body.html(html);
 		$('#deviceCheckFooter').css('display','flex');
-		$('#deviceCheckCount').html('<i class="fa fa-info-circle" style="color:#9ca3af;"></i> 총 <strong>' + list.length + '</strong>건 불일치');
+		if (dcShowAll) {
+			$('#deviceCheckCount').html('<i class="fa fa-info-circle" style="color:#9ca3af;"></i> 전체 <strong>' + list.length + '</strong>건 (불일치 <strong style="color:#dc2626;">' + mismatchCnt + '</strong>건)');
+		} else {
+			$('#deviceCheckCount').html('<i class="fa fa-info-circle" style="color:#9ca3af;"></i> 총 <strong>' + list.length + '</strong>건 불일치');
+		}
 	}
 
 	function confirmSyncOne(idx) {

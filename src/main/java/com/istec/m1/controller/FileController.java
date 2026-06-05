@@ -435,6 +435,38 @@ public class FileController {
 		//return "처리 중 오류 발생: " + msg.substring(0, Math.min(100, msg.length())) + "...";
 	}
 
+	@RequestMapping(value = "/file/check_wizit", method = RequestMethod.POST)
+	@ResponseBody
+	public Map<String, Object> checkWizitModemExcel(
+			@RequestParam("file") MultipartFile file,
+			@RequestParam(value = "mode", defaultValue = "insert") String mode,
+			HttpServletRequest request,
+			HttpServletResponse response) {
+
+		Map<String, Object> result = new HashMap<>();
+
+		try {
+			List<Map<String, Object>> errors = fileService.validateWizitModemExcel(file, mode);
+
+			response.setStatus(StatusCode.STATUS_OK.getValue());
+			result.put("status", "success");
+			result.put("errParam", errors);
+
+			if (errors.isEmpty()) {
+				result.put("message", "검증 완료: 문제 없음 (" + mode + " 가능)");
+			} else {
+				result.put("message", "검증 완료: " + errors.size() + "건의 문제 발견");
+			}
+		} catch (Exception e) {
+			response.setStatus(StatusCode.STATUS_INTERNAL_SERVER_ERROR.getValue());
+			result.put("status", "error");
+			result.put("message", "검증 실패: " + e.getMessage());
+			e.printStackTrace();
+		}
+
+		return result;
+	}
+
 	@RequestMapping(value = "/file/insert_wizit", method = RequestMethod.POST)
 	@ResponseBody
 	public Map<String, Object> insertWizitModemFromExcel(
@@ -473,7 +505,7 @@ public class FileController {
 			// 모든 일반 예외 처리
 			response.setStatus(StatusCode.STATUS_INTERNAL_SERVER_ERROR.getValue());
 			result.put("status", "error");
-			result.put("details", getSimpleErrorMessage(e.getMessage())); 
+			result.put("message", getSimpleErrorMessage(e.getMessage())); 
 			log.error("Exception : " + e.getMessage());
 			e.printStackTrace();
 		}
@@ -514,7 +546,7 @@ public class FileController {
 			// 모든 일반 예외 처리
 			response.setStatus(StatusCode.STATUS_INTERNAL_SERVER_ERROR.getValue());
 			result.put("status", "error");
-			result.put("details", getSimpleErrorMessage(e.getMessage())); 
+			result.put("message", getSimpleErrorMessage(e.getMessage())); 
 			e.printStackTrace();
 		}
 

@@ -21,6 +21,8 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.HashSet;
 import java.util.UUID;
 
 import javax.servlet.ServletOutputStream;
@@ -677,7 +679,103 @@ public class FileService {
 		return true;
 	}
 
-	@Transactional(timeout = 900) // 15분
+	/**
+	 * 위지트 모뎀 엑셀 데이터 사전 검증 (DB 변경 없음)
+	 * @param mode "insert" 또는 "update"
+	 */
+	public List<Map<String, Object>> validateWizitModemExcel(MultipartFile file, String mode) throws Exception {
+		List<Map<String, Object>> errors = new ArrayList<>();
+		Set<String> excelModemIds = new HashSet<>();
+		Set<String> excelDevNos = new HashSet<>();
+
+		try (InputStream in = file.getInputStream();
+			Workbook workbook = WorkbookFactory.create(in)) {
+
+			Sheet sheet = workbook.getSheetAt(0);
+			int lastRowNum = sheet.getLastRowNum();
+
+			for (int i = 1; i <= lastRowNum; i++) {
+				Row row = sheet.getRow(i);
+				if (isRowEmpty(row)) break;
+
+				int j = 0;
+				Integer dataSq = getInteger(row, j++);
+				if (dataSq == null) break;
+
+				String modemId = getString(row, j++);
+				String deviceNo = getString(row, j++);
+				String subDeviceNo = getString(row, j++);
+				String meterId = getString(row, j++);
+				String IMEI = getString(row, j++);
+				String IMSI = getString(row, j++);
+
+				List<String> rowErrors = new ArrayList<>();
+
+				// 필수값 검증
+				if (modemId == null || modemId.isEmpty()) {
+					rowErrors.add("모뎀ID 비어있음");
+				}
+				if (IMEI == null || IMEI.isEmpty()) {
+					rowErrors.add("IMEI 비어있음");
+				}
+				if (IMSI == null || IMSI.isEmpty()) {
+					rowErrors.add("IMSI 비어있음");
+				}
+
+				// 엑셀 내 중복 검증
+				if (modemId != null && !modemId.isEmpty()) {
+					if (excelModemIds.contains(modemId)) {
+						rowErrors.add("엑셀 내 모뎀ID 중복: " + modemId);
+					}
+					excelModemIds.add(modemId);
+				}
+				if (deviceNo != null && !deviceNo.isEmpty()) {
+					if (excelDevNos.contains(deviceNo)) {
+						rowErrors.add("엑셀 내 주번호(dev_no) 중복: " + deviceNo);
+					}
+					excelDevNos.add(deviceNo);
+				}
+
+				// DB 검증
+				if (modemId != null && !modemId.isEmpty()) {
+					int exists = tbM1WizitModemImportMapper.existsModemId(modemId);
+
+					if ("insert".equals(mode)) {
+						if (exists > 0) {
+							rowErrors.add("이미 등록된 모뎀ID: " + modemId);
+						}
+					} else if ("update".equals(mode)) {
+						if (exists == 0) {
+							rowErrors.add("DB에 존재하지 않는 모뎀ID: " + modemId);
+						}
+					}
+				}
+
+				// dev_no UNIQUE 제약 검증
+				if (deviceNo != null && !deviceNo.isEmpty()) {
+					String owner = tbM1WizitModemImportMapper.selectModemIdByDevNo(deviceNo);
+					if (owner != null && !owner.equals(modemId)) {
+						rowErrors.add("주번호(dev_no) '" + deviceNo + "'이(가) 다른 모뎀(" + owner + ")에 할당됨");
+					}
+				}
+
+				if (!rowErrors.isEmpty()) {
+					Map<String, Object> errItem = new HashMap<>();
+					errItem.put("row", i + 1);
+					errItem.put("modemId", modemId != null ? modemId : "");
+					errItem.put("devNo", deviceNo != null ? deviceNo : "");
+					errItem.put("errors", String.join(", ", rowErrors));
+					errors.add(errItem);
+				}
+			}
+		} catch (IOException e) {
+			throw new Exception("엑셀 파일 읽기 실패: " + e.getMessage(), e);
+		}
+
+		return errors;
+	}
+
+	@Transactional(timeout = 900, rollbackFor = Exception.class)
 	public void insertWizitModemFromExcel(
 		MultipartFile file, 
 		int upsitesq, 
@@ -744,7 +842,7 @@ public class FileService {
 		}
 	}
 
-	@Transactional
+	@Transactional(rollbackFor = Exception.class)
 	public void updateWizitModemFromExcel(
 		MultipartFile file, 
 		int upsitesq, 

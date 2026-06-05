@@ -143,10 +143,6 @@
 							type="button"
 							onclick="openModal();"
 							class="btn btn-sm dj-btn-outline-primary"
-							data-toggle="dropdown"
-							data-display="static"
-							aria-haspopup="true"
-							aria-expanded="false"
 						>
 							<i class="ico i-import"></i>Import
 						</button>

@@ -30,6 +30,16 @@
         WHERE modem_id = #{modemId}
     </select>
     
+    <!-- 검증용: 모뎀ID 존재 여부 -->
+    <select id="existsModemId" parameterType="java.lang.String" resultType="int">
+        SELECT COUNT(*) FROM tb_m1_wizit_modem_info WHERE modem_id = #{modemId}
+    </select>
+
+    <!-- 검증용: dev_no 소유자 조회 (다른 모뎀이 사용 중인지) -->
+    <select id="selectModemIdByDevNo" parameterType="java.lang.String" resultType="java.lang.String">
+        SELECT modem_id FROM tb_m1_wizit_modem_info WHERE dev_no = #{devNo} LIMIT 1
+    </select>
+
     <!-- 데이터 삽입 -->
     <insert id="insertImport" parameterType="java.util.Map">
         INSERT INTO tb_m1_wizit_modem_info (

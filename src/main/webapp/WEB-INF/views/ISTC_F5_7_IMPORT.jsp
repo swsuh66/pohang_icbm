@@ -42,6 +42,17 @@
 		else alert('data null');
 	}
 
+	function checkErrorGridSearch(data) {
+		if (!isGridInitialized || !errorExcelGrid) {
+			errorExcelGrid = checkInitGrid('errorExcelGrid');
+			isGridInitialized = true;
+		} else {
+			$('#errorExcelGrid').empty();
+			errorExcelGrid = checkInitGrid('errorExcelGrid');
+		}
+		if (data) errorExcelGrid.finishLoad(data || []);
+	}
+
 	function down() {
 		params = {};
 
@@ -85,8 +96,14 @@
 	}
 
 	function submit2() {
+		var fileInput = document.getElementById('file');
+		if (!fileInput.value) {
+			jAlert.error('알림', '엑셀 파일을 선택해주세요.');
+			return;
+		}
+
 		let formData = new FormData(insertForm);
-		formData.append('isCheck', false); // isCheck 파라미터 추가
+		formData.append('isCheck', false);
 		$('#fileUp').aceWidget('startLoading');
 
 		$.ajax({
@@ -103,16 +120,21 @@
 				$('#gridWindow').show();
 			},
 			error: function (e) {
-				// 오류 발생 시 동작
 				$('#fileUp').aceWidget('stopLoading');
 				console.error(e);
 				const msg = e.responseJSON?.message || '알 수 없는 오류 발생';
-				jAlert.error('오류 발생: ' + msg);
+				jAlert.error('오류', msg);
 			},
 		});
 	}
 
 	function updateSubmit() {
+		var fileInput = document.getElementById('file');
+		if (!fileInput.value) {
+			jAlert.error('알림', '엑셀 파일을 선택해주세요.');
+			return;
+		}
+
 		$('#fileUp').aceWidget('startLoading');
 		
 		$.ajax({
@@ -124,7 +146,6 @@
 			success: function (result) {
 				$('#fileUp').aceWidget('stopLoading');
 				
-				// errParam이 있는 경우 (기존 로직 유지)
 				if (result.errParam && result.errParam.length > 0) {
 					resultParam = result.errParam;
 					errorDataGridSearch(result.errParam);
@@ -132,18 +153,16 @@
 					$('#insertForm').hide();
 					$('#gridWindow').show();
 				} else {
-					// 성공 시 서버에서 반환한 message 사용
 					jAlert.info('정보', result.message || '수정 정보 입력 성공');
 					$('#insertForm').hide();
 					$('#gridWindow').show();
 				}
 			},
 			error: function (e) {
-				// 오류 발생 시 동작
 				$('#fileUp').aceWidget('stopLoading');
 				console.error(e);
 				const msg = e.responseJSON?.message || '알 수 없는 오류 발생';
-				jAlert.error('오류 발생: ' + msg);
+				jAlert.error('오류', msg);
 			},
 		});
 	}
@@ -176,11 +195,86 @@
 		});
 	}
 
+	function checkWizit(mode) {
+		var fileInput = document.getElementById('file');
+		if (!fileInput.value) {
+			jAlert.error('알림', '엑셀 파일을 선택해주세요.');
+			return;
+		}
+
+		var formData = new FormData(insertForm);
+		formData.append('mode', mode);
+		$('#fileUp').aceWidget('startLoading');
+
+		$.ajax({
+			url: 'file/check_wizit',
+			processData: false,
+			contentType: false,
+			data: formData,
+			type: 'POST',
+			success: function (result) {
+				$('#fileUp').aceWidget('stopLoading');
+
+				if (result.errParam && result.errParam.length > 0) {
+					checkErrorGridSearch(result.errParam);
+					jAlert.error('검증 결과', result.message);
+					$('#insertForm').hide();
+					$('#gridWindow').show();
+				} else {
+					jAlert.info('검증 결과', result.message);
+				}
+			},
+			error: function (e) {
+				$('#fileUp').aceWidget('stopLoading');
+				console.error(e);
+				var msg = e.responseJSON?.message || '검증 중 오류 발생';
+				jAlert.error('오류', msg);
+			},
+		});
+	}
+
 	function closeModal() {
 		$('#importContainer').modal('hide');
 		$('#insertForm').show();
 		$('#gridWindow').hide();
 		document.getElementById('file').value = '';
+	}
+
+	/*
+	 * 검증결과 그리드 초기화
+	 */
+	function checkInitGrid(container) {
+		var opt = {
+			height: '100%',
+			width: '100%',
+			sorting: true,
+			pageLoading: true,
+			paging: true,
+			pageSize: 50,
+			pageButtonCount: 5,
+			pagerFormat: '{first} {prev} {pages} {next} {last}    {pageIndex} of {pageCount}',
+			pagePrevText: '이전',
+			pageNextText: '다음',
+			pageFirstText: '처음',
+			pageLastText: '마지막',
+
+			rnTop: 50,
+			rnBottom: 0,
+
+			fields: [
+				{ name: 'row', title: '행번호', type: 'text', align: 'center', width: 60 },
+				{ name: 'modemId', title: '모뎀ID', type: 'text', width: 120 },
+				{ name: 'devNo', title: '주번호', type: 'text', width: 120 },
+				{ name: 'errors', title: '문제 내용', type: 'text', align: 'left', width: 350 },
+			],
+
+			loadStrategy: function () {
+				return new CustomPageLoadingStrategy(this, null);
+			},
+			rowDoubleClick: function (evt) {},
+		};
+
+		return new DataGrid(container, opt);
 	}
 
 	/*
@@ -247,9 +341,10 @@
 			</div>
 		</div>
 		<div class="dj-btn-group">
+			<a class="btn dj-btn-outline-blue btn-sm" onclick="checkWizit('insert');"> 신규체크 </a>
+			<a class="btn dj-btn-outline-blue btn-sm" onclick="checkWizit('update');"> 수정체크 </a>
 			<a class="btn dj-btn-primary btn-sm" onclick="submit2();"> 신규 </a>
 			<a class="btn dj-btn-green btn-sm" onclick="updateSubmit();"> 수정 </a>
-			<!-- <a class="btn dj-btn-outline-green btn-sm" onclick="checkSubmit();"> 체크 </a> -->
 			<a class="btn dj-btn-outline-red btn-sm" onclick="closeModal();"> 닫기 </a>
 		</div>
 	</form>

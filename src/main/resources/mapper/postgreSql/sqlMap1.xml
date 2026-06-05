@@ -4811,12 +4811,16 @@
 			d.point_sq        as "pointSq",
 			p.point_nm        as "pointNm",
 			c.cust_name       as "custNm",
-			c.admin_no        as "custNo"
+			c.admin_no        as "custNo",
+			case when w.sub_dev_no is distinct from d.sub_dev_no then 'Y' else 'N' end as "mismatch"
 		from tb_m1_wizit_modem_info w
 		join tb_m1_cmap_device d on d.dev_no = w.dev_no
 		left join tb_m1_info_point p on p.point_sq = d.point_sq
 		left join tb_m1_info_customer c on c.cust_sq = p.cust_sq
-		where w.sub_dev_no is distinct from d.sub_dev_no
+		where 1=1
+		<if test='mismatch_only == null or mismatch_only == "Y"'>
+			and w.sub_dev_no is distinct from d.sub_dev_no
+		</if>
 		<if test='search_dev_no != null and search_dev_no != ""'>
 			and w.dev_no like '%' || #{search_dev_no} || '%'
 		</if>
@@ -4967,14 +4971,23 @@
 			com1.company_nm,
 			com1.company_cd,
 			ROW_NUMBER() OVER(
+				ORDER BY
 				<choose>
-					<when test="sortField != null">
-						ORDER BY "${sortField}" <if test="sortOrder != null"> ${sortOrder} </if>
-					</when>
-					<otherwise>
-						ORDER BY a.point_sq
-					</otherwise>
+					<when test="sortField == 'custNm'">c.cust_name</when>
+					<when test="sortField == 'adminId'">c.admin_no</when>
+					<when test="sortField == 'addrOld'">c.addr</when>
+					<when test="sortField == 'addrNew'">c.addr_new</when>
+					<when test="sortField == 'custPhone'">c.cust_phone</when>
+					<when test="sortField == 'checkDay'">c.check_day</when>
+					<when test="sortField == 'readOpr'">c.read_responsi</when>
+					<when test="sortField == 'statCd'">meas.stat_cd</when>
+					<when test="sortField == 'deviceStatCd'">meas.stat_cd</when>
+					<when test="sortField == 'measDt'">meas.meas_dt</when>
+					<when test="sortField == 'accuIv'">meas.accu_iv</when>
+					<otherwise>a.point_sq</otherwise>
 				</choose>
+				<if test="sortOrder != null"> ${sortOrder} </if>
+				NULLS LAST
 			) as rn,
 			COUNT(*) OVER() as total_count
 		FROM
