@@ -162,6 +162,11 @@
 		// Brad : 2024.04.30 차트데이터 전체데이터 반영을 위해 주석처리
 		//useChart.setDataSource(result);
 
+	    if (result && result.length > 0 && result[0].statCd) {
+	        var statStr = meterStatCd.getStr(result[0].statCd);
+	        $('#statCdStr').val(statStr);
+	    }
+
 	};
 
 	//2023.10.25 김용희 : 주-부 수용가
