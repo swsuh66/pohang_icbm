@@ -657,9 +657,9 @@
 			  a.p_remark	 as "pointRemark",	-- 비고
 			  a.ins_dt	 as "insDt",	-- 등록일시
 			  a.upd_dt	 as "updDt",	-- 수정일시,
-			  b.meas_dt   as "measDt",
-			  to_char(b.meas_dt, 'yyyy-mm-dd hh24:mi') as "measDtStr",
-			  trunc(b.accu_iv)   as "accuIv",
+			  cc.last_meas_dt   as "measDt",
+			  to_char(cc.last_meas_dt, 'yyyy-mm-dd hh24:mi') as "measDtStr",
+			  trunc(lr.accu_iv)   as "accuIv",
 			  b.adjst_os  as "adjstV",
 			  b.stat_cd   as "statCd",
 		  case position('1' in a.stat_cd)			  
@@ -686,11 +686,11 @@
 			  b.term_cv_30d as "termCv_30d",
 			  b.delay_rcv as "delayRcv",
 			  b.bat2_iv as "bat2Iv",
-			  			  
+			  
 			  case
 		        when b.bat2_stat = '1' then '장애'
-		        when b.bat2_stat = '0' then '정상'		        
-		      end "bat2Stat",			  
+		        when b.bat2_stat = '0' then '정상'
+		      end "bat2Stat",
 
 			  a.company_sq as "comSq",
 		      a.company_nm as "comNm",
@@ -728,6 +728,13 @@
  left outer join tb_m1_wizit_modem_info w on w.dev_no = a.dev_no
  left outer join tb_m1_info_customer c on c.cust_sq = a.cust_sq
   left join leak_suspects ls on ls.point_sq = a.point_sq
+  LEFT JOIN client_customer cc ON cc.point_sq = a.point_sq
+  LEFT JOIN LATERAL (
+      SELECT m.accu_iv
+      FROM client_meas_raw m
+      WHERE m.point_sq = a.point_sq
+      ORDER BY m.meas_dt DESC LIMIT 1
+  ) lr ON TRUE
 		    
   where 1=1	
      	
@@ -5149,9 +5156,9 @@
 		p.p_remark as "pointRemark",
 		p.ins_dt as "insDt",
 		p.upd_dt as "updDt",
-		b.meas_dt as "measDt",
-		to_char(b.meas_dt, 'yyyy-mm-dd hh24:mi') as "measDtStr",
-		trunc(b.accu_iv) as "accuIv",
+		cc.last_meas_dt as "measDt",
+		to_char(cc.last_meas_dt, 'yyyy-mm-dd hh24:mi') as "measDtStr",
+		trunc(lr.accu_iv) as "accuIv",
 		b.adjst_os as "adjstV",
 		b.stat_cd as "statCd",
 		b.stat_cd as "deviceStatCd",
@@ -5202,6 +5209,13 @@
 		${rnTop} - ${rnBottom} as "pageSize"
 	FROM paged_points p
 	LEFT JOIN vi_m1_sv_meas_now b ON b.point_sq = p.point_sq
+	LEFT JOIN client_customer cc ON cc.point_sq = p.point_sq
+	LEFT JOIN LATERAL (
+	    SELECT m.accu_iv
+	    FROM client_meas_raw m
+	    WHERE m.point_sq = p.point_sq
+	    ORDER BY m.meas_dt DESC LIMIT 1
+	) lr ON TRUE
 	ORDER BY p.rn
     </select>
     
@@ -5243,23 +5257,23 @@
 			  a.p_remark	 as "pointRemark",	-- 비고
 			  a.ins_dt	 as "insDt",	-- 등록일시
 			  a.upd_dt	 as "updDt",	-- 수정일시,
-			  b.meas_dt   as "measDt",
-			  to_char(b.meas_dt, 'yyyy-mm-dd hh24:mi') as "measDtStr",
-			  trunc(b.accu_iv)   as "accuIv",
+			  cc.last_meas_dt   as "measDt",
+			  to_char(cc.last_meas_dt, 'yyyy-mm-dd hh24:mi') as "measDtStr",
+			  trunc(lr.accu_iv)   as "accuIv",
 			  b.adjst_os  as "adjstV",
 			  b.stat_cd   as "statCd",
 			  b.stat_cd   as "deviceStatCd",
-			  case position('1' in b.stat_cd)			  
+			  case position('1' in b.stat_cd)
 			      when 1 then '통신 장애'
 			      when 2 then '계량기 장애'
 			      when 3 then 'Q3 초과'
 			      when 4 then '역류'
-			      when 5 then '누수'		      		      
+			      when 5 then '누수'
 			      when 6 then '정상'
 			      when 7 then '정상'
 			      when 8 then 'BAT'
 			      else '정상'
-			  end "statCdStr",		
+			  end "statCdStr",
 			  dev.ami_type as "amiType",
 			  dev.dev_no   as "devNo",
 			  dev.sub_dev_no   as "subDevNo",
@@ -5277,8 +5291,8 @@
 			  b.bat2_iv as "bat2Iv",
 			  case
 		        when b.bat2_stat = '1' then '장애'
-		        when b.bat2_stat = '0' then '정상'		        
-		      end "bat2Stat",			  
+		        when b.bat2_stat = '0' then '정상'
+		      end "bat2Stat",
 			  com1.company_sq as "comSq",
 		      com1.company_nm as "comNm",
 		      com1.company_cd as "comCd",
@@ -5299,6 +5313,13 @@
 		     LEFT JOIN tb_m1_cmap_device dev ON dev.point_sq = a.point_sq
 		     LEFT JOIN tb_m1_info_company com1 ON com1.company_sq = dev.company_sq
 		     LEFT JOIN vi_m1_sv_meas_now b ON b.point_sq = a.point_sq
+		     LEFT JOIN client_customer cc ON cc.point_sq = a.point_sq
+		     LEFT JOIN LATERAL (
+		         SELECT m.accu_iv
+		         FROM client_meas_raw m
+		         WHERE m.point_sq = a.point_sq
+		         ORDER BY m.meas_dt DESC LIMIT 1
+		     ) lr ON TRUE
 		 where 1=1 
 	         <choose>
 				<when test="upSiteSq != null and lv != null">
