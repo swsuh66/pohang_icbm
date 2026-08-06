@@ -1,5 +1,21 @@
 var meterStatCd = {
 
+	getStatus: function(amiErrCode, metErrCode) {
+		if (amiErrCode && amiErrCode.charAt(0) === '1') return { str: '계량기 장애', color: 'orange', image: 'resources/img/marker/box-icon-08-sm.png' };
+
+		if (metErrCode) {
+			var q3 = metErrCode.charAt(0) === '1' ? 1 : 0;
+			var rev = metErrCode.charAt(1) === '1' ? 1 : 0;
+			var leak = metErrCode.charAt(2) === '1' ? 1 : 0;
+
+			if (q3) return { str: 'Q3초과', color: 'primary', image: 'resources/img/marker/box-icon-11-sm.png' };
+			if (rev) return { str: '역류', color: 'success', image: 'resources/img/marker/box-icon-03-sm.png' };
+			if (leak) return { str: '누수', color: 'purple', image: 'resources/img/marker/box-icon-12-sm.png' };
+		}
+
+		return { str: '정상', color: 'info', image: 'resources/img/marker/box-icon-06-sm.png' };
+	},
+
 	info: function(type, statCd) {
 
 		var opt = {
@@ -96,6 +112,19 @@ var meterStatCd = {
 };
 
 var deviceStatCd = {
+
+	getDevStatus: function(amiErrCode, measDt) {
+		var commLost = { str: '통신 장애', color: 'danger', image: 'resources/img/marker/box-icon-07-sm.png' };
+
+		if (!measDt) return commLost;
+
+		var lastDt = new Date(measDt);
+		var now = new Date();
+		var diffDays = (now - lastDt) / (1000 * 60 * 60 * 24);
+		if (diffDays >= 3) return commLost;
+
+		return { str: '정상', color: 'info', image: 'resources/img/marker/box-icon-06-sm.png' };
+	},
 
 	info: function(type, statCd) {
 

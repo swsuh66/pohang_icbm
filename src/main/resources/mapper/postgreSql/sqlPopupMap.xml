@@ -94,7 +94,7 @@
 			  trunc(b.accu_iv)   as "accuIv",
 			  b.adjst_os  as "adjstV",
 			  b.stat_cd   as "statCd",
-			  case position('1' in a.stat_cd)			  
+			  case position('1' in b.stat_cd)			  
 			      when 1 then '통신 장애'
 			      when 2 then '계량기 장애'
 			      when 3 then 'Q3 초과'
@@ -145,6 +145,16 @@
 		    vi_m1_sv_point_list a
 		    left outer join vi_m1_sv_meas_now b on b.POINT_SQ = a.POINT_SQ
 		    left outer join tb_m1_meas_waterleak c on c.point_sq = a.point_sq
+		    <if test="statCd != null">
+		    LEFT JOIN client_customer cc_f ON cc_f.point_sq = a.point_sq
+		    LEFT JOIN LATERAL (
+		        SELECT m.ami_err_code, m.meas_dt as lr_meas_dt
+		        FROM client_meas_raw m
+		        WHERE m.point_sq = a.point_sq
+		          AND m.meas_dt >= COALESCE(cc_f.last_meas_dt, CURRENT_DATE - 3)
+		        ORDER BY m.meas_dt DESC LIMIT 1
+		    ) lr_f ON TRUE
+		    </if>
 		 where 1=1 
 		<!-- 사이트 필터링 (사용자 소속 기반) -->
 		<choose>
@@ -159,12 +169,25 @@
 		</choose>
 		
 		<if test="useCd != null">
-<!-- 	    	and a.use_cd = #{useCd} -->
-	    	and a.use_cd in ('1', '9')
+	    	and a.use_cd = '1'
 	    </if>
 
 		<if test="statCd != null">
-	    	and position('1' in a.stat_cd) = #{statCd}::integer
+			<choose>
+				<when test="statCd == 1">
+					and (lr_f.lr_meas_dt IS NULL OR lr_f.lr_meas_dt &lt; CURRENT_DATE - 3)
+				</when>
+				<when test="statCd == 2">
+					and lr_f.lr_meas_dt IS NOT NULL
+					and lr_f.lr_meas_dt >= CURRENT_DATE - 3
+					and substring(lr_f.ami_err_code, 1, 1) = '1'
+				</when>
+				<when test="statCd == 0">
+					and lr_f.lr_meas_dt IS NOT NULL
+					and lr_f.lr_meas_dt >= CURRENT_DATE - 3
+					and (lr_f.ami_err_code IS NULL OR substring(lr_f.ami_err_code, 1, 1) != '1')
+				</when>
+			</choose>
 	    </if>
 	</sql>
 	

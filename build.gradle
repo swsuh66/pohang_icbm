@@ -6,7 +6,7 @@ plugins {
 }
 
 group = 'com.istec'
-version = 'Ver_Phis_260601'
+version = 'Ver_Phis_260605'
 
 sourceCompatibility = '1.8'
 targetCompatibility = '1.8'
@@ -74,6 +74,8 @@ dependencies {
 test {
     useJUnitPlatform()
 }
+
+
 
 
 

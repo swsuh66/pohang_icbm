@@ -169,16 +169,14 @@
                     return value;
 
                 case 'statCd':
-                    if (!item.statCd)
+                    if (!item.amiErrCode && !item.metErrCode)
                         return '-';
-
-                    return '<img style="width:24px;height:24px; margin: 0 4px 0 0" src="' + meterStatCd.getImage(item.statCd) + '"/><span style="font-size:12px;">' + meterStatCd.getStr(item.statCd) + '</span>';
+                    var mStat = meterStatCd.getStatus(item.amiErrCode, item.metErrCode);
+                    return '<img style="width:24px;height:24px; margin: 0 4px 0 0" src="' + getAbsolutepath(mStat.image) + '"/><span style="font-size:12px;">' + mStat.str + '</span>';
                     break;
                 case 'deviceStatCd':
-                    if (!item.statCd)
-                        return '-';
-
-                    return '<img style="width:24px;height:24px; margin: 0 4px 0 0" src="' + deviceStatCd.getImage(item.statCd) + '"/><span style="font-size:12px;">' + deviceStatCd.getStr(item.statCd) + '</span>';
+                    var dStat = deviceStatCd.getDevStatus(item.amiErrCode, item.measDt);
+                    return '<img style="width:24px;height:24px; margin: 0 4px 0 0" src="' + getAbsolutepath(dStat.image) + '"/><span style="font-size:12px;">' + dStat.str + '</span>';
                     break;
                 case 'custNm':
                     //value = item.custNm.substring(0,3);

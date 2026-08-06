@@ -150,6 +150,16 @@
 			) as rn,
 			COUNT(*) OVER() as total_count
 		FROM vi_m1_sv_point_list b
+		<if test="statCd != null">
+		LEFT JOIN client_customer cc_f ON cc_f.point_sq = b.point_sq
+		LEFT JOIN LATERAL (
+			SELECT m.ami_err_code, m.meas_dt as lr_meas_dt
+			FROM client_meas_raw m
+			WHERE m.point_sq = b.point_sq
+			  AND m.meas_dt >= COALESCE(cc_f.last_meas_dt, CURRENT_DATE - 3)
+			ORDER BY m.meas_dt DESC LIMIT 1
+		) lr_f ON TRUE
+		</if>
 		WHERE b.use_cd = '1'
 		<choose>
 			<when test="upSiteSq != null and lv != null">
@@ -231,7 +241,19 @@
 			</when>
 		</choose>
 		<if test="statCd != null">
-	    	and position('1' in b.stat_cd) = #{statCd}::integer
+			<choose>
+				<when test="statCd == 1">
+					and (lr_f.lr_meas_dt IS NULL OR lr_f.lr_meas_dt &lt; CURRENT_DATE - 3)
+				</when>
+				<when test="statCd == 2">
+					and substring(lr_f.ami_err_code, 1, 1) = '1'
+				</when>
+				<when test="statCd == 0">
+					and lr_f.lr_meas_dt IS NOT NULL
+					and lr_f.lr_meas_dt >= CURRENT_DATE - 3
+					and (lr_f.ami_err_code IS NULL OR substring(lr_f.ami_err_code, 1, 1) != '1')
+				</when>
+			</choose>
 	    </if>
 		<if test="pointSq != null">
 	    	and b.point_sq = #{pointSq}
@@ -414,6 +436,16 @@
 		from
 			fn_meas_raw_for_day(to_date(#{baseDate}, 'yyyy-mm-dd')) a
 			right outer join vi_m1_sv_point_list b on a.point_sq = b.point_sq
+		<if test="statCd != null">
+		LEFT JOIN client_customer cc_f ON cc_f.point_sq = b.point_sq
+		LEFT JOIN LATERAL (
+			SELECT m.ami_err_code, m.meas_dt as lr_meas_dt
+			FROM client_meas_raw m
+			WHERE m.point_sq = b.point_sq
+			  AND m.meas_dt >= COALESCE(cc_f.last_meas_dt, CURRENT_DATE - 3)
+			ORDER BY m.meas_dt DESC LIMIT 1
+		) lr_f ON TRUE
+		</if>
 			
 		<trim prefix="WHERE" prefixOverrides="AND|OR">
 	         <choose>
@@ -506,7 +538,19 @@
 		</choose>
 	    	and b.use_cd = '1'
 		<if test="statCd != null">
-	    	and position('1' in b.stat_cd) = #{statCd}::integer
+			<choose>
+				<when test="statCd == 1">
+					and (lr_f.lr_meas_dt IS NULL OR lr_f.lr_meas_dt &lt; CURRENT_DATE - 3)
+				</when>
+				<when test="statCd == 2">
+					and substring(lr_f.ami_err_code, 1, 1) = '1'
+				</when>
+				<when test="statCd == 0">
+					and lr_f.lr_meas_dt IS NOT NULL
+					and lr_f.lr_meas_dt >= CURRENT_DATE - 3
+					and (lr_f.ami_err_code IS NULL OR substring(lr_f.ami_err_code, 1, 1) != '1')
+				</when>
+			</choose>
 	    </if>
 		
 		<if test="pointSq != null">
@@ -657,20 +701,16 @@
 			  a.p_remark	 as "pointRemark",	-- 비고
 			  a.ins_dt	 as "insDt",	-- 등록일시
 			  a.upd_dt	 as "updDt",	-- 수정일시,
-			  cc.last_meas_dt   as "measDt",
-			  to_char(cc.last_meas_dt, 'yyyy-mm-dd hh24:mi') as "measDtStr",
+			  COALESCE(cc.last_meas_dt, lr.lr_meas_dt)   as "measDt",
+			  to_char(COALESCE(cc.last_meas_dt, lr.lr_meas_dt), 'yyyy-mm-dd hh24:mi') as "measDtStr",
 			  trunc(lr.accu_iv)   as "accuIv",
 			  b.adjst_os  as "adjstV",
 			  b.stat_cd   as "statCd",
-		  case position('1' in a.stat_cd)			  
-		      when 1 then '통신 장애'
-		      when 2 then '계량기 장애'
-		      when 3 then 'Q3 초과'
-		      when 4 then '역류'
-		      when 5 then '누수'		      		      
-		      when 6 then '정상'
-		      when 7 then '정상'
-		      when 8 then 'BAT'
+		  case
+		      when substring(lr.ami_err_code, 1, 1) = '1' then '계량기 장애'
+		      when substring(lr.met_err_code, 1, 1) = '1' then 'Q3 초과'
+		      when substring(lr.met_err_code, 2, 1) = '1' then '역류'
+		      when substring(lr.met_err_code, 3, 1) = '1' then '누수'
 		      else '정상'
 		  end "statCdStr",
 			  a.ami_type as "amiType",
@@ -709,15 +749,14 @@
 		  a.note,
 		  w.modem_id as "modemId",
 		  c.cust_status as "custStatus",
-		  case position('1' in a.stat_cd)
-		      when 1 then '통신 장애'
+		  case when lr.lr_meas_dt IS NULL OR lr.lr_meas_dt &lt; CURRENT_DATE - 3 then '통신 장애'
 		      else '정상'
 		  end "devStatus",
-	  case 
-	      when substring(a.stat_cd, 2, 1) = '1' or 
-	           substring(a.stat_cd, 3, 1) = '1' or 
-	           substring(a.stat_cd, 4, 1) = '1' or 
-	           substring(a.stat_cd, 8, 1) = '1' then '계량기 장애'
+	  case
+	      when substring(lr.ami_err_code, 1, 1) = '1' then '계량기 장애'
+	      when substring(lr.met_err_code, 1, 1) = '1' then 'Q3초과'
+	      when substring(lr.met_err_code, 2, 1) = '1' then '역류'
+	      when substring(lr.met_err_code, 3, 1) = '1' then '누수'
 	      else '정상'
 	  end "meterStatus",
 	  coalesce(ls.leak_status, '-') as "leakSuspect",
@@ -730,9 +769,10 @@
   left join leak_suspects ls on ls.point_sq = a.point_sq
   LEFT JOIN client_customer cc ON cc.point_sq = a.point_sq
   LEFT JOIN LATERAL (
-      SELECT m.accu_iv
+      SELECT m.accu_iv, m.ami_err_code, m.met_err_code, m.stat_cd as lr_stat_cd, m.meas_dt as lr_meas_dt
       FROM client_meas_raw m
       WHERE m.point_sq = a.point_sq
+        AND m.meas_dt >= COALESCE(cc.last_meas_dt, CURRENT_DATE - 3)
       ORDER BY m.meas_dt DESC LIMIT 1
   ) lr ON TRUE
 		    
@@ -825,14 +865,24 @@
 		</if>
 
 		<if test="statCd != null">
-	    	and position('1' in a.stat_cd) = #{statCd}::integer
+			<choose>
+				<when test="statCd == 1">
+					and (lr.lr_meas_dt IS NULL OR lr.lr_meas_dt &lt; CURRENT_DATE - 3)
+				</when>
+				<when test="statCd == 2">
+					and substring(lr.ami_err_code, 1, 1) = '1'
+				</when>
+				<when test="statCd == 0">
+					and lr.lr_meas_dt IS NOT NULL
+					and lr.lr_meas_dt >= CURRENT_DATE - 3
+					and (lr.ami_err_code IS NULL OR substring(lr.ami_err_code, 1, 1) != '1')
+				</when>
+			</choose>
 	    </if>
 		
 		<if test="pointSq != null">
 	    	and a.point_sq = #{pointSq}
 	    </if>
-	    
-	    <!-- searchOption == 0 또는 null인 경우는 search_filtered_points에서 이미 처리됨 -->
 	    <if test="searchParamList != null and searchOption != null and searchOption == 1">
 		    <foreach collection="searchParamList" item="item" index="index" open="AND (" close=")" separator="OR ">
 						(
@@ -1144,6 +1194,16 @@
 			</choose>
 		) a
 	) a
+	<if test="statCd != null">
+	LEFT JOIN client_customer cc_f ON cc_f.point_sq = a.point_sq
+	LEFT JOIN LATERAL (
+		SELECT m.ami_err_code, m.meas_dt as lr_meas_dt
+		FROM client_meas_raw m
+		WHERE m.point_sq = a.point_sq
+		  AND m.meas_dt >= COALESCE(cc_f.last_meas_dt, CURRENT_DATE - 3)
+		ORDER BY m.meas_dt DESC LIMIT 1
+	) lr_f ON TRUE
+	</if>
 	where
 	  1=1
      	<choose>
@@ -1228,7 +1288,19 @@
 	    </if>
 		
 		<if test="statCd != null">
-	    	and position('1' in a.stat_cd) = #{statCd}::integer
+			<choose>
+				<when test="statCd == 1">
+					and (lr_f.lr_meas_dt IS NULL OR lr_f.lr_meas_dt &lt; CURRENT_DATE - 3)
+				</when>
+				<when test="statCd == 2">
+					and substring(lr_f.ami_err_code, 1, 1) = '1'
+				</when>
+				<when test="statCd == 0">
+					and lr_f.lr_meas_dt IS NOT NULL
+					and lr_f.lr_meas_dt >= CURRENT_DATE - 3
+					and (lr_f.ami_err_code IS NULL OR substring(lr_f.ami_err_code, 1, 1) != '1')
+				</when>
+			</choose>
 	    </if>
 		
 		<if test="pointSq != null">
@@ -2455,11 +2527,47 @@
     </select>
 
 <sql id="pointHisdata_sql">
-	with main_data as (
-	    select *
-	    from fn_tb_meas_point_his_day_mov(#{pointSq}, to_date(#{begDate}, 'yyyy-mm-dd'), to_date(#{endDate}, 'yyyy-mm-dd'))
+	with day_base as (
+	    select
+	        a.point_sq,
+	        a.meas_dt,
+	        a.last_dt,
+	        a.raw_cnt,
+	        ((CASE WHEN substr(COALESCE(a.stat_cd, '1')::text, 1, 1) = '1' THEN '1' ELSE '0' END
+	          || CASE WHEN a.raw_cnt IS NULL OR a.raw_cnt = 0 THEN '1' ELSE '0' END
+	          || substring(COALESCE(a.stat_cd, '00000000')::text, 2, 7)))::char(9) AS stat_cd,
+	        a.accu_iv, a.accu_cv, a.term_cv, a.adjst_os,
+	        avg(a.term_cv) over w1 as term_cv_1d,
+	        avg(a.term_cv) over w2 as term_cv_7d,
+	        avg(a.term_cv) over w3 as term_cv_30d,
+	        avg(a.temperature) over w1 as temperature
+	    from
+	        client_meas_day a
+	    where
+	        a.point_sq = #{pointSq}::integer
+	<![CDATA[
+	        and a.meas_dt >= (to_date(#{begDate}, 'yyyy-mm-dd') - interval '30 day')::date
+	        and a.meas_dt <= to_date(#{endDate}, 'yyyy-mm-dd')
+	]]>
+	    window
+	        w1 as (partition by a.point_sq order by a.meas_dt rows between 1 preceding and 1 preceding),
+	        w2 as (partition by a.point_sq order by a.meas_dt rows between 7 preceding and current row),
+	        w3 as (partition by a.point_sq order by a.meas_dt rows between 30 preceding and current row)
 	),
-	/* 누수의심 계산 - tb_m1_meas_raw 사용 (보정된 term_cv 기준) */
+	main_data as (
+	    select
+	        point_sq, meas_dt, last_dt, raw_cnt, stat_cd,
+	        accu_iv, accu_cv, adjst_os, term_cv,
+	        trunc(term_cv_1d, 3) as term_cv_1d,
+	        trunc(term_cv_7d, 3) as term_cv_7d,
+	        trunc(term_cv_30d, 3) as term_cv_30d,
+	        temperature
+	    from day_base
+	<![CDATA[
+	    where meas_dt >= (to_date(#{begDate}, 'yyyy-mm-dd') - interval '1 day')
+	]]>
+	),
+	/* 누수의심 계산 - client_meas_raw 사용 (보정된 term_cv 기준) */
 	leak_suspects as (
 	    select distinct
 	        m.point_sq,
@@ -2468,7 +2576,7 @@
 	    from main_data md
 	    cross join lateral (
 	        select m.point_sq
-	        from tb_m1_meas_raw m
+	        from client_meas_raw m
 	        join tb_m1_info_point p on p.point_sq = m.point_sq
 	        join tb_m1_info_customer c on c.cust_sq = p.cust_sq
 	        left join tb_m1_waterleak_setting2 s
@@ -2530,7 +2638,7 @@
 		    select
 		        a.point_sq,
 		        a.meas_dt,
-		        a.stat_cd,
+		        (CASE WHEN substr(COALESCE(a.stat_cd, '1')::text, 1, 1) = '1' THEN '01' ELSE '00' END || substring(COALESCE(a.stat_cd, '00000000')::text, 2, 7))::char(9) as stat_cd,
 		        a.accu_iv,
 		        a.accu_cv,
 		        a.term_cv,
@@ -2539,7 +2647,7 @@
 		        a.bat1_iv,
 		        a.bat2_iv,
 		        a.rssi_iv,
-		        a.snr_iv,
+		        a.signoi_rat as snr_iv,
 		        a.ni_rsrp,
 		        a.ni_rsrq,
 		        a.temperature,
@@ -2560,11 +2668,11 @@
 		        , d.flow_min
 		        </if>
 		    from
-		        vi_m1_sv_meas_raw a 
+		        client_meas_raw a 
 		        join vi_m1_sv_point_list b on a.point_sq = b.point_sq
 		        left outer join tb_m1_waterleak_setting w on w.site_sq = b.site_sq
 		        <if test="begRawDate != null">
-		        left outer join vi_m1_sv_meas_day d on d.point_sq = a.point_sq
+		        left outer join client_meas_day d on d.point_sq = a.point_sq and d.meas_dt = to_date(#{begRawDate}, 'yyyy-mm-dd')
 		        </if>	         	        
 	        
 	        
@@ -2672,7 +2780,7 @@
    		 	</if>
 			
 			<if test="pointSq != null">
-		    	and b.point_sq = #{pointSq}
+		    	and a.point_sq = #{pointSq}::integer
 		    </if>
 		    
 		     <if test="searchParam != null">	     
@@ -2703,7 +2811,7 @@
 				and d.meas_dt = to_date(#{begRawDate}, 'yyyy-mm-dd')				
 			</if>
 		),
-		/* 누수의심 계산 - tb_m1_meas_raw 사용 (보정된 term_cv 기준) */
+		/* 누수의심 계산 - client_meas_raw 사용 (보정된 term_cv 기준) */
 		leak_suspects as (
 		    select distinct
 		        m.point_sq,
@@ -2712,7 +2820,7 @@
 		    from raw_data rd
 		    cross join lateral (
 		        select m.point_sq
-		        from tb_m1_meas_raw m
+		        from client_meas_raw m
 		        join tb_m1_info_customer c on c.cust_sq = rd.cust_sq
 		        left join tb_m1_waterleak_setting2 s
 		            on s.pipe_diameter = c.pipe_diameter
@@ -3143,6 +3251,16 @@
             p.*,
             COUNT(*) OVER() AS "totalCount"
         FROM vi_m1_sv_point_list p
+        <if test="statCd != null and statCd != 1">
+        LEFT JOIN client_customer cc_f ON cc_f.point_sq = p.point_sq
+        LEFT JOIN LATERAL (
+            SELECT m.ami_err_code, m.met_err_code, m.meas_dt as lr_meas_dt
+            FROM client_meas_raw m
+            WHERE m.point_sq = p.point_sq
+              AND m.meas_dt >= COALESCE(cc_f.last_meas_dt, CURRENT_DATE - 3)
+            ORDER BY m.meas_dt DESC LIMIT 1
+        ) lr_f ON TRUE
+        </if>
         WHERE 1=1
         <choose>
             <when test="upSiteSq != null and lv != null">
@@ -3242,7 +3360,49 @@
         </choose>
         
         <if test="statCd != null">
-            AND position('1' in p.stat_cd) = #{statCd}::integer
+            <choose>
+                <when test="statCd == 1">
+                    AND NOT EXISTS (
+                        SELECT 1 FROM client_meas_raw m
+                        WHERE m.point_sq = p.point_sq
+                          AND m.meas_dt >= CURRENT_DATE - 3
+                    )
+                </when>
+                <when test="statCd == 2">
+                    AND lr_f.lr_meas_dt IS NOT NULL
+                    AND lr_f.lr_meas_dt >= CURRENT_DATE - 3
+                    AND substring(lr_f.ami_err_code, 1, 1) = '1'
+                </when>
+                <when test="statCd == 3">
+                    AND lr_f.lr_meas_dt IS NOT NULL
+                    AND lr_f.lr_meas_dt >= CURRENT_DATE - 3
+                    AND substring(lr_f.ami_err_code, 1, 1) != '1'
+                    AND substring(lr_f.met_err_code, 1, 1) = '1'
+                </when>
+                <when test="statCd == 4">
+                    AND lr_f.lr_meas_dt IS NOT NULL
+                    AND lr_f.lr_meas_dt >= CURRENT_DATE - 3
+                    AND substring(lr_f.ami_err_code, 1, 1) != '1'
+                    AND substring(lr_f.met_err_code, 1, 1) != '1'
+                    AND substring(lr_f.met_err_code, 2, 1) = '1'
+                </when>
+                <when test="statCd == 5">
+                    AND lr_f.lr_meas_dt IS NOT NULL
+                    AND lr_f.lr_meas_dt >= CURRENT_DATE - 3
+                    AND substring(lr_f.ami_err_code, 1, 1) != '1'
+                    AND substring(lr_f.met_err_code, 1, 1) != '1'
+                    AND substring(lr_f.met_err_code, 2, 1) != '1'
+                    AND substring(lr_f.met_err_code, 3, 1) = '1'
+                </when>
+                <when test="statCd == 0">
+                    AND lr_f.lr_meas_dt IS NOT NULL
+                    AND lr_f.lr_meas_dt >= CURRENT_DATE - 3
+                    AND (lr_f.ami_err_code IS NULL OR substring(lr_f.ami_err_code, 1, 1) != '1')
+                    AND (lr_f.met_err_code IS NULL OR substring(lr_f.met_err_code, 1, 1) != '1')
+                    AND (lr_f.met_err_code IS NULL OR substring(lr_f.met_err_code, 2, 1) != '1')
+                    AND (lr_f.met_err_code IS NULL OR substring(lr_f.met_err_code, 3, 1) != '1')
+                </when>
+            </choose>
         </if>
         
         <if test="pointSq != null">
@@ -3337,7 +3497,9 @@
         GREATEST(COALESCE(m.term_iv, 0), 0) AS "useVal",
         GREATEST(COALESCE(m.term_iv + m.fadjst_os, 0), 0) AS "rstVal",
         COALESCE(m.term_dy, 0) AS "useDays",
-        t.stat_cd AS "statCd",
+        lr.lr_stat_cd AS "statCd",
+        lr.ami_err_code AS "amiErrCode",
+        lr.met_err_code AS "metErrCode",
         TRUNC(GREATEST(COALESCE(m.term_iv + m.fadjst_os, 0), 0)) AS "rstValTr",
         TRUNC(COALESCE(m.beg_accu_iv, 0)) AS "begValTr",
         TRUNC(COALESCE(m.end_accu_iv, 0)) AS "endValTr",
@@ -3346,15 +3508,11 @@
         '단독' AS "meterType",
         NULL AS "shareMeter",
         NULL AS "region",
-        CASE POSITION('1' IN t.stat_cd)
-            WHEN 1 THEN '통신 장애'
-            WHEN 2 THEN '계량기 장애'
-            WHEN 3 THEN 'Q3 초과'
-            WHEN 4 THEN '역류'
-            WHEN 5 THEN '누수'
-            WHEN 6 THEN '정상'
-            WHEN 7 THEN '정상'
-            WHEN 8 THEN 'BAT'
+        CASE
+            WHEN substring(lr.ami_err_code, 1, 1) = '1' THEN '계량기 장애'
+            WHEN substring(lr.met_err_code, 1, 1) = '1' THEN 'Q3 초과'
+            WHEN substring(lr.met_err_code, 2, 1) = '1' THEN '역류'
+            WHEN substring(lr.met_err_code, 3, 1) = '1' THEN '누수'
             ELSE '정상'
         END AS "statCdStr",
         t.read_opr AS "readOpr",
@@ -3366,6 +3524,14 @@
         t."totalCount"
     FROM target_list t
     LEFT JOIN meas_final m ON t.point_sq = m.point_sq
+    LEFT JOIN client_customer cc ON cc.point_sq = t.point_sq
+    LEFT JOIN LATERAL (
+        SELECT m2.stat_cd as lr_stat_cd, m2.ami_err_code, m2.met_err_code
+        FROM client_meas_raw m2
+        WHERE m2.point_sq = t.point_sq
+          AND m2.meas_dt >= COALESCE(cc.last_meas_dt, CURRENT_DATE - 3)
+        ORDER BY m2.meas_dt DESC LIMIT 1
+    ) lr ON TRUE
     ORDER BY t.admin_id
     </select>
     <!-- ========== 최적화된 부과조회 쿼리 끝 ========== -->
@@ -3443,6 +3609,8 @@
 		        (m.term_iv + COALESCE(m.fadjst_os, 0)) AS "rstVal",
 		        m.term_dy AS "useDays",
 		        p.stat_cd AS "statCd",
+		        lr.ami_err_code AS "amiErrCode",
+		        lr.met_err_code AS "metErrCode",
 		        TRUNC(m.term_iv + COALESCE(m.fadjst_os, 0)) AS "rstValTr",
 		        TRUNC(m.beg_accu_iv) AS "begValTr",
 		        TRUNC(m.end_accu_iv) AS "endValTr",
@@ -3451,15 +3619,11 @@
 		        '단독' AS "meterType",
 		        NULL AS "shareMeter",
 		        NULL AS "region",
-		        CASE POSITION('1' IN p.stat_cd)
-		            WHEN 1 THEN '통신 장애'
-		            WHEN 2 THEN '계량기 장애'
-		            WHEN 3 THEN 'Q3 초과'
-		            WHEN 4 THEN '역류'
-		            WHEN 5 THEN '누수'
-		            WHEN 6 THEN '정상'
-		            WHEN 7 THEN '정상'
-		            WHEN 8 THEN 'BAT'
+		        CASE
+		            WHEN substring(lr.ami_err_code, 1, 1) = '1' THEN '계량기 장애'
+		            WHEN substring(lr.met_err_code, 1, 1) = '1' THEN 'Q3 초과'
+		            WHEN substring(lr.met_err_code, 2, 1) = '1' THEN '역류'
+		            WHEN substring(lr.met_err_code, 3, 1) = '1' THEN '누수'
 		            ELSE '정상'
 		        END AS "statCdStr",
 		        p.read_opr AS "readOpr",
@@ -3467,6 +3631,14 @@
 		        COUNT(*) OVER() AS "totalCount"
 		    FROM vi_m1_sv_point_list p
 		    LEFT JOIN meter_aggregates m ON m.point_sq = p.point_sq
+		    LEFT JOIN client_customer cc ON cc.point_sq = p.point_sq
+		    LEFT JOIN LATERAL (
+		        SELECT m2.stat_cd as lr_stat_cd, m2.ami_err_code, m2.met_err_code, m2.meas_dt as lr_meas_dt
+		        FROM client_meas_raw m2
+		        WHERE m2.point_sq = p.point_sq
+		          AND m2.meas_dt >= COALESCE(cc.last_meas_dt, CURRENT_DATE - 3)
+		        ORDER BY m2.meas_dt DESC LIMIT 1
+		    ) lr ON TRUE
 		    WHERE 1=1
 		        <choose>
 		            <when test="upSiteSq != null and lv != null">
@@ -3566,7 +3738,45 @@
 		        </choose>
 		        
 		        <if test="statCd != null">
-		            AND POSITION('1' IN p.stat_cd) = #{statCd}::INTEGER
+		            <choose>
+		                <when test="statCd == 1">
+		                    AND (lr.lr_meas_dt IS NULL OR lr.lr_meas_dt &lt; CURRENT_DATE - 3)
+		                </when>
+		                <when test="statCd == 2">
+		                    AND lr.lr_meas_dt IS NOT NULL
+		                    AND lr.lr_meas_dt >= CURRENT_DATE - 3
+		                    AND substring(lr.ami_err_code, 1, 1) = '1'
+		                </when>
+		                <when test="statCd == 3">
+		                    AND lr.lr_meas_dt IS NOT NULL
+		                    AND lr.lr_meas_dt >= CURRENT_DATE - 3
+		                    AND substring(lr.ami_err_code, 1, 1) != '1'
+		                    AND substring(lr.met_err_code, 1, 1) = '1'
+		                </when>
+		                <when test="statCd == 4">
+		                    AND lr.lr_meas_dt IS NOT NULL
+		                    AND lr.lr_meas_dt >= CURRENT_DATE - 3
+		                    AND substring(lr.ami_err_code, 1, 1) != '1'
+		                    AND substring(lr.met_err_code, 1, 1) != '1'
+		                    AND substring(lr.met_err_code, 2, 1) = '1'
+		                </when>
+		                <when test="statCd == 5">
+		                    AND lr.lr_meas_dt IS NOT NULL
+		                    AND lr.lr_meas_dt >= CURRENT_DATE - 3
+		                    AND substring(lr.ami_err_code, 1, 1) != '1'
+		                    AND substring(lr.met_err_code, 1, 1) != '1'
+		                    AND substring(lr.met_err_code, 2, 1) != '1'
+		                    AND substring(lr.met_err_code, 3, 1) = '1'
+		                </when>
+		                <when test="statCd == 0">
+		                    AND lr.lr_meas_dt IS NOT NULL
+		                    AND lr.lr_meas_dt >= CURRENT_DATE - 3
+		                    AND (lr.ami_err_code IS NULL OR substring(lr.ami_err_code, 1, 1) != '1')
+		                    AND (lr.met_err_code IS NULL OR substring(lr.met_err_code, 1, 1) != '1')
+		                    AND (lr.met_err_code IS NULL OR substring(lr.met_err_code, 2, 1) != '1')
+		                    AND (lr.met_err_code IS NULL OR substring(lr.met_err_code, 3, 1) != '1')
+		                </when>
+		            </choose>
 		        </if>
 		        
 		        <if test="pointSq != null">
@@ -4025,10 +4235,20 @@
 	/*statCdSumarySimple*/
 	with tb_t as (
 		  select
-		    position('1' in b.stat_cd) index_of,		    
-		    b.*
-		  from		    
+		    b.point_sq,
+		    lr.lr_meas_dt,
+		    lr.ami_err_code,
+		    lr.met_err_code
+		  from
 		    vi_m1_sv_point_list b
+		    LEFT JOIN client_customer cc ON cc.point_sq = b.point_sq
+		    LEFT JOIN LATERAL (
+		        SELECT m.ami_err_code, m.met_err_code, m.meas_dt as lr_meas_dt
+		        FROM client_meas_raw m
+		        WHERE m.point_sq = b.point_sq
+		          AND m.meas_dt >= COALESCE(cc.last_meas_dt, CURRENT_DATE - 3)
+		        ORDER BY m.meas_dt DESC LIMIT 1
+		    ) lr ON TRUE
 		   where 1=1
 		    and b.use_cd ='1'
 			<choose>
@@ -4118,48 +4338,26 @@
 			</when>
 		</choose>
 		),
-	    tb_all as (
-		  select '200000000'::text stat_cd, index_of from tb_t
-		),
-		tb_all_normal as (
-		  select '300000000'::text as "stat_cd", index_of from tb_t where 1=1
-		),
 		tb_result as (
-		  select
-		    stat_cd, count(*) cnt, statCdStr
-		  from (
+		  select stat_cd, count(*) cnt, statCdStr from (
 		    select
 		      case
-		        when a.index_of = 1 then '100000000'
-		        when a.index_of = 2 then '010000000'
-				<!--
-		        when a.index_of = 3 then '001000000'
-		        when a.index_of = 4 then '000100000'
-		        when a.index_of = 5 then '000010000'
-		        when a.index_of = 6 then '000001000'
-				-->
+		        when a.lr_meas_dt IS NULL OR a.lr_meas_dt &lt; CURRENT_DATE - 3 then '100000000'
+		        when substring(a.ami_err_code, 1, 1) = '1' then '010000000'
 		        else '000000000'
-		      end stat_cd
-		      ,case
-		        when a.index_of = 1 then '통신장애'
-		        when a.index_of = 2 then '계량기장애'
-				<!--
-		        when a.index_of = 3 then 'Q3초과'
-		        when a.index_of = 4 then '역류'
-		        when a.index_of = 5 then '누수'
-		        when a.index_of = 6 then '배터리장애'
-				-->
+		      end stat_cd,
+		      case
+		        when a.lr_meas_dt IS NULL OR a.lr_meas_dt &lt; CURRENT_DATE - 3 then '통신장애'
+		        when substring(a.ami_err_code, 1, 1) = '1' then '계량기장애'
 		        else '정상'
 		      end statCdStr
-		    from
-		      tb_all_normal a
-		   where 1=1
+		    from tb_t a
 		  ) a
 		  group by stat_cd, statCdStr
 		  union all
-		  select stat_cd, count(*) cnt, '전체' as "statCdStr" from tb_all group by stat_cd
+		  select '200000000'::text as stat_cd, count(*) as cnt, '전체' as "statCdStr" from tb_t
 		  union all
-		  select stat_cd, count(*) cnt, '원격검침' as "statCdStr" from tb_all_normal group by stat_cd
+		  select '300000000'::text as stat_cd, count(*) as cnt, '원격검침' as "statCdStr" from tb_t
 		)
 	select
 		  stat_cd AS "statCd",
@@ -5005,6 +5203,16 @@
 			LEFT JOIN tb_m1_cmap_device dev ON dev.point_sq = a.point_sq
 			LEFT JOIN tb_m1_info_company com1 ON com1.company_sq = dev.company_sq
 			LEFT JOIN vi_m1_sv_meas_now meas ON meas.point_sq = a.point_sq
+		<if test="statCd != null and statCd != 1">
+			LEFT JOIN client_customer cc_f ON cc_f.point_sq = a.point_sq
+			LEFT JOIN LATERAL (
+			    SELECT m.ami_err_code, m.met_err_code, m.meas_dt as lr_meas_dt
+			    FROM client_meas_raw m
+			    WHERE m.point_sq = a.point_sq
+			      AND m.meas_dt >= COALESCE(cc_f.last_meas_dt, CURRENT_DATE - 3)
+			    ORDER BY m.meas_dt DESC LIMIT 1
+			) lr_f ON TRUE
+		</if>
 		WHERE 1=1
 		<choose>
 			<when test="upSiteSq != null and lv != null">
@@ -5087,7 +5295,49 @@
 		</choose>
 			and a.use_cd = '1'
 		<if test="statCd != null">
-			and position('1' in meas.stat_cd) = #{statCd}::integer
+			<choose>
+				<when test="statCd == 1">
+					and NOT EXISTS (
+						SELECT 1 FROM client_meas_raw m
+						WHERE m.point_sq = a.point_sq
+						  AND m.meas_dt >= CURRENT_DATE - 3
+					)
+				</when>
+				<when test="statCd == 2">
+					and lr_f.lr_meas_dt IS NOT NULL
+					and lr_f.lr_meas_dt >= CURRENT_DATE - 3
+					and substring(lr_f.ami_err_code, 1, 1) = '1'
+				</when>
+				<when test="statCd == 3">
+					and lr_f.lr_meas_dt IS NOT NULL
+					and lr_f.lr_meas_dt >= CURRENT_DATE - 3
+					and substring(lr_f.ami_err_code, 1, 1) != '1'
+					and substring(lr_f.met_err_code, 1, 1) = '1'
+				</when>
+				<when test="statCd == 4">
+					and lr_f.lr_meas_dt IS NOT NULL
+					and lr_f.lr_meas_dt >= CURRENT_DATE - 3
+					and substring(lr_f.ami_err_code, 1, 1) != '1'
+					and substring(lr_f.met_err_code, 1, 1) != '1'
+					and substring(lr_f.met_err_code, 2, 1) = '1'
+				</when>
+				<when test="statCd == 5">
+					and lr_f.lr_meas_dt IS NOT NULL
+					and lr_f.lr_meas_dt >= CURRENT_DATE - 3
+					and substring(lr_f.ami_err_code, 1, 1) != '1'
+					and substring(lr_f.met_err_code, 1, 1) != '1'
+					and substring(lr_f.met_err_code, 2, 1) != '1'
+					and substring(lr_f.met_err_code, 3, 1) = '1'
+				</when>
+				<when test="statCd == 0">
+					and lr_f.lr_meas_dt IS NOT NULL
+					and lr_f.lr_meas_dt >= CURRENT_DATE - 3
+					and (lr_f.ami_err_code IS NULL OR substring(lr_f.ami_err_code, 1, 1) != '1')
+					and (lr_f.met_err_code IS NULL OR substring(lr_f.met_err_code, 1, 1) != '1')
+					and (lr_f.met_err_code IS NULL OR substring(lr_f.met_err_code, 2, 1) != '1')
+					and (lr_f.met_err_code IS NULL OR substring(lr_f.met_err_code, 3, 1) != '1')
+				</when>
+			</choose>
 		</if>
 		<if test="pointSq != null">
 	    	and a.point_sq = #{pointSq}
@@ -5156,21 +5406,19 @@
 		p.p_remark as "pointRemark",
 		p.ins_dt as "insDt",
 		p.upd_dt as "updDt",
-		cc.last_meas_dt as "measDt",
-		to_char(cc.last_meas_dt, 'yyyy-mm-dd hh24:mi') as "measDtStr",
+		COALESCE(cc.last_meas_dt, lr.lr_meas_dt) as "measDt",
+		to_char(COALESCE(cc.last_meas_dt, lr.lr_meas_dt), 'yyyy-mm-dd hh24:mi') as "measDtStr",
 		trunc(lr.accu_iv) as "accuIv",
 		b.adjst_os as "adjstV",
 		b.stat_cd as "statCd",
 		b.stat_cd as "deviceStatCd",
-		case position('1' in b.stat_cd)
-		    when 1 then '통신 장애'
-		    when 2 then '계량기 장애'
-		    when 3 then 'Q3 초과'
-		    when 4 then '역류'
-		    when 5 then '누수'
-		    when 6 then '정상'
-		    when 7 then '정상'
-		    when 8 then 'BAT'
+		lr.ami_err_code as "amiErrCode",
+		lr.met_err_code as "metErrCode",
+		case
+		    when substring(lr.ami_err_code, 1, 1) = '1' then '계량기 장애'
+		    when substring(lr.met_err_code, 1, 1) = '1' then 'Q3 초과'
+		    when substring(lr.met_err_code, 2, 1) = '1' then '역류'
+		    when substring(lr.met_err_code, 3, 1) = '1' then '누수'
 		    else '정상'
 		end "statCdStr",
 		p.ami_type as "amiType",
@@ -5211,9 +5459,10 @@
 	LEFT JOIN vi_m1_sv_meas_now b ON b.point_sq = p.point_sq
 	LEFT JOIN client_customer cc ON cc.point_sq = p.point_sq
 	LEFT JOIN LATERAL (
-	    SELECT m.accu_iv
+	    SELECT m.accu_iv, m.ami_err_code, m.met_err_code, m.stat_cd as lr_stat_cd, m.meas_dt as lr_meas_dt
 	    FROM client_meas_raw m
 	    WHERE m.point_sq = p.point_sq
+	      AND m.meas_dt >= COALESCE(cc.last_meas_dt, CURRENT_DATE - 3)
 	    ORDER BY m.meas_dt DESC LIMIT 1
 	) lr ON TRUE
 	ORDER BY p.rn
@@ -5257,21 +5506,19 @@
 			  a.p_remark	 as "pointRemark",	-- 비고
 			  a.ins_dt	 as "insDt",	-- 등록일시
 			  a.upd_dt	 as "updDt",	-- 수정일시,
-			  cc.last_meas_dt   as "measDt",
-			  to_char(cc.last_meas_dt, 'yyyy-mm-dd hh24:mi') as "measDtStr",
+			  COALESCE(cc.last_meas_dt, lr.lr_meas_dt)   as "measDt",
+			  to_char(COALESCE(cc.last_meas_dt, lr.lr_meas_dt), 'yyyy-mm-dd hh24:mi') as "measDtStr",
 			  trunc(lr.accu_iv)   as "accuIv",
 			  b.adjst_os  as "adjstV",
 			  b.stat_cd   as "statCd",
 			  b.stat_cd   as "deviceStatCd",
-			  case position('1' in b.stat_cd)
-			      when 1 then '통신 장애'
-			      when 2 then '계량기 장애'
-			      when 3 then 'Q3 초과'
-			      when 4 then '역류'
-			      when 5 then '누수'
-			      when 6 then '정상'
-			      when 7 then '정상'
-			      when 8 then 'BAT'
+			  lr.ami_err_code as "amiErrCode",
+			  lr.met_err_code as "metErrCode",
+			  case
+			      when substring(lr.ami_err_code, 1, 1) = '1' then '계량기 장애'
+			      when substring(lr.met_err_code, 1, 1) = '1' then 'Q3 초과'
+			      when substring(lr.met_err_code, 2, 1) = '1' then '역류'
+			      when substring(lr.met_err_code, 3, 1) = '1' then '누수'
 			      else '정상'
 			  end "statCdStr",
 			  dev.ami_type as "amiType",
@@ -5315,9 +5562,10 @@
 		     LEFT JOIN vi_m1_sv_meas_now b ON b.point_sq = a.point_sq
 		     LEFT JOIN client_customer cc ON cc.point_sq = a.point_sq
 		     LEFT JOIN LATERAL (
-		         SELECT m.accu_iv
+		         SELECT m.accu_iv, m.ami_err_code, m.met_err_code, m.stat_cd as lr_stat_cd, m.meas_dt as lr_meas_dt
 		         FROM client_meas_raw m
 		         WHERE m.point_sq = a.point_sq
+		           AND m.meas_dt >= COALESCE(cc.last_meas_dt, CURRENT_DATE - 3)
 		         ORDER BY m.meas_dt DESC LIMIT 1
 		     ) lr ON TRUE
 		 where 1=1 
@@ -5412,7 +5660,19 @@
 	    	and a.use_cd = '1'
 		
 		<if test="statCd != null">
-	    	and position('1' in b.stat_cd) = #{statCd}::integer
+			<choose>
+				<when test="statCd == 1">
+					and (lr.lr_meas_dt IS NULL OR lr.lr_meas_dt &lt; CURRENT_DATE - 3)
+				</when>
+				<when test="statCd == 2">
+					and substring(lr.ami_err_code, 1, 1) = '1'
+				</when>
+				<when test="statCd == 0">
+					and lr.lr_meas_dt IS NOT NULL
+					and lr.lr_meas_dt >= CURRENT_DATE - 3
+					and (lr.ami_err_code IS NULL OR substring(lr.ami_err_code, 1, 1) != '1')
+				</when>
+			</choose>
 	    </if>
 		
 		<if test="pointSq != null">
