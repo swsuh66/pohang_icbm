@@ -151,12 +151,11 @@
 			COUNT(*) OVER() as total_count
 		FROM vi_m1_sv_point_list b
 		<if test="statCd != null">
-		LEFT JOIN client_customer cc_f ON cc_f.point_sq = b.point_sq
 		LEFT JOIN LATERAL (
 			SELECT m.ami_err_code, m.meas_dt as lr_meas_dt
 			FROM client_meas_raw m
 			WHERE m.point_sq = b.point_sq
-			  AND m.meas_dt >= COALESCE(cc_f.last_meas_dt, CURRENT_DATE - 3)
+			  AND m.meas_dt >= CURRENT_DATE - 3
 			ORDER BY m.meas_dt DESC LIMIT 1
 		) lr_f ON TRUE
 		</if>
@@ -324,7 +323,7 @@
 			sum(case when extract(day from d.meas_dt) = 29 then d.accu_iv end) as iv_d29,
 			sum(case when extract(day from d.meas_dt) = 30 then d.accu_iv end) as iv_d30,
 			sum(case when extract(day from d.meas_dt) = 31 then d.accu_iv end) as iv_d31
-		FROM tb_m1_meas_day d
+		FROM client_meas_day d
 		WHERE d.point_sq IN (SELECT point_sq FROM paged_points)
 		  AND d.meas_dt >= date_trunc('month', to_date(#{baseDate}, 'yyyy-mm-dd'))
 		  AND d.meas_dt <![CDATA[<]]> date_trunc('month', to_date(#{baseDate}, 'yyyy-mm-dd')) + INTERVAL '1 month'
@@ -437,12 +436,11 @@
 			fn_meas_raw_for_day(to_date(#{baseDate}, 'yyyy-mm-dd')) a
 			right outer join vi_m1_sv_point_list b on a.point_sq = b.point_sq
 		<if test="statCd != null">
-		LEFT JOIN client_customer cc_f ON cc_f.point_sq = b.point_sq
 		LEFT JOIN LATERAL (
 			SELECT m.ami_err_code, m.meas_dt as lr_meas_dt
 			FROM client_meas_raw m
 			WHERE m.point_sq = b.point_sq
-			  AND m.meas_dt >= COALESCE(cc_f.last_meas_dt, CURRENT_DATE - 3)
+			  AND m.meas_dt >= CURRENT_DATE - 3
 			ORDER BY m.meas_dt DESC LIMIT 1
 		) lr_f ON TRUE
 		</if>
@@ -701,8 +699,8 @@
 			  a.p_remark	 as "pointRemark",	-- 비고
 			  a.ins_dt	 as "insDt",	-- 등록일시
 			  a.upd_dt	 as "updDt",	-- 수정일시,
-			  COALESCE(cc.last_meas_dt, lr.lr_meas_dt)   as "measDt",
-			  to_char(COALESCE(cc.last_meas_dt, lr.lr_meas_dt), 'yyyy-mm-dd hh24:mi') as "measDtStr",
+			  COALESCE(cc.last_dt, lr.lr_meas_dt)   as "measDt",
+			  to_char(COALESCE(cc.last_dt, lr.lr_meas_dt), 'yyyy-mm-dd hh24:mi') as "measDtStr",
 			  trunc(lr.accu_iv)   as "accuIv",
 			  b.adjst_os  as "adjstV",
 			  b.stat_cd   as "statCd",
@@ -766,15 +764,19 @@
  left outer join vi_m1_sv_meas_now b on b.POINT_SQ = a.POINT_SQ
  left outer join tb_m1_wizit_modem_info w on w.dev_no = a.dev_no
  left outer join tb_m1_info_customer c on c.cust_sq = a.cust_sq
-  left join leak_suspects ls on ls.point_sq = a.point_sq
-  LEFT JOIN client_customer cc ON cc.point_sq = a.point_sq
-  LEFT JOIN LATERAL (
-      SELECT m.accu_iv, m.ami_err_code, m.met_err_code, m.stat_cd as lr_stat_cd, m.meas_dt as lr_meas_dt
-      FROM client_meas_raw m
-      WHERE m.point_sq = a.point_sq
-        AND m.meas_dt >= COALESCE(cc.last_meas_dt, CURRENT_DATE - 3)
-      ORDER BY m.meas_dt DESC LIMIT 1
-  ) lr ON TRUE
+ left join leak_suspects ls on ls.point_sq = a.point_sq
+ LEFT JOIN LATERAL (
+     SELECT last_dt FROM client_meas_day
+     WHERE point_sq = a.point_sq
+     ORDER BY meas_dt DESC LIMIT 1
+ ) cc ON TRUE
+ LEFT JOIN LATERAL (
+     SELECT m.accu_iv, m.ami_err_code, m.met_err_code, m.stat_cd as lr_stat_cd, m.meas_dt as lr_meas_dt
+     FROM client_meas_raw m
+     WHERE m.point_sq = a.point_sq
+       AND m.meas_dt >= COALESCE(cc.last_dt, CURRENT_DATE - 3)
+     ORDER BY m.meas_dt DESC LIMIT 1
+ ) lr ON TRUE
 		    
   where 1=1	
      	
@@ -1195,12 +1197,11 @@
 		) a
 	) a
 	<if test="statCd != null">
-	LEFT JOIN client_customer cc_f ON cc_f.point_sq = a.point_sq
 	LEFT JOIN LATERAL (
 		SELECT m.ami_err_code, m.meas_dt as lr_meas_dt
 		FROM client_meas_raw m
 		WHERE m.point_sq = a.point_sq
-		  AND m.meas_dt >= COALESCE(cc_f.last_meas_dt, CURRENT_DATE - 3)
+		  AND m.meas_dt >= CURRENT_DATE - 3
 		ORDER BY m.meas_dt DESC LIMIT 1
 	) lr_f ON TRUE
 	</if>
@@ -3252,12 +3253,11 @@
             COUNT(*) OVER() AS "totalCount"
         FROM vi_m1_sv_point_list p
         <if test="statCd != null and statCd != 1">
-        LEFT JOIN client_customer cc_f ON cc_f.point_sq = p.point_sq
         LEFT JOIN LATERAL (
             SELECT m.ami_err_code, m.met_err_code, m.meas_dt as lr_meas_dt
             FROM client_meas_raw m
             WHERE m.point_sq = p.point_sq
-              AND m.meas_dt >= COALESCE(cc_f.last_meas_dt, CURRENT_DATE - 3)
+              AND m.meas_dt >= CURRENT_DATE - 3
             ORDER BY m.meas_dt DESC LIMIT 1
         ) lr_f ON TRUE
         </if>
@@ -3524,12 +3524,16 @@
         t."totalCount"
     FROM target_list t
     LEFT JOIN meas_final m ON t.point_sq = m.point_sq
-    LEFT JOIN client_customer cc ON cc.point_sq = t.point_sq
+    LEFT JOIN LATERAL (
+        SELECT last_dt FROM client_meas_day
+        WHERE point_sq = t.point_sq
+        ORDER BY meas_dt DESC LIMIT 1
+    ) cc ON TRUE
     LEFT JOIN LATERAL (
         SELECT m2.stat_cd as lr_stat_cd, m2.ami_err_code, m2.met_err_code
         FROM client_meas_raw m2
         WHERE m2.point_sq = t.point_sq
-          AND m2.meas_dt >= COALESCE(cc.last_meas_dt, CURRENT_DATE - 3)
+          AND m2.meas_dt >= COALESCE(cc.last_dt, CURRENT_DATE - 3)
         ORDER BY m2.meas_dt DESC LIMIT 1
     ) lr ON TRUE
     ORDER BY t.admin_id
@@ -3631,12 +3635,16 @@
 		        COUNT(*) OVER() AS "totalCount"
 		    FROM vi_m1_sv_point_list p
 		    LEFT JOIN meter_aggregates m ON m.point_sq = p.point_sq
-		    LEFT JOIN client_customer cc ON cc.point_sq = p.point_sq
+		    LEFT JOIN LATERAL (
+		        SELECT last_dt FROM client_meas_day
+		        WHERE point_sq = p.point_sq
+		        ORDER BY meas_dt DESC LIMIT 1
+		    ) cc ON TRUE
 		    LEFT JOIN LATERAL (
 		        SELECT m2.stat_cd as lr_stat_cd, m2.ami_err_code, m2.met_err_code, m2.meas_dt as lr_meas_dt
 		        FROM client_meas_raw m2
 		        WHERE m2.point_sq = p.point_sq
-		          AND m2.meas_dt >= COALESCE(cc.last_meas_dt, CURRENT_DATE - 3)
+		          AND m2.meas_dt >= COALESCE(cc.last_dt, CURRENT_DATE - 3)
 		        ORDER BY m2.meas_dt DESC LIMIT 1
 		    ) lr ON TRUE
 		    WHERE 1=1
@@ -4241,12 +4249,11 @@
 		    lr.met_err_code
 		  from
 		    vi_m1_sv_point_list b
-		    LEFT JOIN client_customer cc ON cc.point_sq = b.point_sq
 		    LEFT JOIN LATERAL (
 		        SELECT m.ami_err_code, m.met_err_code, m.meas_dt as lr_meas_dt
 		        FROM client_meas_raw m
 		        WHERE m.point_sq = b.point_sq
-		          AND m.meas_dt >= COALESCE(cc.last_meas_dt, CURRENT_DATE - 3)
+		          AND m.meas_dt >= CURRENT_DATE - 3
 		        ORDER BY m.meas_dt DESC LIMIT 1
 		    ) lr ON TRUE
 		   where 1=1
@@ -5204,12 +5211,11 @@
 			LEFT JOIN tb_m1_info_company com1 ON com1.company_sq = dev.company_sq
 			LEFT JOIN vi_m1_sv_meas_now meas ON meas.point_sq = a.point_sq
 		<if test="statCd != null and statCd != 1">
-			LEFT JOIN client_customer cc_f ON cc_f.point_sq = a.point_sq
 			LEFT JOIN LATERAL (
 			    SELECT m.ami_err_code, m.met_err_code, m.meas_dt as lr_meas_dt
 			    FROM client_meas_raw m
 			    WHERE m.point_sq = a.point_sq
-			      AND m.meas_dt >= COALESCE(cc_f.last_meas_dt, CURRENT_DATE - 3)
+			      AND m.meas_dt >= CURRENT_DATE - 3
 			    ORDER BY m.meas_dt DESC LIMIT 1
 			) lr_f ON TRUE
 		</if>
@@ -5406,8 +5412,8 @@
 		p.p_remark as "pointRemark",
 		p.ins_dt as "insDt",
 		p.upd_dt as "updDt",
-		COALESCE(cc.last_meas_dt, lr.lr_meas_dt) as "measDt",
-		to_char(COALESCE(cc.last_meas_dt, lr.lr_meas_dt), 'yyyy-mm-dd hh24:mi') as "measDtStr",
+		COALESCE(cc.last_dt, lr.lr_meas_dt) as "measDt",
+		to_char(COALESCE(cc.last_dt, lr.lr_meas_dt), 'yyyy-mm-dd hh24:mi') as "measDtStr",
 		trunc(lr.accu_iv) as "accuIv",
 		b.adjst_os as "adjstV",
 		b.stat_cd as "statCd",
@@ -5457,12 +5463,16 @@
 		${rnTop} - ${rnBottom} as "pageSize"
 	FROM paged_points p
 	LEFT JOIN vi_m1_sv_meas_now b ON b.point_sq = p.point_sq
-	LEFT JOIN client_customer cc ON cc.point_sq = p.point_sq
+	LEFT JOIN LATERAL (
+	    SELECT last_dt FROM client_meas_day
+	    WHERE point_sq = p.point_sq
+	    ORDER BY meas_dt DESC LIMIT 1
+	) cc ON TRUE
 	LEFT JOIN LATERAL (
 	    SELECT m.accu_iv, m.ami_err_code, m.met_err_code, m.stat_cd as lr_stat_cd, m.meas_dt as lr_meas_dt
 	    FROM client_meas_raw m
 	    WHERE m.point_sq = p.point_sq
-	      AND m.meas_dt >= COALESCE(cc.last_meas_dt, CURRENT_DATE - 3)
+	      AND m.meas_dt >= COALESCE(cc.last_dt, CURRENT_DATE - 3)
 	    ORDER BY m.meas_dt DESC LIMIT 1
 	) lr ON TRUE
 	ORDER BY p.rn
@@ -5506,8 +5516,8 @@
 			  a.p_remark	 as "pointRemark",	-- 비고
 			  a.ins_dt	 as "insDt",	-- 등록일시
 			  a.upd_dt	 as "updDt",	-- 수정일시,
-			  COALESCE(cc.last_meas_dt, lr.lr_meas_dt)   as "measDt",
-			  to_char(COALESCE(cc.last_meas_dt, lr.lr_meas_dt), 'yyyy-mm-dd hh24:mi') as "measDtStr",
+			  COALESCE(cc.last_dt, lr.lr_meas_dt)   as "measDt",
+			  to_char(COALESCE(cc.last_dt, lr.lr_meas_dt), 'yyyy-mm-dd hh24:mi') as "measDtStr",
 			  trunc(lr.accu_iv)   as "accuIv",
 			  b.adjst_os  as "adjstV",
 			  b.stat_cd   as "statCd",
@@ -5560,12 +5570,16 @@
 		     LEFT JOIN tb_m1_cmap_device dev ON dev.point_sq = a.point_sq
 		     LEFT JOIN tb_m1_info_company com1 ON com1.company_sq = dev.company_sq
 		     LEFT JOIN vi_m1_sv_meas_now b ON b.point_sq = a.point_sq
-		     LEFT JOIN client_customer cc ON cc.point_sq = a.point_sq
+		     LEFT JOIN LATERAL (
+		         SELECT last_dt FROM client_meas_day
+		         WHERE point_sq = a.point_sq
+		         ORDER BY meas_dt DESC LIMIT 1
+		     ) cc ON TRUE
 		     LEFT JOIN LATERAL (
 		         SELECT m.accu_iv, m.ami_err_code, m.met_err_code, m.stat_cd as lr_stat_cd, m.meas_dt as lr_meas_dt
 		         FROM client_meas_raw m
 		         WHERE m.point_sq = a.point_sq
-		           AND m.meas_dt >= COALESCE(cc.last_meas_dt, CURRENT_DATE - 3)
+		           AND m.meas_dt >= COALESCE(cc.last_dt, CURRENT_DATE - 3)
 		         ORDER BY m.meas_dt DESC LIMIT 1
 		     ) lr ON TRUE
 		 where 1=1 

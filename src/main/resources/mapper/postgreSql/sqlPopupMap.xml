@@ -146,12 +146,11 @@
 		    left outer join vi_m1_sv_meas_now b on b.POINT_SQ = a.POINT_SQ
 		    left outer join tb_m1_meas_waterleak c on c.point_sq = a.point_sq
 		    <if test="statCd != null">
-		    LEFT JOIN client_customer cc_f ON cc_f.point_sq = a.point_sq
 		    LEFT JOIN LATERAL (
 		        SELECT m.ami_err_code, m.meas_dt as lr_meas_dt
 		        FROM client_meas_raw m
 		        WHERE m.point_sq = a.point_sq
-		          AND m.meas_dt >= COALESCE(cc_f.last_meas_dt, CURRENT_DATE - 3)
+		          AND m.meas_dt >= CURRENT_DATE - 3
 		        ORDER BY m.meas_dt DESC LIMIT 1
 		    ) lr_f ON TRUE
 		    </if>
