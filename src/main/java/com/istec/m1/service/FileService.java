@@ -271,7 +271,7 @@ public class FileService {
 			List<Object> mapping, 
 			String fileName) throws IOException {
 		
-		final int FLUSH_ROW_SIZE = 2000; // 2000행마다 flush (I/O 최소화)
+		final int FLUSH_ROW_SIZE = 2000;
 		
 		SXSSFWorkbook workbook = null;
 		OutputStream outs = null;
@@ -279,21 +279,27 @@ public class FileService {
 		long startTime = System.currentTimeMillis();
 		
 		try {
-			// 버퍼링된 출력 스트림 사용 (I/O 성능 향상)
+			// DB 조회를 먼저 완료하여 커넥션을 빠르게 반환 (Connection leak 방지)
+			List<HashMap<String, Object>> data = queryService.selectLongRunning(qid, params);
+			
+			long queryElapsed = System.currentTimeMillis() - startTime;
+			log.info("엑셀 다운로드 DB 조회 완료: {}건, 소요시간: {}ms", data.size(), queryElapsed);
+
+			response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+			response.setHeader("Content-Disposition", "attachment; filename=\"" + fileName + ".xlsx\"");
+			response.setHeader("Set-Cookie", "fileDownload=true; Path=/");
+
 			outs = new java.io.BufferedOutputStream(response.getOutputStream(), 65536);
 			
-			// XSSFWorkbook 없이 직접 SXSSFWorkbook 생성 (더 빠름)
 			workbook = new SXSSFWorkbook(FLUSH_ROW_SIZE);
-			workbook.setCompressTempFiles(false); // 압축 비활성화 (속도 우선)
+			workbook.setCompressTempFiles(false);
 			
 			SXSSFSheet sheet = (SXSSFSheet) workbook.createSheet();
 			sheet.setRandomAccessWindowSize(FLUSH_ROW_SIZE);
 			
-			// 컬럼 키 배열 미리 생성 (루프 내 반복 작업 최소화)
 			final int columnCount = mapping.size();
 			final String[] columnKeys = new String[columnCount];
 			
-			// 헤더 생성 + 컬럼 키 캐싱
 			SXSSFRow headerRow = (SXSSFRow) sheet.createRow(0);
 			for (int i = 0; i < columnCount; i++) {
 				@SuppressWarnings("unchecked")
@@ -305,55 +311,38 @@ public class FileService {
 				columnKeys[i] = key;
 			}
 			
-			// 스트리밍 조회 및 엑셀 쓰기
-			final int[] rowNum = {1};
-			final SXSSFSheet finalSheet = sheet;
-			
-			queryService.selectStream(qid, params, resultContext -> {
-				HashMap<String, Object> rowData = resultContext.getResultObject();
+			for (int rowIdx = 0; rowIdx < data.size(); rowIdx++) {
+				Map<String, Object> rowData = data.get(rowIdx);
 				
-				SXSSFRow dataRow = (SXSSFRow) finalSheet.createRow(rowNum[0]);
+				SXSSFRow dataRow = (SXSSFRow) sheet.createRow(rowIdx + 1);
 				
-				// 캐싱된 컬럼 키 사용 (Map 조회 최소화)
 				for (int i = 0; i < columnCount; i++) {
 					Object value = rowData.get(columnKeys[i]);
 					dataRow.createCell(i).setCellValue(value != null ? value.toString() : "");
 				}
 				
-				// 주기적으로 메모리를 디스크로 flush
-				if (rowNum[0] % FLUSH_ROW_SIZE == 0) {
-					try {
-						finalSheet.flushRows(FLUSH_ROW_SIZE);
-					} catch (IOException e) {
-						log.error("flushRows 오류: {}", e.getMessage());
-					}
+				if ((rowIdx + 1) % FLUSH_ROW_SIZE == 0) {
+					sheet.flushRows(FLUSH_ROW_SIZE);
 				}
-				
-				rowNum[0]++;
-			});
+			}
 			
-			// 남은 row flush
 			sheet.flushRows();
 			
 			long elapsed = System.currentTimeMillis() - startTime;
-			log.info("엑셀 스트리밍 다운로드 완료: 총 {}행, 소요시간: {}ms", rowNum[0] - 1, elapsed);
-			
-			response.reset();
-			response.setHeader("Content-Disposition", "attachment; filename=\"" + fileName + ".xlsx\"");
+			log.info("엑셀 다운로드 완료: 총 {}행, 소요시간: {}ms (DB: {}ms)", data.size(), elapsed, queryElapsed);
 			
 			workbook.write(outs);
+			outs.flush();
 			
 		} catch (IOException e) {
-			log.error("스트리밍 엑셀 다운로드 오류: {}", e.getMessage(), e);
+			log.error("엑셀 다운로드 오류: {}", e.getMessage(), e);
 			throw e;
 		} finally {
-			// 임시파일 삭제
 			if (workbook != null) {
 				workbook.dispose();
 			}
 			if (outs != null) {
 				try {
-					outs.flush();
 					outs.close();
 				} catch (IOException e) {
 					log.warn("OutputStream 정리 중 오류: {}", e.getMessage());

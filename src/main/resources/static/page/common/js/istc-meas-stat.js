@@ -1,6 +1,15 @@
 var meterStatCd = {
 
-	getStatus: function(amiErrCode, metErrCode) {
+	getStatus: function(amiErrCode, metErrCode, measDt) {
+		if (measDt) {
+			var lastDt = new Date(measDt);
+			var now = new Date();
+			var diffDays = (now - lastDt) / (1000 * 60 * 60 * 24);
+			if (diffDays >= 3) return { str: '통신장애', color: 'danger', image: 'resources/img/marker/box-icon-07-sm.png' };
+		} else if (!amiErrCode && !metErrCode) {
+			return { str: '통신장애', color: 'danger', image: 'resources/img/marker/box-icon-07-sm.png' };
+		}
+
 		if (amiErrCode && amiErrCode.charAt(0) === '1') return { str: '계량기 장애', color: 'orange', image: 'resources/img/marker/box-icon-08-sm.png' };
 
 		if (metErrCode) {

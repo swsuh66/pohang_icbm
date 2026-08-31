@@ -64,11 +64,12 @@ public class QueryService {
 	/**
 	 * 스트리밍 조회 - 대용량 엑셀 다운로드용
 	 * ResultHandler를 사용하여 한 행씩 처리 (메모리 효율적)
+	 * readOnly 트랜잭션이 autoCommit=false를 보장 → fetchSize와 결합하여 서버사이드 커서 활성화
 	 * @param qid 쿼리 ID
 	 * @param hashMap 파라미터
 	 * @param handler 결과 핸들러
 	 */
-	@Transactional(readOnly = true)
+	@Transactional(readOnly = true, timeout = 300)
 	public void selectStream(String qid, Map<String, Object> hashMap, ResultHandler<HashMap<String, Object>> handler) {
 		queryDao.selectStream(qid, hashMap, handler);
 	}

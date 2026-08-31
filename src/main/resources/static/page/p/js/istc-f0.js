@@ -428,7 +428,7 @@ function rawStockchart(container, data) {
 				var reDate = Date.UTC(year, month - 1, day, hour, min, sec);
 				
 				if (data[ix].pointSq) {
-					seriesData[0].push([reDate, data[ix].termCv / data[ix].intavlH]);
+					seriesData[0].push([reDate, (data[ix].intavlH && data[ix].intavlH > 0) ? data[ix].termCv / data[ix].intavlH : null]);
 					seriesData[1].push([reDate, data[ix].accuIv]);
 					if (_amiType && _amiType === 'lora') {
 						seriesData[2].push([reDate, data[ix].rssiV]);
@@ -478,7 +478,7 @@ function rawStockchart(container, data) {
 
 			var d = dataMap[kctTimestamp];
 			if (d && d.pointSq) {
-				seriesData[0].push([kctTimestamp, d.termCv / d.intavlH]);
+				seriesData[0].push([kctTimestamp, (d.intavlH && d.intavlH > 0) ? d.termCv / d.intavlH : null]);
 				seriesData[1].push([kctTimestamp, d.accuIv]);
 				if (_amiType && _amiType === 'lora') {
 					seriesData[2].push([kctTimestamp, d.rssiV]);
@@ -522,7 +522,7 @@ function rawStockchart(container, data) {
 				var reDate = Date.UTC(year, month - 1, day, hour, min, sec);
 				//var reDate = data[ix].measDtStr;
 				if (data[ix].pointSq) {
-					seriesData[0].push([reDate, data[ix].termCv / data[ix].intavlH]);
+					seriesData[0].push([reDate, (data[ix].intavlH && data[ix].intavlH > 0) ? data[ix].termCv / data[ix].intavlH : null]);
 					seriesData[1].push([reDate, data[ix].accuIv]);
 
 					if (_amiType && _amiType == 'lora') {

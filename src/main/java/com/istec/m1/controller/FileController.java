@@ -294,13 +294,14 @@ public class FileController {
 			HttpServletRequest request, HttpServletResponse response) throws IOException {
 
 		List<Object> mappingList = new ArrayList<Object>();
+		List<HashMap<String, Object>> data = null;
 		Map<String, Object> mappingInfo = null;		
 		Map<String, Object> selMap = makeParames(request);
 		String fileName = (String)selMap.get(Define.Key.FILE_NAME);
 		String length = (String)selMap.get(Define.Key.LENGTH);
 		String qid = (String)selMap.get(Define.Key.QID);		
 
-		log.info("스트리밍 엑셀 다운로드 시작 - qid: {}, fileName: {}", qid, fileName);
+		log.info("엑셀 다운로드 시작 - qid: {}, fileName: {}", qid, fileName);
 
 		for(int i = 0 ; i < Integer.parseInt(length); i++) {
 			mappingInfo = new HashMap<>();
@@ -311,8 +312,58 @@ public class FileController {
 			mappingList.add(mappingInfo);
 		}
 		
-		// 스트리밍 방식: DB 조회와 엑셀 쓰기를 동시에 처리
-		fileService.excelCreateSXSSFStreaming(response, qid, selMap, mappingList, fileName);
+		data = queryService.selectLongRunning(qid, selMap);
+
+		if ("mars.icbm.map1.newPointList".equals(qid) && data != null && !data.isEmpty()) {
+			List<Integer> nullMeasDtPoints = new ArrayList<>();
+			for (HashMap<String, Object> row : data) {
+				if (row.get("measDt") == null) {
+					Object psq = row.get("pointSq");
+					if (psq != null) {
+						nullMeasDtPoints.add(((Number) psq).intValue());
+					}
+				}
+			}
+
+			if (!nullMeasDtPoints.isEmpty()) {
+				StringBuilder sb = new StringBuilder("{");
+				for (int i = 0; i < nullMeasDtPoints.size(); i++) {
+					if (i > 0) sb.append(",");
+					sb.append(nullMeasDtPoints.get(i));
+				}
+				sb.append("}");
+
+				Map<String, Object> oldParam = new HashMap<>();
+				oldParam.put("pointSqs", sb.toString());
+				List<HashMap<String, Object>> oldDates = queryService.select(
+						"mars.icbm.map1.getOldMeasDt", oldParam);
+
+				if (oldDates != null && !oldDates.isEmpty()) {
+					Map<Integer, HashMap<String, Object>> oldDateMap = new HashMap<>();
+					for (HashMap<String, Object> od : oldDates) {
+						oldDateMap.put(((Number) od.get("pointSq")).intValue(), od);
+					}
+
+					for (HashMap<String, Object> row : data) {
+						if (row.get("measDt") == null) {
+							Object psq = row.get("pointSq");
+							if (psq != null) {
+								HashMap<String, Object> od = oldDateMap.get(((Number) psq).intValue());
+								if (od != null) {
+									row.put("measDt", od.get("measDt"));
+									row.put("measDtStr", od.get("measDtStr"));
+								}
+							}
+						}
+					}
+				}
+				log.info("통신장애 날짜 보완: {}건 중 {}건 보완됨",
+						nullMeasDtPoints.size(),
+						(oldDates != null ? oldDates.size() : 0));
+			}
+		}
+
+		fileService.excelCreateSXSSF(response, mappingList, data, fileName);
 	}
 
 	public List<HashMap<String, Object>> getAlrimTokData(Map<String, Object> params, String url) {

@@ -181,20 +181,14 @@ public class QueryDao {
 	/**
 	 * 스트리밍 조회 - 대용량 엑셀 다운로드용
 	 * ResultHandler를 사용하여 한 행씩 처리 (메모리 효율적)
-	 * PostgreSQL fetchSize 설정으로 진정한 스트리밍 처리
+	 * Spring @Transactional(readOnly=true)이 autoCommit=false를 보장하고,
+	 * XML의 fetchSize 설정과 결합하여 PostgreSQL 서버사이드 커서 활성화
 	 * @param qid 쿼리 ID
 	 * @param hashMap 파라미터
 	 * @param handler 결과 핸들러
 	 */
 	public void selectStream(String qid, Map<String, Object> hashMap, ResultHandler<HashMap<String, Object>> handler) {
 		logger.debug("[DAO-SELECT-STREAM] " + qid + ", " + hashMap.toString());
-		
-		// PostgreSQL 스트리밍을 위해 fetchSize 설정 (1000건씩 가져오기)
-		// 기본 SqlSessionTemplate은 fetchSize를 지원하지 않으므로 직접 SqlSession 사용
-		try (SqlSession session = sqlSessionFactory.openSession()) {
-			// fetchSize 설정을 위해 connection의 autoCommit을 false로 설정해야 함
-			// 하지만 Spring 트랜잭션에서 이미 처리되므로 RowBounds 사용
-			session.select(qid, hashMap, handler);
-		}
+		sqlsession.select(qid, hashMap, handler);
 	}
 }

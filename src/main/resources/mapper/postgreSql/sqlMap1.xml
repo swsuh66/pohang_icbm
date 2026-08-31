@@ -245,6 +245,8 @@
 					and (lr_f.lr_meas_dt IS NULL OR lr_f.lr_meas_dt &lt; CURRENT_DATE - 3)
 				</when>
 				<when test="statCd == 2">
+					and lr_f.lr_meas_dt IS NOT NULL
+					and lr_f.lr_meas_dt >= CURRENT_DATE - 3
 					and substring(lr_f.ami_err_code, 1, 1) = '1'
 				</when>
 				<when test="statCd == 0">
@@ -541,6 +543,8 @@
 					and (lr_f.lr_meas_dt IS NULL OR lr_f.lr_meas_dt &lt; CURRENT_DATE - 3)
 				</when>
 				<when test="statCd == 2">
+					and lr_f.lr_meas_dt IS NOT NULL
+					and lr_f.lr_meas_dt >= CURRENT_DATE - 3
 					and substring(lr_f.ami_err_code, 1, 1) = '1'
 				</when>
 				<when test="statCd == 0">
@@ -643,24 +647,34 @@
 	          and (c.addr like '%' || #{addr} || '%' or c.addr_new like '%' || #{addr} || '%')
 	      </if>
 	),
-	leak_suspects as (
-	    -- Step 2: 필터링된 포인트에 대해서만 누수의심 계산
-	    select distinct
+	raw_with_term_cv as (
+	    -- Step 2-a: client_meas_raw에서 accu_iv 차이로 term_cv 재계산
+	    select
 	        m.point_sq,
+	        m.meas_dt,
+	        GREATEST(m.accu_iv - lag(m.accu_iv) OVER (PARTITION BY m.point_sq ORDER BY m.meas_dt), 0) as real_term_cv
+	    from client_meas_raw m
+	    where m.meas_dt between now() - interval '25 hours' and now()
+	      and m.point_sq in (select point_sq from search_filtered_points)
+	),
+	leak_suspects as (
+	    -- Step 2-b: 재계산된 term_cv로 누수의심 판정
+	    select distinct
+	        rwt.point_sq,
 	        '누수의심' as leak_status
 	    from search_filtered_points sfp
-	    join tb_m1_meas_raw m on m.point_sq = sfp.point_sq
+	    join raw_with_term_cv rwt on rwt.point_sq = sfp.point_sq
 	    left join tb_m1_waterleak_setting2 s 
 	        on s.pipe_diameter = sfp.pipe_diameter 
 	        and s.business_name = sfp.business_name
-	    where m.term_cv is not null
-	      and m.meas_dt between now() - interval '24 hours' and now()
+	    where rwt.real_term_cv is not null
+	      and rwt.meas_dt between now() - interval '24 hours' and now()
 	      and not exists (
 	          select 1 from tb_m1_waterleak_hide_setting h 
-	          where h.point_sq = m.point_sq
+	          where h.point_sq = rwt.point_sq
 	      )
-	    group by m.point_sq, sfp.pipe_diameter, sfp.business_name, s.compare_term_cv
-	    having min(m.term_cv) >= coalesce(max(s.compare_term_cv), 0.1)
+	    group by rwt.point_sq, sfp.pipe_diameter, sfp.business_name, s.compare_term_cv
+	    having min(rwt.real_term_cv) >= coalesce(max(s.compare_term_cv), 0.1)
 	)
 	select
 			  (ROW_NUMBER() OVER()) AS "rownum",
@@ -1198,7 +1212,7 @@
 	) a
 	<if test="statCd != null">
 	LEFT JOIN LATERAL (
-		SELECT m.ami_err_code, m.meas_dt as lr_meas_dt
+		SELECT m.ami_err_code, m.met_err_code, m.meas_dt as lr_meas_dt
 		FROM client_meas_raw m
 		WHERE m.point_sq = a.point_sq
 		  AND m.meas_dt >= CURRENT_DATE - 3
@@ -1294,12 +1308,38 @@
 					and (lr_f.lr_meas_dt IS NULL OR lr_f.lr_meas_dt &lt; CURRENT_DATE - 3)
 				</when>
 				<when test="statCd == 2">
+					and lr_f.lr_meas_dt IS NOT NULL
+					and lr_f.lr_meas_dt >= CURRENT_DATE - 3
 					and substring(lr_f.ami_err_code, 1, 1) = '1'
+				</when>
+				<when test="statCd == 3">
+					and lr_f.lr_meas_dt IS NOT NULL
+					and lr_f.lr_meas_dt >= CURRENT_DATE - 3
+					and substring(lr_f.ami_err_code, 1, 1) != '1'
+					and substring(lr_f.met_err_code, 1, 1) = '1'
+				</when>
+				<when test="statCd == 4">
+					and lr_f.lr_meas_dt IS NOT NULL
+					and lr_f.lr_meas_dt >= CURRENT_DATE - 3
+					and substring(lr_f.ami_err_code, 1, 1) != '1'
+					and substring(lr_f.met_err_code, 1, 1) != '1'
+					and substring(lr_f.met_err_code, 2, 1) = '1'
+				</when>
+				<when test="statCd == 5">
+					and lr_f.lr_meas_dt IS NOT NULL
+					and lr_f.lr_meas_dt >= CURRENT_DATE - 3
+					and substring(lr_f.ami_err_code, 1, 1) != '1'
+					and substring(lr_f.met_err_code, 1, 1) != '1'
+					and substring(lr_f.met_err_code, 2, 1) != '1'
+					and substring(lr_f.met_err_code, 3, 1) = '1'
 				</when>
 				<when test="statCd == 0">
 					and lr_f.lr_meas_dt IS NOT NULL
 					and lr_f.lr_meas_dt >= CURRENT_DATE - 3
 					and (lr_f.ami_err_code IS NULL OR substring(lr_f.ami_err_code, 1, 1) != '1')
+					and (lr_f.met_err_code IS NULL OR substring(lr_f.met_err_code, 1, 1) != '1')
+					and (lr_f.met_err_code IS NULL OR substring(lr_f.met_err_code, 2, 1) != '1')
+					and (lr_f.met_err_code IS NULL OR substring(lr_f.met_err_code, 3, 1) != '1')
 				</when>
 			</choose>
 	    </if>
@@ -2528,7 +2568,7 @@
     </select>
 
 <sql id="pointHisdata_sql">
-	with day_base as (
+	with day_raw as (
 	    select
 	        a.point_sq,
 	        a.meas_dt,
@@ -2537,11 +2577,11 @@
 	        ((CASE WHEN substr(COALESCE(a.stat_cd, '1')::text, 1, 1) = '1' THEN '1' ELSE '0' END
 	          || CASE WHEN a.raw_cnt IS NULL OR a.raw_cnt = 0 THEN '1' ELSE '0' END
 	          || substring(COALESCE(a.stat_cd, '00000000')::text, 2, 7)))::char(9) AS stat_cd,
-	        a.accu_iv, a.accu_cv, a.term_cv, a.adjst_os,
-	        avg(a.term_cv) over w1 as term_cv_1d,
-	        avg(a.term_cv) over w2 as term_cv_7d,
-	        avg(a.term_cv) over w3 as term_cv_30d,
-	        avg(a.temperature) over w1 as temperature
+	        a.accu_iv, a.accu_cv,
+	        GREATEST(a.accu_iv - lag(a.accu_iv) OVER (PARTITION BY a.point_sq ORDER BY a.meas_dt), 0) as term_cv,
+	        CASE WHEN a.accu_iv &lt; lag(a.accu_iv) OVER (PARTITION BY a.point_sq ORDER BY a.meas_dt)
+	             THEN a.adjst_os ELSE 0 END as adjst_os,
+	        a.temperature
 	    from
 	        client_meas_day a
 	    where
@@ -2550,10 +2590,20 @@
 	        and a.meas_dt >= (to_date(#{begDate}, 'yyyy-mm-dd') - interval '30 day')::date
 	        and a.meas_dt <= to_date(#{endDate}, 'yyyy-mm-dd')
 	]]>
+	),
+	day_base as (
+	    select
+	        point_sq, meas_dt, last_dt, raw_cnt, stat_cd,
+	        accu_iv, accu_cv, term_cv, adjst_os,
+	        avg(term_cv) over w1 as term_cv_1d,
+	        avg(term_cv) over w2 as term_cv_7d,
+	        avg(term_cv) over w3 as term_cv_30d,
+	        avg(temperature) over w1 as temperature
+	    from day_raw
 	    window
-	        w1 as (partition by a.point_sq order by a.meas_dt rows between 1 preceding and 1 preceding),
-	        w2 as (partition by a.point_sq order by a.meas_dt rows between 7 preceding and current row),
-	        w3 as (partition by a.point_sq order by a.meas_dt rows between 30 preceding and current row)
+	        w1 as (partition by point_sq order by meas_dt rows between 1 preceding and 1 preceding),
+	        w2 as (partition by point_sq order by meas_dt rows between 7 preceding and current row),
+	        w3 as (partition by point_sq order by meas_dt rows between 30 preceding and current row)
 	),
 	main_data as (
 	    select
@@ -2568,29 +2618,43 @@
 	    where meas_dt >= (to_date(#{begDate}, 'yyyy-mm-dd') - interval '1 day')
 	]]>
 	),
-	/* 누수의심 계산 - client_meas_raw 사용 (보정된 term_cv 기준) */
+	/* 누수의심 계산 - client_meas_raw에서 accu_iv 차이로 계산 */
+	raw_term_for_leak AS (
+	    SELECT point_sq, meas_dt,
+	        GREATEST(accu_iv - lag(accu_iv) OVER (PARTITION BY point_sq ORDER BY meas_dt), 0) AS real_term_cv
+	    FROM client_meas_raw
+	    WHERE point_sq = #{pointSq}::integer
+	      AND meas_dt &gt;= (SELECT MIN(meas_dt) - interval '24 hours' FROM main_data)
+	      AND meas_dt &lt;= (SELECT MAX(meas_dt) FROM main_data)
+	),
 	leak_suspects as (
 	    select distinct
-	        m.point_sq,
+	        rwt.point_sq,
 	        md.meas_dt,
 	        '누수의심' as leak_status
 	    from main_data md
 	    cross join lateral (
-	        select m.point_sq
-	        from client_meas_raw m
-	        join tb_m1_info_point p on p.point_sq = m.point_sq
+	        select rwt.point_sq
+	        from raw_term_for_leak rwt
+	        join tb_m1_info_point p on p.point_sq = rwt.point_sq
 	        join tb_m1_info_customer c on c.cust_sq = p.cust_sq
-	        left join tb_m1_waterleak_setting2 s
-	            on s.pipe_diameter = c.pipe_diameter
-	            and s.business_name = c.business_name
-	        where m.point_sq = md.point_sq
-	          and m.term_cv is not null
-	          and m.point_sq not in (select point_sq from tb_m1_waterleak_hide_setting)
-	          and m.meas_dt between md.meas_dt - interval '24 hours' and md.meas_dt
+	        where rwt.point_sq = md.point_sq
+	          and rwt.real_term_cv is not null
+	          and rwt.point_sq not in (select point_sq from tb_m1_waterleak_hide_setting)
+	          and rwt.meas_dt between md.meas_dt - interval '24 hours' and md.meas_dt
 	          and p.use_cd = '1'
-	        group by m.point_sq, c.pipe_diameter, c.business_name, s.compare_term_cv
-	        having min(m.term_cv) >= coalesce(max(s.compare_term_cv), 0.1)
-	    ) m
+	        group by rwt.point_sq, c.pipe_diameter, c.business_name
+	        having min(rwt.real_term_cv) >= COALESCE(
+	            (SELECT leak_rule FROM tb_m1_rule_waterleak
+	             WHERE business_name = c.business_name
+	               AND pipe_diameter &lt;= c.pipe_diameter
+	             ORDER BY pipe_diameter DESC LIMIT 1),
+	            (SELECT leak_rule FROM tb_m1_rule_waterleak
+	             WHERE business_name = '기타'
+	               AND pipe_diameter &lt;= c.pipe_diameter
+	             ORDER BY pipe_diameter DESC LIMIT 1)
+	        )
+	    ) rwt
 	)
 	select 
     (ROW_NUMBER() OVER()) AS "rownum", 
@@ -2635,16 +2699,17 @@
     
     <sql id="pointHisdataRaw_sql">
 	
-		with raw_data as (
-		    select
-		        a.point_sq,
-		        a.meas_dt,
-		        (CASE WHEN substr(COALESCE(a.stat_cd, '1')::text, 1, 1) = '1' THEN '01' ELSE '00' END || substring(COALESCE(a.stat_cd, '00000000')::text, 2, 7))::char(9) as stat_cd,
-		        a.accu_iv,
-		        a.accu_cv,
-		        a.term_cv,
-		        a.itval_h,
-		        a.adjst_os,
+	with raw_data as (
+	    select
+	        a.point_sq,
+	        a.meas_dt,
+	        (CASE WHEN substr(COALESCE(a.stat_cd, '1')::text, 1, 1) = '1' THEN '01' ELSE '00' END || substring(COALESCE(a.stat_cd, '00000000')::text, 2, 7))::char(9) as stat_cd,
+	        a.accu_iv,
+	        a.accu_cv,
+	        GREATEST(a.accu_iv - lag(a.accu_iv) OVER (PARTITION BY a.point_sq ORDER BY a.meas_dt), 0) as term_cv,
+	        COALESCE(a.itval_h, 1) as itval_h,
+	        CASE WHEN a.accu_iv &lt; lag(a.accu_iv) OVER (PARTITION BY a.point_sq ORDER BY a.meas_dt)
+	             THEN a.adjst_os ELSE 0 END as adjst_os,
 		        a.bat1_iv,
 		        a.bat2_iv,
 		        a.rssi_iv,
@@ -2812,29 +2877,43 @@
 				and d.meas_dt = to_date(#{begRawDate}, 'yyyy-mm-dd')				
 			</if>
 		),
-		/* 누수의심 계산 - client_meas_raw 사용 (보정된 term_cv 기준) */
-		leak_suspects as (
-		    select distinct
-		        m.point_sq,
-		        rd.meas_dt,
-		        '누수의심' as leak_status
-		    from raw_data rd
-		    cross join lateral (
-		        select m.point_sq
-		        from client_meas_raw m
-		        join tb_m1_info_customer c on c.cust_sq = rd.cust_sq
-		        left join tb_m1_waterleak_setting2 s
-		            on s.pipe_diameter = c.pipe_diameter
-		            and s.business_name = c.business_name
-		        where m.point_sq = rd.point_sq
-		          and m.term_cv is not null
-		          and rd.point_sq not in (select point_sq from tb_m1_waterleak_hide_setting)
-		          and m.meas_dt between rd.meas_dt - interval '24 hours' and rd.meas_dt
-		          and rd.use_cd = '1'
-		        group by m.point_sq, c.pipe_diameter, c.business_name, s.compare_term_cv
-		        having min(m.term_cv) >= coalesce(max(s.compare_term_cv), 0.1)
-		    ) m
-		)
+	/* 누수의심 계산 - client_meas_raw에서 accu_iv 차이로 real_term_cv 계산 */
+	raw_with_real_term AS (
+	    SELECT point_sq, meas_dt,
+	        GREATEST(accu_iv - lag(accu_iv) OVER (PARTITION BY point_sq ORDER BY meas_dt), 0) AS real_term_cv
+	    FROM client_meas_raw
+	    WHERE meas_dt &gt;= (SELECT MIN(meas_dt) - interval '24 hours' FROM raw_data)
+	      AND meas_dt &lt;= (SELECT MAX(meas_dt) FROM raw_data)
+	      AND point_sq IN (SELECT point_sq FROM raw_data)
+	),
+	leak_suspects as (
+	    select distinct
+	        rwt.point_sq,
+	        rd.meas_dt,
+	        '누수의심' as leak_status
+	    from raw_data rd
+	    cross join lateral (
+	        select rwt.point_sq
+	        from raw_with_real_term rwt
+	        join tb_m1_info_customer c on c.cust_sq = rd.cust_sq
+	        where rwt.point_sq = rd.point_sq
+	          and rwt.real_term_cv is not null
+	          and rd.point_sq not in (select point_sq from tb_m1_waterleak_hide_setting)
+	          and rwt.meas_dt between rd.meas_dt - interval '24 hours' and rd.meas_dt
+	          and rd.use_cd = '1'
+	        group by rwt.point_sq, c.pipe_diameter, c.business_name
+	        having min(rwt.real_term_cv) >= COALESCE(
+	            (SELECT leak_rule FROM tb_m1_rule_waterleak
+	             WHERE business_name = c.business_name
+	               AND pipe_diameter &lt;= c.pipe_diameter
+	             ORDER BY pipe_diameter DESC LIMIT 1),
+	            (SELECT leak_rule FROM tb_m1_rule_waterleak
+	             WHERE business_name = '기타'
+	               AND pipe_diameter &lt;= c.pipe_diameter
+	             ORDER BY pipe_diameter DESC LIMIT 1)
+	        )
+	    ) rwt
+	)
 		select
 			(ROW_NUMBER() OVER()) AS "rownum", 
 			rd.point_sq		as "pointSq",
@@ -2940,298 +3019,167 @@
 	</select>
 	
 	
-	<select id="selectAnalyResult" parameterType="java.util.Map" resultType="java.util.Map">
-		SELECT 
-			to_char(a.baseDate, 'yyyy-mm-dd') AS "measDt", 
-			to_char(a.baseDate, 'yyyy-mm-dd') as "measDtStr",
-			b.measCnt 	    AS "measCnt",
-			trunc(trunc(100.0 * b.measCnt / (b.resultCnt*24), 3))    AS "measRat",
-			trunc(b.resultCnt) 	AS "equipCnt", 
-			trunc(b.totUse)        AS "totUse", 
-			trunc(b.avgUse)        AS "avgUse", 
-			trunc(b.minUse)        AS "minUse", 
-			trunc(b.maxUse)        AS "maxUse",
-			trunc((b.resultCnt::float/c.totalUsrCnt::float)*100) AS "dayMeasRat"
-		FROM 
-			(
-				SELECT	generate_series(#{fromDate}::date + interval '1 day', #{toDate}::date, '1 day':: INTERVAL) AS baseDate
-			) a
-			LEFT outer JOIN 
-			(
-				SELECT 
-					c.meas_dt, 
-					sum(c.term_cv)      as totUse, 
-					avg(c.term_cv)  	as avgUse, 
-					min(c.term_cv)      as minUse, 
-					max(c.term_cv)      as maxUse,
-					sum(c.raw_cnt)		as measCnt,     
-					count(*)   			as resultCnt       
-				FROM 
-					vi_m1_sv_point_list b 
-					inner join vi_m1_sv_meas_day c on c.point_sq = b.point_sq
-				<trim prefix="WHERE" prefixOverrides="AND|OR">
-			         <choose>
-						<when test="upSiteSq != null and lv != null">
-							 and b.site_sq in (
-							    select site_sq from fn_prj_sites(#{upSiteSq}::integer, #{lv}::integer)
-							 )					 	
-						</when>
-						<when test="siteSq != null">
-							 and b.site_sq = #{siteSq}::integer		 	
-						</when>							
-					</choose>
-		     	</trim>	
-		     	
-		     	<choose>
-					<when test="upBlkSq != null and lv != null">
-						 and b.blk_sq in (
-						    select blk_sq from fn_prj_blockes(#{upBlkSq}::integer, #{lv}::integer)
-						 )					 	
-					</when>
-					<when test="blkSq != null and blkSq != -2">
-						 and b.blk_sq = #{blkSq}::integer		 	
-					</when>							
-					<when test="blkSq != null and blkSq == -2">
-						 and b.blk_sq IS NULL		 	
-					</when>
-				</choose>
-		     	
-				<choose>
-					<when test="comSq != null and comSq != -2">
-					and b.company_sq = #{comSq}::integer
-					</when>
-					<when test="comSq != null and comSq == -2">
-					and b.company_sq IS NULL
-					</when>
-				</choose>	      
-			    
-			     <choose>
-					<when test="amiType != null and !amiType.equals('-2')">
-					and b.ami_type = #{amiType}
-					</when>
-					<when test="amiType != null and amiType.equals('-2')">
-					and b.ami_type IS NULL
-					</when>
-				</choose>
-				
-				 <choose>
-					<when test="readOpr != null and !readOpr.equals('-2')">
-					and b.read_opr = #{readOpr}
-					</when>
-					<when test="readOpr != null and readOpr.equals('-2')">
-					and b.read_opr IS NULL
-					</when>
-				</choose>
-				
-				<choose>
-					<when test="chkDay != null and !chkDay.equals('-2')">
-					and b.check_day = #{chkDay}
-					</when>
-					<when test="chkDay != null and chkDay.equals('-2')">
-					and b.check_day IS NULL
-					</when>
-				</choose>
-			     
-			     <choose>
-					<when test="useType != null and !useType.equals('-2')">
-					and b.use_type = #{useType}
-					</when>
-					<when test="useType != null and useType.equals('-2')">
-					and b.use_type IS NULL
-					</when>
-				</choose>
-				
-				<choose>
-					<when test="setYears != null and !setYears.equals('-2')">
-					and b.set_years = #{setYears}
-					</when>
-					<when test="setYears != null and setYears.equals('-2')">
-					and b.set_years IS NULL
-					</when>
-				</choose>
-		
-			     <choose>
-					<when test="pipeDia != null and pipeDia != -2">
-					and b.pipe_dia = #{pipeDia}::numeric
-					</when>
-					<when test="pipeDia != null and pipeDia == -2">
-					and b.pipe_dia is null
-					</when>
-				</choose>
-				
-				<choose>
-					<when test="useCd != null">
-					and	b.use_cd = #{useCd}
-					</when>
-					<when test="useCd == null">
-					and	b.use_cd = '1'
-					</when>
-				</choose>
-				
-				<if test="statCd != null">
-    				and position('1' in b.stat_cd) = #{statCd}::integer
-   		 		</if>
-				
-				<if test="pointSq != null">
-			    	and b.point_sq = #{pointSq}
-			    </if>
-			    
-			     <if test="searchParam != null">	     
-			    	AND 
-			        	(
-				        	b.cust_nm like '%${searchParam}%'
-					    	or b.admin_id like '%${searchParam}%'			    	
-					    	or b.addr_new like '%${searchParam}%'			    
-					    	
-				    	)
-			     </if>
-			     		
-				<![CDATA[									 
-					and (c.meas_dt > #{fromDate}::date and c.meas_dt <= #{toDate}::date)
-				]]>					
-					
-				group by  
-					c.meas_dt
-			) b 
-			ON a.baseDate = b.meas_dt			
-			join (
-			
-				select
-			        baseDate,
-			        count(*) totalUsrCnt
-			    from
-			    (	
-					  SELECT	generate_series(#{fromDate}::date + interval '1 day', #{toDate}::date, '1 day':: INTERVAL) AS baseDate	
-			    ) a, vi_m1_sv_point_list b
-	        	<trim prefix="WHERE" prefixOverrides="AND|OR">
-			         <choose>
-						<when test="upSiteSq != null and lv != null">
-							 and b.site_sq in (
-							    select site_sq from fn_prj_sites(#{upSiteSq}::integer, #{lv}::integer)
-							 )					 	
-						</when>
-						<when test="siteSq != null">
-							 and b.site_sq = #{siteSq}::integer		 	
-						</when>							
-					</choose>
-		     	</trim>	
-		     	
-		     	<choose>
-					<when test="upBlkSq != null and lv != null">
-						 and b.blk_sq in (
-						    select blk_sq from fn_prj_blockes(#{upBlkSq}::integer, #{lv}::integer)
-						 )					 	
-					</when>
-					<when test="blkSq != null and blkSq != -2">
-						 and b.blk_sq = #{blkSq}::integer		 	
-					</when>							
-					<when test="blkSq != null and blkSq == -2">
-						 and b.blk_sq IS NULL		 	
-					</when>
-				</choose>
-		     	
-				<choose>
-					<when test="comSq != null and comSq != -2">
-					and b.company_sq = #{comSq}::integer
-					</when>
-					<when test="comSq != null and comSq == -2">
-					and b.company_sq IS NULL
-					</when>
-				</choose>	      
-			    
-			     <choose>
-					<when test="amiType != null and !amiType.equals('-2')">
-					and b.ami_type = #{amiType}
-					</when>
-					<when test="amiType != null and amiType.equals('-2')">
-					and b.ami_type IS NULL
-					</when>
-				</choose>
-				
-				 <choose>
-					<when test="readOpr != null and !readOpr.equals('-2')">
-					and b.read_opr = #{readOpr}
-					</when>
-					<when test="readOpr != null and readOpr.equals('-2')">
-					and b.read_opr IS NULL
-					</when>
-				</choose>
-				
-				<choose>
-					<when test="chkDay != null and !chkDay.equals('-2')">
-					and b.check_day = #{chkDay}
-					</when>
-					<when test="chkDay != null and chkDay.equals('-2')">
-					and b.check_day IS NULL
-					</when>
-				</choose>
-			     
-			     <choose>
-					<when test="useType != null and !useType.equals('-2')">
-					and b.use_type = #{useType}
-					</when>
-					<when test="useType != null and useType.equals('-2')">
-					and b.use_type IS NULL
-					</when>
-				</choose>
-				
-				<choose>
-					<when test="setYears != null and !setYears.equals('-2')">
-					and b.set_years = #{setYears}
-					</when>
-					<when test="setYears != null and setYears.equals('-2')">
-					and b.set_years IS NULL
-					</when>
-				</choose>
-		
-			     <choose>
-					<when test="pipeDia != null and pipeDia != -2">
-					and b.pipe_dia = #{pipeDia}::numeric
-					</when>
-					<when test="pipeDia != null and pipeDia == -2">
-					and b.pipe_dia is null
-					</when>
-				</choose>
-				
-				<choose>
-					<when test="useCd != null">
-					and	b.use_cd = #{useCd}
-					</when>
-					<when test="useCd == null">
-					and	b.use_cd = '1'
-					</when>
-				</choose>
-				
-				<if test="statCd != null">
-    				and position('1' in b.stat_cd) = #{statCd}::integer
-   		 		</if>
-				
-				<if test="pointSq != null">
-			    	and b.point_sq = #{pointSq}
-			    </if>
-			    
-			     <if test="searchParam != null">	     
-			    	AND 
-			        	(
-				        	b.cust_nm like '%${searchParam}%'
-					    	or b.admin_id like '%${searchParam}%'			    	
-					    	or b.addr_new like '%${searchParam}%'			    
-					    	
-				    	)
-			     </if>
-			         
-			         
-			      <![CDATA[   
-			      	and a.baseDate >= b.set_dt  
-			      ]]> 
-			         
-			      group by baseDate
-			
-			
-			) c on c.baseDate = a.baseDate
-			
-		order by 
-			a.baseDate desc
+	<sql id="analyResult_pointFilter">
+		<choose>
+			<when test="upSiteSq != null and lv != null">
+				 and b.site_sq in (
+				    select site_sq from fn_prj_sites(#{upSiteSq}::integer, #{lv}::integer)
+				 )
+			</when>
+			<when test="siteSq != null">
+				 and b.site_sq = #{siteSq}::integer
+			</when>
+		</choose>
+
+		<choose>
+			<when test="upBlkSq != null and lv != null">
+				 and b.blk_sq in (
+				    select blk_sq from fn_prj_blockes(#{upBlkSq}::integer, #{lv}::integer)
+				 )
+			</when>
+			<when test="blkSq != null and blkSq != -2">
+				 and b.blk_sq = #{blkSq}::integer
+			</when>
+			<when test="blkSq != null and blkSq == -2">
+				 and b.blk_sq IS NULL
+			</when>
+		</choose>
+
+		<choose>
+			<when test="comSq != null and comSq != -2">
+			and b.company_sq = #{comSq}::integer
+			</when>
+			<when test="comSq != null and comSq == -2">
+			and b.company_sq IS NULL
+			</when>
+		</choose>
+
+		<choose>
+			<when test="amiType != null and !amiType.equals('-2')">
+			and b.ami_type = #{amiType}
+			</when>
+			<when test="amiType != null and amiType.equals('-2')">
+			and b.ami_type IS NULL
+			</when>
+		</choose>
+
+		<choose>
+			<when test="readOpr != null and !readOpr.equals('-2')">
+			and b.read_opr = #{readOpr}
+			</when>
+			<when test="readOpr != null and readOpr.equals('-2')">
+			and b.read_opr IS NULL
+			</when>
+		</choose>
+
+		<choose>
+			<when test="chkDay != null and !chkDay.equals('-2')">
+			and b.check_day = #{chkDay}
+			</when>
+			<when test="chkDay != null and chkDay.equals('-2')">
+			and b.check_day IS NULL
+			</when>
+		</choose>
+
+		<choose>
+			<when test="useType != null and !useType.equals('-2')">
+			and b.use_type = #{useType}
+			</when>
+			<when test="useType != null and useType.equals('-2')">
+			and b.use_type IS NULL
+			</when>
+		</choose>
+
+		<choose>
+			<when test="setYears != null and !setYears.equals('-2')">
+			and b.set_years = #{setYears}
+			</when>
+			<when test="setYears != null and setYears.equals('-2')">
+			and b.set_years IS NULL
+			</when>
+		</choose>
+
+		<choose>
+			<when test="pipeDia != null and pipeDia != -2">
+			and b.pipe_dia = #{pipeDia}::numeric
+			</when>
+			<when test="pipeDia != null and pipeDia == -2">
+			and b.pipe_dia is null
+			</when>
+		</choose>
+
+		<choose>
+			<when test="useCd != null">
+			and	b.use_cd = #{useCd}
+			</when>
+			<when test="useCd == null">
+			and	b.use_cd = '1'
+			</when>
+		</choose>
+
+		<if test="statCd != null">
+			and position('1' in b.stat_cd) = #{statCd}::integer
+		</if>
+
+		<if test="pointSq != null">
+			and b.point_sq = #{pointSq}
+		</if>
+
+		<if test="searchParam != null">
+			AND (
+				b.cust_nm like '%${searchParam}%'
+				or b.admin_id like '%${searchParam}%'
+				or b.addr_new like '%${searchParam}%'
+			)
+		</if>
+	</sql>
+
+	<select id="selectAnalyResult" parameterType="java.util.Map" resultType="java.util.Map" timeout="120">
+		WITH filtered_pts AS MATERIALIZED (
+			SELECT b.point_sq, b.set_dt
+			FROM vi_m1_sv_point_list b
+			<trim prefix="WHERE" prefixOverrides="AND|OR">
+				<include refid="analyResult_pointFilter"/>
+			</trim>
+		),
+		date_series AS (
+			SELECT generate_series(#{fromDate}::date + interval '1 day', #{toDate}::date, '1 day'::INTERVAL) AS baseDate
+		),
+		meas_agg AS (
+			SELECT
+				c.meas_dt,
+				sum(c.term_cv)  as totUse,
+				avg(c.term_cv)  as avgUse,
+				min(c.term_cv)  as minUse,
+				max(c.term_cv)  as maxUse,
+				sum(c.raw_cnt)  as measCnt,
+				count(*)        as resultCnt
+			FROM (
+				SELECT cmd.point_sq, cmd.meas_dt, cmd.raw_cnt,
+					GREATEST(cmd.accu_iv - lag(cmd.accu_iv) OVER (PARTITION BY cmd.point_sq ORDER BY cmd.meas_dt), 0) AS term_cv
+				FROM client_meas_day cmd
+				WHERE cmd.point_sq IN (SELECT point_sq FROM filtered_pts)
+				  AND cmd.meas_dt >= #{fromDate}::date AND cmd.meas_dt &lt;= #{toDate}::date
+			) c
+			<![CDATA[
+			WHERE c.meas_dt > #{fromDate}::date AND c.meas_dt <= #{toDate}::date
+			]]>
+			GROUP BY c.meas_dt
+		)
+		SELECT
+			to_char(ds.baseDate, 'yyyy-mm-dd') AS "measDt",
+			to_char(ds.baseDate, 'yyyy-mm-dd') AS "measDtStr",
+			ma.measCnt      AS "measCnt",
+			trunc(trunc(100.0 * ma.measCnt / NULLIF(ma.resultCnt * 24, 0), 3)) AS "measRat",
+			trunc(ma.resultCnt) AS "equipCnt",
+			trunc(ma.totUse)    AS "totUse",
+			trunc(ma.avgUse)    AS "avgUse",
+			trunc(ma.minUse)    AS "minUse",
+			trunc(ma.maxUse)    AS "maxUse",
+			trunc((ma.resultCnt::float / NULLIF((SELECT count(*) FROM filtered_pts fp WHERE fp.set_dt &lt;= ds.baseDate), 0)::float) * 100) AS "dayMeasRat"
+		FROM date_series ds
+		LEFT JOIN meas_agg ma ON ds.baseDate = ma.meas_dt
+		ORDER BY ds.baseDate DESC
 	</select>
 	
 	
@@ -3500,6 +3448,7 @@
         lr.lr_stat_cd AS "statCd",
         lr.ami_err_code AS "amiErrCode",
         lr.met_err_code AS "metErrCode",
+        lr.lr_meas_dt AS "measDt",
         TRUNC(GREATEST(COALESCE(m.term_iv + m.fadjst_os, 0), 0)) AS "rstValTr",
         TRUNC(COALESCE(m.beg_accu_iv, 0)) AS "begValTr",
         TRUNC(COALESCE(m.end_accu_iv, 0)) AS "endValTr",
@@ -3509,6 +3458,7 @@
         NULL AS "shareMeter",
         NULL AS "region",
         CASE
+            WHEN lr.lr_meas_dt IS NULL OR lr.lr_meas_dt &lt; CURRENT_DATE - 3 THEN '통신장애'
             WHEN substring(lr.ami_err_code, 1, 1) = '1' THEN '계량기 장애'
             WHEN substring(lr.met_err_code, 1, 1) = '1' THEN 'Q3 초과'
             WHEN substring(lr.met_err_code, 2, 1) = '1' THEN '역류'
@@ -3530,7 +3480,7 @@
         ORDER BY meas_dt DESC LIMIT 1
     ) cc ON TRUE
     LEFT JOIN LATERAL (
-        SELECT m2.stat_cd as lr_stat_cd, m2.ami_err_code, m2.met_err_code
+        SELECT m2.stat_cd as lr_stat_cd, m2.ami_err_code, m2.met_err_code, m2.meas_dt as lr_meas_dt
         FROM client_meas_raw m2
         WHERE m2.point_sq = t.point_sq
           AND m2.meas_dt >= COALESCE(cc.last_dt, CURRENT_DATE - 3)
@@ -3624,6 +3574,7 @@
 		        NULL AS "shareMeter",
 		        NULL AS "region",
 		        CASE
+		            WHEN lr.lr_meas_dt IS NULL OR lr.lr_meas_dt &lt; CURRENT_DATE - 3 THEN '통신장애'
 		            WHEN substring(lr.ami_err_code, 1, 1) = '1' THEN '계량기 장애'
 		            WHEN substring(lr.met_err_code, 1, 1) = '1' THEN 'Q3 초과'
 		            WHEN substring(lr.met_err_code, 2, 1) = '1' THEN '역류'
@@ -3636,15 +3587,10 @@
 		    FROM vi_m1_sv_point_list p
 		    LEFT JOIN meter_aggregates m ON m.point_sq = p.point_sq
 		    LEFT JOIN LATERAL (
-		        SELECT last_dt FROM client_meas_day
-		        WHERE point_sq = p.point_sq
-		        ORDER BY meas_dt DESC LIMIT 1
-		    ) cc ON TRUE
-		    LEFT JOIN LATERAL (
 		        SELECT m2.stat_cd as lr_stat_cd, m2.ami_err_code, m2.met_err_code, m2.meas_dt as lr_meas_dt
 		        FROM client_meas_raw m2
 		        WHERE m2.point_sq = p.point_sq
-		          AND m2.meas_dt >= COALESCE(cc.last_dt, CURRENT_DATE - 3)
+		          AND m2.meas_dt >= CURRENT_DATE - 30
 		        ORDER BY m2.meas_dt DESC LIMIT 1
 		    ) lr ON TRUE
 		    WHERE 1=1
@@ -4244,16 +4190,22 @@
 	with tb_t as (
 		  select
 		    b.point_sq,
-		    lr.lr_meas_dt,
+		    cc.last_dt as lr_meas_dt,
 		    lr.ami_err_code,
 		    lr.met_err_code
 		  from
 		    vi_m1_sv_point_list b
 		    LEFT JOIN LATERAL (
-		        SELECT m.ami_err_code, m.met_err_code, m.meas_dt as lr_meas_dt
+		        SELECT last_dt FROM client_meas_day
+		        WHERE point_sq = b.point_sq
+		          AND meas_dt >= CURRENT_DATE - 4
+		        ORDER BY meas_dt DESC LIMIT 1
+		    ) cc ON TRUE
+		    LEFT JOIN LATERAL (
+		        SELECT m.ami_err_code, m.met_err_code
 		        FROM client_meas_raw m
 		        WHERE m.point_sq = b.point_sq
-		          AND m.meas_dt >= CURRENT_DATE - 3
+		          AND m.meas_dt >= COALESCE(cc.last_dt, CURRENT_DATE - 3)
 		        ORDER BY m.meas_dt DESC LIMIT 1
 		    ) lr ON TRUE
 		   where 1=1
@@ -4349,12 +4301,12 @@
 		  select stat_cd, count(*) cnt, statCdStr from (
 		    select
 		      case
-		        when a.lr_meas_dt IS NULL OR a.lr_meas_dt &lt; CURRENT_DATE - 3 then '100000000'
+		        when a.lr_meas_dt IS NULL OR a.lr_meas_dt &lt; CURRENT_TIMESTAMP - interval '3 days' then '100000000'
 		        when substring(a.ami_err_code, 1, 1) = '1' then '010000000'
 		        else '000000000'
 		      end stat_cd,
 		      case
-		        when a.lr_meas_dt IS NULL OR a.lr_meas_dt &lt; CURRENT_DATE - 3 then '통신장애'
+		        when a.lr_meas_dt IS NULL OR a.lr_meas_dt &lt; CURRENT_TIMESTAMP - interval '3 days' then '통신장애'
 		        when substring(a.ami_err_code, 1, 1) = '1' then '계량기장애'
 		        else '정상'
 		      end statCdStr
@@ -5136,8 +5088,8 @@
 
     
     
-    <select id="newPointList" parameterType="java.util.Map" resultType="java.util.Map">
-      <include refid="newPointList_sql"/>      
+    <select id="newPointList" parameterType="java.util.Map" resultType="java.util.Map" fetchSize="500" timeout="300">
+      <include refid="newPointList_sql"/>
     </select>
 	
 	<select id="newPointList_paging" parameterType="java.util.Map" resultType="java.util.Map">
@@ -5304,9 +5256,10 @@
 			<choose>
 				<when test="statCd == 1">
 					and NOT EXISTS (
-						SELECT 1 FROM client_meas_raw m
-						WHERE m.point_sq = a.point_sq
-						  AND m.meas_dt >= CURRENT_DATE - 3
+						SELECT 1 FROM client_meas_day d
+						WHERE d.point_sq = a.point_sq
+						  AND d.meas_dt >= CURRENT_DATE - 4
+						  AND d.last_dt >= CURRENT_TIMESTAMP - interval '3 days'
 					)
 				</when>
 				<when test="statCd == 2">
@@ -5420,14 +5373,14 @@
 		b.stat_cd as "deviceStatCd",
 		lr.ami_err_code as "amiErrCode",
 		lr.met_err_code as "metErrCode",
-		case
-		    when substring(lr.ami_err_code, 1, 1) = '1' then '계량기 장애'
-		    when substring(lr.met_err_code, 1, 1) = '1' then 'Q3 초과'
-		    when substring(lr.met_err_code, 2, 1) = '1' then '역류'
-		    when substring(lr.met_err_code, 3, 1) = '1' then '누수'
-		    else '정상'
-		end "statCdStr",
-		p.ami_type as "amiType",
+	case
+	    when substring(lr.ami_err_code, 1, 1) = '1' then '계량기 장애'
+	    when substring(lr.met_err_code, 1, 1) = '1' then 'Q3 초과'
+	    when substring(lr.met_err_code, 2, 1) = '1' then '역류'
+	    when substring(lr.met_err_code, 3, 1) = '1' then '누수'
+	    else '정상'
+	end "statCdStr",
+	p.ami_type as "amiType",
 		p.dev_no as "devNo",
 		p.sub_dev_no as "subDevNo",
 		b.raw_cnt_0d as "rawCnt_0d",
@@ -5479,110 +5432,24 @@
     </select>
     
 	<sql id="newPointList_sql">
-			select
-			  (ROW_NUMBER() OVER()) AS "rownum",
-			  a.point_sq	 as "pointSq",	-- 장비 Sq
-			  a.site_sq   as "siteSq",			  
-			  s3.site_nm as "siteNm0", --지자체
-        	  s3.site_nm as "siteNm1", --사업소
-		      s3.site_nm as "siteNm2", --구
-			  s3.site_nm as "siteNm", --사이트 이름 (동)
-			  a.blk_sq	 as "blkSq",	-- 블럭 Sq
-			  c.set_years as "setYears", --수용가 대상년도
-			  a.cust_sq	 as "custSq",	-- 수용가 Sq
-			  a.use_cd	 as "useCd",	-- 사용코드 (0:점검, 1:사용중, 7:사용중지)
-			  case a.use_cd
-			    when '1' then '검침중'
-			    else '검침중지'
-			  end "useCdStr",
-			  c.check_day as "checkDay", --검침일
-			  c.admin_no	 as "adminId",	-- 검침관리코드
-			  c.cust_name	 as "custNm",	-- 수용가 이름
-			  c.addr	 as "addrOld",	-- 구주소
-			  c.addr_new	 as "addrNew",	-- 도로명주소
-			  c.meter_no	 as "meterNo",	-- 미터번호
-			  c.business_name	 as "useType",	-- 업종 (가정용/일반용/학교용)
-			  c.pipe_diameter	 as "pipeDia",	-- 관경
-			  k3.blk_nm	 as "blkNm1",	-- 상위 블럭이름
-			  k3.blk_nm	 as "blkNm2",	-- 중블럭이름
-			  k3.blk_nm as "blkNm",	-- 하위 블럭이름
-			  c.read_responsi  as "readOpr",	-- 검침원
-			  c.check_day as "chkDay", --검침일
-			  c.cust_phone as "custPhone", --전화번호
-			  a.loc_lng	 as "locLng",	-- 위도
-			  a.loc_lat	 as "locLat",	-- 경도
-			  dev.ins_dt	 as "setDt",	-- ami 설치일
-			  to_char(dev.ins_dt, 'yyyy-mm-dd') as "setDtStr",
-			  a.p_remark	 as "pointRemark",	-- 비고
-			  a.ins_dt	 as "insDt",	-- 등록일시
-			  a.upd_dt	 as "updDt",	-- 수정일시,
-			  COALESCE(cc.last_dt, lr.lr_meas_dt)   as "measDt",
-			  to_char(COALESCE(cc.last_dt, lr.lr_meas_dt), 'yyyy-mm-dd hh24:mi') as "measDtStr",
-			  trunc(lr.accu_iv)   as "accuIv",
-			  b.adjst_os  as "adjstV",
-			  b.stat_cd   as "statCd",
-			  b.stat_cd   as "deviceStatCd",
-			  lr.ami_err_code as "amiErrCode",
-			  lr.met_err_code as "metErrCode",
-			  case
-			      when substring(lr.ami_err_code, 1, 1) = '1' then '계량기 장애'
-			      when substring(lr.met_err_code, 1, 1) = '1' then 'Q3 초과'
-			      when substring(lr.met_err_code, 2, 1) = '1' then '역류'
-			      when substring(lr.met_err_code, 3, 1) = '1' then '누수'
-			      else '정상'
-			  end "statCdStr",
-			  dev.ami_type as "amiType",
-			  dev.dev_no   as "devNo",
-			  dev.sub_dev_no   as "subDevNo",
-			  b.raw_cnt_0d as "rawCnt_0d",
-			  b.term_cv_0d as "termCv_0d",
-			  b.raw_cnt_1d as "rawCnt_1d",
-			  b.term_cv_1d as "termCv_1d",
-			  b.raw_cnt_7d as "rawCnt_7d",
-			  b.term_cv_7d as "termCv_7d",
-			  b.raw_cnt_30d as "rawCnt_30d",
-			  b.term_cv_30d as "termCv_30d",
-			  b.raw_cnt_90d as "rawCnt_90d",
-			  b.term_cv_90d as "termCv_90d",
-			  b.delay_rcv as "delayRcv",
-			  b.bat2_iv as "bat2Iv",
-			  case
-		        when b.bat2_stat = '1' then '장애'
-		        when b.bat2_stat = '0' then '정상'
-		      end "bat2Stat",
-			  com1.company_sq as "comSq",
-		      com1.company_nm as "comNm",
-		      com1.company_cd as "comCd",
-			  a.inform_cd as "informCd",
-			  a.send_cd as "sendCd",
-			  a.send_dt as "sendDt",
-			  b.temperature,
-			  c.img_src_gum,
-    		  c.img_src_bf,
-    		  c.img_src_af,
-    		  c.img_src_add,
-			  c.note
-		  from
-		     tb_m1_info_point a
-		     LEFT JOIN tb_m1_info_customer c ON c.cust_sq = a.cust_sq
-		     LEFT JOIN tb_m1_info_block k3 ON k3.blk_sq = a.blk_sq
-		     LEFT JOIN vi_m1_sv_site_list s3 ON s3.site_sq = a.site_sq
-		     LEFT JOIN tb_m1_cmap_device dev ON dev.point_sq = a.point_sq
-		     LEFT JOIN tb_m1_info_company com1 ON com1.company_sq = dev.company_sq
-		     LEFT JOIN vi_m1_sv_meas_now b ON b.point_sq = a.point_sq
-		     LEFT JOIN LATERAL (
-		         SELECT last_dt FROM client_meas_day
-		         WHERE point_sq = a.point_sq
-		         ORDER BY meas_dt DESC LIMIT 1
-		     ) cc ON TRUE
-		     LEFT JOIN LATERAL (
-		         SELECT m.accu_iv, m.ami_err_code, m.met_err_code, m.stat_cd as lr_stat_cd, m.meas_dt as lr_meas_dt
-		         FROM client_meas_raw m
-		         WHERE m.point_sq = a.point_sq
-		           AND m.meas_dt >= COALESCE(cc.last_dt, CURRENT_DATE - 3)
-		         ORDER BY m.meas_dt DESC LIMIT 1
-		     ) lr ON TRUE
-		 where 1=1 
+	WITH filtered_points AS (
+		SELECT a.point_sq
+		FROM tb_m1_info_point a
+		LEFT JOIN tb_m1_info_customer c ON c.cust_sq = a.cust_sq
+		LEFT JOIN tb_m1_info_block k3 ON k3.blk_sq = a.blk_sq
+		LEFT JOIN vi_m1_sv_site_list s3 ON s3.site_sq = a.site_sq
+		LEFT JOIN tb_m1_cmap_device dev ON dev.point_sq = a.point_sq
+		LEFT JOIN tb_m1_info_company com1 ON com1.company_sq = dev.company_sq
+	<if test="statCd != null and statCd != 1">
+		LEFT JOIN LATERAL (
+		    SELECT m.ami_err_code, m.met_err_code, m.meas_dt as lr_meas_dt
+		    FROM client_meas_raw m
+		    WHERE m.point_sq = a.point_sq
+		      AND m.meas_dt >= CURRENT_DATE - 3
+		    ORDER BY m.meas_dt DESC LIMIT 1
+		) lr_f ON TRUE
+	</if>
+		WHERE 1=1
 	         <choose>
 				<when test="upSiteSq != null and lv != null">
 					 and a.site_sq in (
@@ -5676,15 +5543,46 @@
 		<if test="statCd != null">
 			<choose>
 				<when test="statCd == 1">
-					and (lr.lr_meas_dt IS NULL OR lr.lr_meas_dt &lt; CURRENT_DATE - 3)
+					and NOT EXISTS (
+						SELECT 1 FROM client_meas_day d
+						WHERE d.point_sq = a.point_sq
+						  AND d.meas_dt >= CURRENT_DATE - 4
+						  AND d.last_dt >= CURRENT_TIMESTAMP - interval '3 days'
+					)
 				</when>
 				<when test="statCd == 2">
-					and substring(lr.ami_err_code, 1, 1) = '1'
+					and lr_f.lr_meas_dt IS NOT NULL
+					and lr_f.lr_meas_dt >= CURRENT_DATE - 3
+					and substring(lr_f.ami_err_code, 1, 1) = '1'
+				</when>
+				<when test="statCd == 3">
+					and lr_f.lr_meas_dt IS NOT NULL
+					and lr_f.lr_meas_dt >= CURRENT_DATE - 3
+					and substring(lr_f.ami_err_code, 1, 1) != '1'
+					and substring(lr_f.met_err_code, 1, 1) = '1'
+				</when>
+				<when test="statCd == 4">
+					and lr_f.lr_meas_dt IS NOT NULL
+					and lr_f.lr_meas_dt >= CURRENT_DATE - 3
+					and substring(lr_f.ami_err_code, 1, 1) != '1'
+					and substring(lr_f.met_err_code, 1, 1) != '1'
+					and substring(lr_f.met_err_code, 2, 1) = '1'
+				</when>
+				<when test="statCd == 5">
+					and lr_f.lr_meas_dt IS NOT NULL
+					and lr_f.lr_meas_dt >= CURRENT_DATE - 3
+					and substring(lr_f.ami_err_code, 1, 1) != '1'
+					and substring(lr_f.met_err_code, 1, 1) != '1'
+					and substring(lr_f.met_err_code, 2, 1) != '1'
+					and substring(lr_f.met_err_code, 3, 1) = '1'
 				</when>
 				<when test="statCd == 0">
-					and lr.lr_meas_dt IS NOT NULL
-					and lr.lr_meas_dt >= CURRENT_DATE - 3
-					and (lr.ami_err_code IS NULL OR substring(lr.ami_err_code, 1, 1) != '1')
+					and lr_f.lr_meas_dt IS NOT NULL
+					and lr_f.lr_meas_dt >= CURRENT_DATE - 3
+					and (lr_f.ami_err_code IS NULL OR substring(lr_f.ami_err_code, 1, 1) != '1')
+					and (lr_f.met_err_code IS NULL OR substring(lr_f.met_err_code, 1, 1) != '1')
+					and (lr_f.met_err_code IS NULL OR substring(lr_f.met_err_code, 2, 1) != '1')
+					and (lr_f.met_err_code IS NULL OR substring(lr_f.met_err_code, 3, 1) != '1')
 				</when>
 			</choose>
 	    </if>
@@ -5716,8 +5614,129 @@
 	       and (c.admin_no like  '%' || #{searchInputP} || '%'
 		       or  c.cust_name like  '%' || #{searchInputP} || '%')
 	     </if>
+	)
+	SELECT
+		(ROW_NUMBER() OVER()) AS "rownum",
+		a.point_sq	 as "pointSq",
+		a.site_sq   as "siteSq",
+		s3.site_nm as "siteNm0",
+       	s3.site_nm as "siteNm1",
+	    s3.site_nm as "siteNm2",
+		s3.site_nm as "siteNm",
+		a.blk_sq	 as "blkSq",
+		c.set_years as "setYears",
+		a.cust_sq	 as "custSq",
+		a.use_cd	 as "useCd",
+		case a.use_cd
+		    when '1' then '검침중'
+		    else '검침중지'
+		end "useCdStr",
+		c.check_day as "checkDay",
+		c.admin_no	 as "adminId",
+		c.cust_name	 as "custNm",
+		c.addr	 as "addrOld",
+		c.addr_new	 as "addrNew",
+		c.meter_no	 as "meterNo",
+		c.business_name	 as "useType",
+		c.pipe_diameter	 as "pipeDia",
+		k3.blk_nm	 as "blkNm1",
+		k3.blk_nm	 as "blkNm2",
+		k3.blk_nm as "blkNm",
+		c.read_responsi  as "readOpr",
+		c.check_day as "chkDay",
+		c.cust_phone as "custPhone",
+		a.loc_lng	 as "locLng",
+		a.loc_lat	 as "locLat",
+		dev.ins_dt	 as "setDt",
+		to_char(dev.ins_dt, 'yyyy-mm-dd') as "setDtStr",
+		a.p_remark	 as "pointRemark",
+		a.ins_dt	 as "insDt",
+		a.upd_dt	 as "updDt",
+		COALESCE(cc.last_dt, lr.lr_meas_dt) as "measDt",
+		to_char(COALESCE(cc.last_dt, lr.lr_meas_dt), 'yyyy-mm-dd hh24:mi') as "measDtStr",
+		trunc(lr.accu_iv)   as "accuIv",
+		b.adjst_os  as "adjstV",
+		b.stat_cd   as "statCd",
+		b.stat_cd   as "deviceStatCd",
+	lr.ami_err_code as "amiErrCode",
+	lr.met_err_code as "metErrCode",
+	case
+	    when COALESCE(cc.last_dt, lr.lr_meas_dt) IS NULL then '통신장애'
+	    when COALESCE(cc.last_dt, lr.lr_meas_dt) &lt; CURRENT_TIMESTAMP - interval '3 days' then '통신장애'
+	    when substring(lr.ami_err_code, 1, 1) = '1' then '계량기 장애'
+	    when substring(lr.met_err_code, 1, 1) = '1' then 'Q3 초과'
+	    when substring(lr.met_err_code, 2, 1) = '1' then '역류'
+	    when substring(lr.met_err_code, 3, 1) = '1' then '누수'
+	    else '정상'
+	end "statCdStr",
+	dev.ami_type as "amiType",
+	dev.dev_no   as "devNo",
+	dev.sub_dev_no   as "subDevNo",
+		b.raw_cnt_0d as "rawCnt_0d",
+		b.term_cv_0d as "termCv_0d",
+		b.raw_cnt_1d as "rawCnt_1d",
+		b.term_cv_1d as "termCv_1d",
+		b.raw_cnt_7d as "rawCnt_7d",
+		b.term_cv_7d as "termCv_7d",
+		b.raw_cnt_30d as "rawCnt_30d",
+		b.term_cv_30d as "termCv_30d",
+		b.raw_cnt_90d as "rawCnt_90d",
+		b.term_cv_90d as "termCv_90d",
+		b.delay_rcv as "delayRcv",
+		b.bat2_iv as "bat2Iv",
+		case
+	        when b.bat2_stat = '1' then '장애'
+	        when b.bat2_stat = '0' then '정상'
+	      end "bat2Stat",
+		com1.company_sq as "comSq",
+	    com1.company_nm as "comNm",
+	    com1.company_cd as "comCd",
+		a.inform_cd as "informCd",
+		a.send_cd as "sendCd",
+		a.send_dt as "sendDt",
+		b.temperature,
+		c.img_src_gum,
+		c.img_src_bf,
+		c.img_src_af,
+		c.img_src_add,
+		c.note
+	FROM filtered_points fp
+	JOIN tb_m1_info_point a ON a.point_sq = fp.point_sq
+	LEFT JOIN tb_m1_info_customer c ON c.cust_sq = a.cust_sq
+	LEFT JOIN tb_m1_info_block k3 ON k3.blk_sq = a.blk_sq
+	LEFT JOIN vi_m1_sv_site_list s3 ON s3.site_sq = a.site_sq
+	LEFT JOIN tb_m1_cmap_device dev ON dev.point_sq = a.point_sq
+	LEFT JOIN tb_m1_info_company com1 ON com1.company_sq = dev.company_sq
+	LEFT JOIN vi_m1_sv_meas_now b ON b.point_sq = a.point_sq
+	LEFT JOIN LATERAL (
+	    SELECT last_dt FROM client_meas_day
+	    WHERE point_sq = fp.point_sq
+	      AND meas_dt >= CURRENT_DATE - 35
+	    ORDER BY meas_dt DESC LIMIT 1
+	) cc ON TRUE
+	LEFT JOIN LATERAL (
+	    SELECT m.accu_iv, m.ami_err_code, m.met_err_code, m.stat_cd as lr_stat_cd, m.meas_dt as lr_meas_dt
+	    FROM client_meas_raw m
+	    WHERE m.point_sq = fp.point_sq
+	      AND m.meas_dt >= COALESCE(cc.last_dt, CURRENT_DATE - 3)
+	    ORDER BY m.meas_dt DESC LIMIT 1
+	) lr ON TRUE
 	</sql>
-    
+
+	<select id="getOldMeasDt" parameterType="java.util.Map" resultType="java.util.HashMap">
+		/*mars.icbm.map1.getOldMeasDt*/
+		SELECT t.point_sq as "pointSq",
+		       cmd.last_dt as "measDt",
+		       to_char(cmd.last_dt, 'yyyy-mm-dd hh24:mi') as "measDtStr"
+		FROM unnest(#{pointSqs}::integer[]) as t(point_sq)
+		LEFT JOIN LATERAL (
+		    SELECT last_dt FROM client_meas_day
+		    WHERE point_sq = t.point_sq
+		    ORDER BY meas_dt DESC LIMIT 1
+		) cmd ON TRUE
+		WHERE cmd.last_dt IS NOT NULL
+	</select>
+
     <!-- 2024.03.25 포항 누수 변경 -->
     <update id="insertWaterLeak_List" parameterType="java.util.Map" >
     	/*mars.icbm.map1.insertWaterLeak_List*/
@@ -6245,13 +6264,13 @@
 	<sql id="select_waterLeakList_sql3">
 		<![CDATA[
 			WITH
-			-- 1단계: accu_cv 차이로 실제 시간당 사용량(real_term_cv) 계산
+			-- 1단계: accu_iv 차이로 실제 시간당 사용량(real_term_cv) 계산
 			raw_with_real_term AS (
 				SELECT
 					r.point_sq,
 					r.meas_dt,
 					r.stat_cd,
-					r.accu_cv - lag(r.accu_cv) OVER (PARTITION BY r.point_sq ORDER BY r.meas_dt) AS real_term_cv
+					r.accu_iv - lag(r.accu_iv) OVER (PARTITION BY r.point_sq ORDER BY r.meas_dt) AS real_term_cv
 				FROM client_meas_raw r
 				WHERE r.meas_dt >= NOW() - interval '73 hour'
 				  AND r.meas_dt < NOW()

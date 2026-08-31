@@ -134,10 +134,7 @@
  			return c + 1;
  		
  		case 'statCd':
- 			if(!item.amiErrCode && !item.metErrCode)
- 				return '-';
-
- 			var mStat = meterStatCd.getStatus(item.amiErrCode, item.metErrCode);
+ 			var mStat = meterStatCd.getStatus(item.amiErrCode, item.metErrCode, item.measDt);
  			return '<img style="width:30px;height:30px;" src="'+ getAbsolutepath(mStat.image) +'"/><span style="font-size:11px;">'+ mStat.str +'</span>'; break;
  			
  		case 'begDay':
