@@ -390,53 +390,20 @@
 	
 	
 	<sql id="rawDayList_sql">
-		select
-          (ROW_NUMBER() OVER()) AS "rownum", 
-          b.point_sq	 as "pointSq",
-	      b.blk_name     as "blkNm",
-	      b.use_type     as "useType",
-	      b.pipe_dia     as "pipeDia",
-	      b.admin_id     as "adminId",
-		  b.cust_nm      as "custName",
-		  b.addr_new     as "addr",
-		  substr(b.read_opr,1,3)     as "readOpr",
-		  b.site_sq		 as "siteSq",
-		  b.dev_no		 as "devNo",
-		  b.meter_no	 as "meterNo",
-  	      a.iv_d1	     as "D01",
-	      a.iv_d2	     as "D02",
-	      a.iv_d3	     as "D03",
-	      a.iv_d4	     as "D04",
-	      a.iv_d5	     as "D05",
-	      a.iv_d6	     as "D06",
-	      a.iv_d7	     as "D07",
-	      a.iv_d8	     as "D08",
-	      a.iv_d9	     as "D09",
-	      a.iv_d10	     as "D10",
-	      a.iv_d11	     as "D11",
-	      a.iv_d12	     as "D12",
-	      a.iv_d13	     as "D13",
-	      a.iv_d14	     as "D14",
-	      a.iv_d15	     as "D15",
-	      a.iv_d16	     as "D16",
-	      a.iv_d17	     as "D17",
-	      a.iv_d18	     as "D18",
-	      a.iv_d19	     as "D19",
-	      a.iv_d20	     as "D20",
-	      a.iv_d21	     as "D21",
-	      a.iv_d22	     as "D22",
-	      a.iv_d23	     as "D23",
-	      a.iv_d24	     as "D24",
-	      a.iv_d25	     as "D25",
-	      a.iv_d26	     as "D26",
-	      a.iv_d27	     as "D27",
-	      a.iv_d28	     as "D28",
-	      a.iv_d29	     as "D29",
-	      a.iv_d30	     as "D30",
-	      a.iv_d31	     as "D31"
-		from
-			fn_meas_raw_for_day(to_date(#{baseDate}, 'yyyy-mm-dd')) a
-			right outer join vi_m1_sv_point_list b on a.point_sq = b.point_sq
+	WITH filtered_points AS (
+		SELECT
+			b.point_sq,
+			b.blk_name,
+			b.use_type,
+			b.pipe_dia,
+			b.admin_id,
+			b.cust_nm,
+			b.addr_new,
+			substr(b.read_opr,1,3) as read_opr,
+			b.site_sq,
+			b.dev_no,
+			b.meter_no
+		FROM vi_m1_sv_point_list b
 		<if test="statCd != null">
 		LEFT JOIN LATERAL (
 			SELECT m.ami_err_code, m.meas_dt as lr_meas_dt
@@ -446,34 +413,30 @@
 			ORDER BY m.meas_dt DESC LIMIT 1
 		) lr_f ON TRUE
 		</if>
-			
-		<trim prefix="WHERE" prefixOverrides="AND|OR">
-	         <choose>
-				<when test="upSiteSq != null and lv != null">
-					 and b.site_sq in (
-					    select site_sq from fn_prj_sites(#{upSiteSq}::integer, #{lv}::integer)
-					 )					 	
-				</when>
-				<when test="siteSq != null">
-					 and b.site_sq = #{siteSq}::integer		 	
-				</when>
-			</choose>			
-     	</trim>	
-     	
-     	<choose>
+		WHERE b.use_cd = '1'
+		<choose>
+			<when test="upSiteSq != null and lv != null">
+				 and b.site_sq in (
+				    select site_sq from fn_prj_sites(#{upSiteSq}::integer, #{lv}::integer)
+				 )
+			</when>
+			<when test="siteSq != null">
+				 and b.site_sq = #{siteSq}::integer
+			</when>
+		</choose>
+		<choose>
 			<when test="upBlkSq != null and lv != null">
 				 and b.blk_sq in (
 				    select blk_sq from fn_prj_blockes(#{upBlkSq}::integer, #{lv}::integer)
-				 )					 	
+				 )
 			</when>
 			<when test="blkSq != null and blkSq != -2">
-				 and b.blk_sq = #{blkSq}::integer		 	
-			</when>							
+				 and b.blk_sq = #{blkSq}::integer
+			</when>
 			<when test="blkSq != null and blkSq == -2">
-				 and b.blk_sq IS NULL		 	
+				 and b.blk_sq IS NULL
 			</when>
 		</choose>
-     	
 		<choose>
 			<when test="comSq != null and comSq != -2">
 			and b.company_sq = #{comSq}::integer
@@ -481,9 +444,8 @@
 			<when test="comSq != null and comSq == -2">
 			and b.company_sq IS NULL
 			</when>
-		</choose>	      
-	    
-	     <choose>
+		</choose>
+		<choose>
 			<when test="amiType != null and !amiType.equals('-2')">
 			and b.ami_type = #{amiType}
 			</when>
@@ -491,8 +453,7 @@
 			and b.ami_type IS NULL
 			</when>
 		</choose>
-		
-		 <choose>
+		<choose>
 			<when test="readOpr != null and !readOpr.equals('-2')">
 			and b.read_opr = #{readOpr}
 			</when>
@@ -500,7 +461,6 @@
 			and b.read_opr IS NULL
 			</when>
 		</choose>
-		
 		<choose>
 			<when test="chkDay != null and !chkDay.equals('-2')">
 			and b.check_day = #{chkDay}
@@ -509,8 +469,7 @@
 			and b.check_day IS NULL
 			</when>
 		</choose>
-		 
-	     <choose>
+		<choose>
 			<when test="useType != null and !useType.equals('-2')">
 			and b.use_type = #{useType}
 			</when>
@@ -518,7 +477,6 @@
 			and b.use_type IS NULL
 			</when>
 		</choose>
-		
 		<choose>
 			<when test="setYears != null and !setYears.equals('-2')">
 			and b.set_years = #{setYears}
@@ -527,8 +485,7 @@
 			and b.set_years IS NULL
 			</when>
 		</choose>
-
-	     <choose>
+		<choose>
 			<when test="pipeDia != null and pipeDia != -2">
 			and b.pipe_dia = #{pipeDia}::numeric
 			</when>
@@ -536,7 +493,6 @@
 			and b.pipe_dia is null
 			</when>
 		</choose>
-	    	and b.use_cd = '1'
 		<if test="statCd != null">
 			<choose>
 				<when test="statCd == 1">
@@ -553,41 +509,125 @@
 					and (lr_f.ami_err_code IS NULL OR substring(lr_f.ami_err_code, 1, 1) != '1')
 				</when>
 			</choose>
-	    </if>
-		
+		</if>
 		<if test="pointSq != null">
-	    	and b.point_sq = #{pointSq}
-	    </if>
-	     <if test="leakFg != null">
-	    	AND b.waterleak_flag = #{leakFg}
-	     </if>
-	     
-	     <if test="sendCd != null">
-	    	AND b.send_cd = #{sendCd}
-	     </if>
-	     <!--  신규 필터 -->
-	     <if test='cust_nm != null and cust_nm != ""'>
-	       and b.cust_nm like  '%' || #{cust_nm} || '%'
-	     </if>
-	     <if test='admin_no != null and admin_no != ""'>
-	       and b.admin_id like  '%' || #{admin_no} || '%'
-	     </if>
-	     <if test='tap_gb != null and tap_gb != ""'>
-	       and b.tap_gb = #{tap_gb}
-	     </if>
-	     <if test='bungu_cd != null and bungu_cd != ""'>
-	       and b.bungu_cd = #{bungu_cd}
-	     </if>
-	     <if test='(addr_1 != null and addr_1 != "")'>
-	       and b.site_sq in (
-	       	  select site_sq from fn_prj_sites(#{addr_1} :: integer, '4' :: integer)
-	       )
-	     </if>
-	     <if test='addr != null and addr != ""'>
-	       and (b.addr_old like '%' || #{addr} || '%' 
-	        or  b.addr_new like '%' || #{addr} || '%')
-	     </if>
-
+			and b.point_sq = #{pointSq}
+		</if>
+		<if test="leakFg != null">
+			AND b.waterleak_flag = #{leakFg}
+		</if>
+		<if test="sendCd != null">
+			AND b.send_cd = #{sendCd}
+		</if>
+		<if test='cust_nm != null and cust_nm != ""'>
+		   and b.cust_nm like '%' || #{cust_nm} || '%'
+		</if>
+		<if test='admin_no != null and admin_no != ""'>
+		   and b.admin_id like '%' || #{admin_no} || '%'
+		</if>
+		<if test='tap_gb != null and tap_gb != ""'>
+		   and b.tap_gb = #{tap_gb}
+		</if>
+		<if test='bungu_cd != null and bungu_cd != ""'>
+		   and b.bungu_cd = #{bungu_cd}
+		</if>
+		<if test='(addr_1 != null and addr_1 != "")'>
+		   and b.site_sq in (
+		   	  select site_sq from fn_prj_sites(#{addr_1} :: integer, '4' :: integer)
+		   )
+		</if>
+		<if test='addr != null and addr != ""'>
+		   and (b.addr_old like '%' || #{addr} || '%'
+		    or  b.addr_new like '%' || #{addr} || '%')
+		</if>
+	),
+	day_pivot AS (
+		SELECT
+			d.point_sq,
+			sum(case when extract(day from d.meas_dt) = 1 then d.accu_iv end) as iv_d1,
+			sum(case when extract(day from d.meas_dt) = 2 then d.accu_iv end) as iv_d2,
+			sum(case when extract(day from d.meas_dt) = 3 then d.accu_iv end) as iv_d3,
+			sum(case when extract(day from d.meas_dt) = 4 then d.accu_iv end) as iv_d4,
+			sum(case when extract(day from d.meas_dt) = 5 then d.accu_iv end) as iv_d5,
+			sum(case when extract(day from d.meas_dt) = 6 then d.accu_iv end) as iv_d6,
+			sum(case when extract(day from d.meas_dt) = 7 then d.accu_iv end) as iv_d7,
+			sum(case when extract(day from d.meas_dt) = 8 then d.accu_iv end) as iv_d8,
+			sum(case when extract(day from d.meas_dt) = 9 then d.accu_iv end) as iv_d9,
+			sum(case when extract(day from d.meas_dt) = 10 then d.accu_iv end) as iv_d10,
+			sum(case when extract(day from d.meas_dt) = 11 then d.accu_iv end) as iv_d11,
+			sum(case when extract(day from d.meas_dt) = 12 then d.accu_iv end) as iv_d12,
+			sum(case when extract(day from d.meas_dt) = 13 then d.accu_iv end) as iv_d13,
+			sum(case when extract(day from d.meas_dt) = 14 then d.accu_iv end) as iv_d14,
+			sum(case when extract(day from d.meas_dt) = 15 then d.accu_iv end) as iv_d15,
+			sum(case when extract(day from d.meas_dt) = 16 then d.accu_iv end) as iv_d16,
+			sum(case when extract(day from d.meas_dt) = 17 then d.accu_iv end) as iv_d17,
+			sum(case when extract(day from d.meas_dt) = 18 then d.accu_iv end) as iv_d18,
+			sum(case when extract(day from d.meas_dt) = 19 then d.accu_iv end) as iv_d19,
+			sum(case when extract(day from d.meas_dt) = 20 then d.accu_iv end) as iv_d20,
+			sum(case when extract(day from d.meas_dt) = 21 then d.accu_iv end) as iv_d21,
+			sum(case when extract(day from d.meas_dt) = 22 then d.accu_iv end) as iv_d22,
+			sum(case when extract(day from d.meas_dt) = 23 then d.accu_iv end) as iv_d23,
+			sum(case when extract(day from d.meas_dt) = 24 then d.accu_iv end) as iv_d24,
+			sum(case when extract(day from d.meas_dt) = 25 then d.accu_iv end) as iv_d25,
+			sum(case when extract(day from d.meas_dt) = 26 then d.accu_iv end) as iv_d26,
+			sum(case when extract(day from d.meas_dt) = 27 then d.accu_iv end) as iv_d27,
+			sum(case when extract(day from d.meas_dt) = 28 then d.accu_iv end) as iv_d28,
+			sum(case when extract(day from d.meas_dt) = 29 then d.accu_iv end) as iv_d29,
+			sum(case when extract(day from d.meas_dt) = 30 then d.accu_iv end) as iv_d30,
+			sum(case when extract(day from d.meas_dt) = 31 then d.accu_iv end) as iv_d31
+		FROM client_meas_day d
+		WHERE d.point_sq IN (SELECT point_sq FROM filtered_points)
+		  AND d.meas_dt >= date_trunc('month', to_date(#{baseDate}, 'yyyy-mm-dd'))
+		  AND d.meas_dt <![CDATA[<]]> date_trunc('month', to_date(#{baseDate}, 'yyyy-mm-dd')) + INTERVAL '1 month'
+		GROUP BY d.point_sq
+	)
+	SELECT
+		(ROW_NUMBER() OVER(ORDER BY p.point_sq)) AS "rownum",
+		p.point_sq   as "pointSq",
+		p.blk_name   as "blkNm",
+		p.use_type   as "useType",
+		p.pipe_dia   as "pipeDia",
+		p.admin_id   as "adminId",
+		p.cust_nm    as "custName",
+		p.addr_new   as "addr",
+		p.read_opr   as "readOpr",
+		p.site_sq    as "siteSq",
+		p.dev_no     as "devNo",
+		p.meter_no   as "meterNo",
+		dp.iv_d1     as "D01",
+		dp.iv_d2     as "D02",
+		dp.iv_d3     as "D03",
+		dp.iv_d4     as "D04",
+		dp.iv_d5     as "D05",
+		dp.iv_d6     as "D06",
+		dp.iv_d7     as "D07",
+		dp.iv_d8     as "D08",
+		dp.iv_d9     as "D09",
+		dp.iv_d10    as "D10",
+		dp.iv_d11    as "D11",
+		dp.iv_d12    as "D12",
+		dp.iv_d13    as "D13",
+		dp.iv_d14    as "D14",
+		dp.iv_d15    as "D15",
+		dp.iv_d16    as "D16",
+		dp.iv_d17    as "D17",
+		dp.iv_d18    as "D18",
+		dp.iv_d19    as "D19",
+		dp.iv_d20    as "D20",
+		dp.iv_d21    as "D21",
+		dp.iv_d22    as "D22",
+		dp.iv_d23    as "D23",
+		dp.iv_d24    as "D24",
+		dp.iv_d25    as "D25",
+		dp.iv_d26    as "D26",
+		dp.iv_d27    as "D27",
+		dp.iv_d28    as "D28",
+		dp.iv_d29    as "D29",
+		dp.iv_d30    as "D30",
+		dp.iv_d31    as "D31"
+	FROM filtered_points p
+	LEFT JOIN day_pivot dp ON p.point_sq = dp.point_sq
+	ORDER BY p.point_sq
 	</sql>
 	
 	<select id="pointList" parameterType="java.util.Map" resultType="java.util.Map">
@@ -2574,9 +2614,7 @@
 	        a.meas_dt,
 	        a.last_dt,
 	        a.raw_cnt,
-	        ((CASE WHEN substr(COALESCE(a.stat_cd, '1')::text, 1, 1) = '1' THEN '1' ELSE '0' END
-	          || CASE WHEN a.raw_cnt IS NULL OR a.raw_cnt = 0 THEN '1' ELSE '0' END
-	          || substring(COALESCE(a.stat_cd, '00000000')::text, 2, 7)))::char(9) AS stat_cd,
+	        a.stat_cd,
 	        a.accu_iv, a.accu_cv,
 	        GREATEST(a.accu_iv - lag(a.accu_iv) OVER (PARTITION BY a.point_sq ORDER BY a.meas_dt), 0) as term_cv,
 	        CASE WHEN a.accu_iv &lt; lag(a.accu_iv) OVER (PARTITION BY a.point_sq ORDER BY a.meas_dt)
@@ -2664,6 +2702,8 @@
 	md.last_dt as 	"lastDt", 
 	md.raw_cnt	as     "rawCnt", 
 	md.stat_cd   as "statCd",
+	lr_day.ami_err_code as "amiErrCode",
+	lr_day.met_err_code as "metErrCode",
 	coalesce(ls.leak_status, '-') as "leakSuspect",
 	md.accu_iv	  as   "accuIv",
 		md.accu_cv	 as    "accuCv",  
@@ -2676,6 +2716,14 @@
 	from 			
 		main_data md
 		left join leak_suspects ls on ls.point_sq = md.point_sq and ls.meas_dt = md.meas_dt
+		LEFT JOIN LATERAL (
+		    SELECT m.ami_err_code, m.met_err_code
+		    FROM client_meas_raw m
+		    WHERE m.point_sq = md.point_sq
+		      AND m.meas_dt >= md.meas_dt::timestamp
+		      AND m.meas_dt &lt; (md.meas_dt + interval '1 day')::timestamp
+		    ORDER BY m.meas_dt DESC LIMIT 1
+		) lr_day ON TRUE
 	order by 
 		md.meas_dt desc
 </sql>
@@ -2703,7 +2751,9 @@
 	    select
 	        a.point_sq,
 	        a.meas_dt,
-	        (CASE WHEN substr(COALESCE(a.stat_cd, '1')::text, 1, 1) = '1' THEN '01' ELSE '00' END || substring(COALESCE(a.stat_cd, '00000000')::text, 2, 7))::char(9) as stat_cd,
+	        a.stat_cd,
+	        a.ami_err_code,
+	        a.met_err_code,
 	        a.accu_iv,
 	        a.accu_cv,
 	        GREATEST(a.accu_iv - lag(a.accu_iv) OVER (PARTITION BY a.point_sq ORDER BY a.meas_dt), 0) as term_cv,
@@ -2922,16 +2972,14 @@
 			rd.cust_nm 		as "custNm",
 			rd.meas_dt		as "measDt",				
 			to_char(rd.meas_dt, 'yyyy-mm-dd-hh24-mi-ss') as "measDtStr",					
-			rd.stat_cd   	as "statCd",			
-		case position('1' in rd.stat_cd)			  
-	      when 1 then '통신 장애'
-	      when 2 then '계량기 장애'
-	      when 3 then 'Q3 초과'
-	      when 4 then '역류'
-	      when 5 then '누수'		      		      
-	      when 6 then '정상'
-	      when 7 then '정상'
-	      when 8 then 'BAT'
+			rd.stat_cd   	as "statCd",
+			rd.ami_err_code as "amiErrCode",
+			rd.met_err_code as "metErrCode",
+		case
+	      when substring(rd.ami_err_code, 1, 1) = '1' then '계량기 장애'
+	      when substring(rd.met_err_code, 1, 1) = '1' then 'Q3 초과'
+	      when substring(rd.met_err_code, 2, 1) = '1' then '역류'
+	      when substring(rd.met_err_code, 3, 1) = '1' then '누수'
 	      else '정상'
 		end "statCdStr",
 		coalesce(ls.leak_status, '-') as "leakSuspect",

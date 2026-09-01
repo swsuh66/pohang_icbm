@@ -162,10 +162,10 @@
 		// Brad : 2024.04.30 차트데이터 전체데이터 반영을 위해 주석처리
 		//useChart.setDataSource(result);
 
-	    if (result && result.length > 0 && result[0].statCd) {
-	        var statStr = meterStatCd.getStr(result[0].statCd);
-	        $('#statCdStr').val(statStr);
-	    }
+    if (result && result.length > 0) {
+        var statStr = meterStatCd.getStatus(result[0].amiErrCode, result[0].metErrCode, result[0].measDt || result[0].lastDt).str;
+        $('#statCdStr').val(statStr);
+    }
 
 	};
 
@@ -213,7 +213,7 @@
 	                return kutil.dateFormat(value, 'yyyy-mm-dd HH:MM');
 	            },
 	            "statCd": function (value) {
-	                return meterStatCd.getStr(value);
+	                return value;
 	            },
 	            "accuIv": function (value) {
 	                if (value != 0 && !value) return '-';
@@ -257,7 +257,7 @@
 	                return kutil.dateFormat(value, 'yyyy-mm-dd');
 	            },
 	            "statCd": function (value) {
-	                return meterStatCd.getStr(value);
+	                return value;
 	            },
 	            "rawCnt": function (value) {
 	                if (value != 0 && !value) return '';
@@ -298,6 +298,10 @@
 	       getAjax((qType == '0' ? 'pointHisdataRaw' : 'pointHisdata'), _params, function() {
 	           $('#infoModal').aceWidget('startLoading');
 	       }, function(result) {
+	            for (var k = 0; k < result.length; k++) {
+	                var r = result[k];
+	                r.statCd = meterStatCd.getStatus(r.amiErrCode, r.metErrCode, r.measDt || r.lastDt).str;
+	            }
 	            if (qType == '0') {
 	                var includeCon = $('#conExportToggle').is(':checked');
 	                var isWizit = (window._comSq == 6);
@@ -349,16 +353,16 @@
 	            switch (this.name) {
 	                case 'measDt':
 	                    return kutil.dateFormat(value, 'yy-mm-dd HH:MM:ss');
-	                case 'statCd':
-	                    return meterStatCd.getStr(value);
-	                case 'accuIv':
-	                    if (value != 0 && !value) return '-';
-	                    value = kutil.v2n(value, 3);
-	                    if (item.adjstV && Math.abs(item.adjstV) >= 1)
-	                        value += '<br><small style="color:red;">'
-	                            + kutil.v2n(item.adjstV, 3) + '</small>';
-	                    return value;
-	                case 'termCh':
+                case 'statCd':
+                    return meterStatCd.getStatus(item.amiErrCode, item.metErrCode, item.measDt).str;
+                case 'accuIv':
+                    if (value != 0 && !value) return '-';
+                    value = kutil.v2n(value, 3);
+                    if (item.adjstV && Math.abs(item.adjstV) >= 1)
+                        value += '<br><small style="color:red;">'
+                            + kutil.v2n(item.adjstV, 3) + '</small>';
+                    return value;
+                case 'termCh':
 	                    if (item.termCv != null && item.intavlH)
 	                        return kutil.v2n(item.termCv / item.intavlH, 3);
 	                    return '-';
@@ -392,10 +396,10 @@
 	                    return (value ? kutil.dateFormat(new Date(item.measDt), 'yy-mm-dd')
 	                        : '-');
 
-	                case 'statCd':
-	                    return meterStatCd.getStr(value);
+                case 'statCd':
+                    return meterStatCd.getStatus(item.amiErrCode, item.metErrCode, item.measDt || item.lastDt).str;
 
-	                case 'rawCnt':
+                case 'rawCnt':
 	                    return value;
 
 	                case 'lastDt':
