@@ -686,6 +686,14 @@
 	      <if test='addr != null and addr != ""'>
 	          and (c.addr like '%' || #{addr} || '%' or c.addr_new like '%' || #{addr} || '%')
 	      </if>
+		<choose>
+			<when test="metcmp != null and metcmp != '-2'">
+				and c.metcmp = #{metcmp}
+			</when>
+			<when test="metcmp != null and metcmp == '-2'">
+				and c.metcmp IS NULL
+			</when>
+		</choose>
 	),
 	raw_with_term_cv as (
 	    -- Step 2-a: client_meas_raw에서 accu_iv 차이로 term_cv 재계산
@@ -1162,6 +1170,14 @@
 			or a.meter_no like '%' || #{meter_no} || '%'
 			)
 		</if>
+		<choose>
+			<when test="metcmp != null and metcmp != '-2'">
+			and c.metcmp = #{metcmp}
+			</when>
+			<when test="metcmp != null and metcmp == '-2'">
+			and c.metcmp IS NULL
+			</when>
+		</choose>
 	</select>
 	
 	
@@ -1430,10 +1446,10 @@
 	 </if>
 	 
 	 <choose>
-		<when test='metcmp != null and !metcmp.equals("-2")'>
+		<when test="metcmp != null and metcmp != '-2'">
 		and a.metcmp = #{metcmp}
 		</when>
-		<when test='metcmp != null and metcmp.equals("-2")'>
+		<when test="metcmp != null and metcmp == '-2'">
 		and a.metcmp IS NULL
 		</when>
 	 </choose>
@@ -5366,6 +5382,14 @@
 			or c.meter_no like '%' || #{meter_no} || '%'
 		   )
 	    </if>
+		<choose>
+			<when test="metcmp != null and metcmp != '-2'">
+			and c.metcmp = #{metcmp}
+			</when>
+			<when test="metcmp != null and metcmp == '-2'">
+			and c.metcmp IS NULL
+			</when>
+		</choose>
 	    <if test='searchInputP != null and searchInputP != ""'>
 	       and (c.admin_no like '%' || #{searchInputP} || '%'
 		       or  c.cust_name like '%' || #{searchInputP} || '%')
@@ -5657,6 +5681,14 @@
 			or c.meter_no like '%' || #{meter_no} || '%' 
 		   )
 	     </if>
+		<choose>
+			<when test="metcmp != null and metcmp != '-2'">
+			and c.metcmp = #{metcmp}
+			</when>
+			<when test="metcmp != null and metcmp == '-2'">
+			and c.metcmp IS NULL
+			</when>
+		</choose>
 		 <!-- 대시보드 필터 -->
 		 <if test='searchInputP != null and searchInputP != ""'>
 	       and (c.admin_no like  '%' || #{searchInputP} || '%'

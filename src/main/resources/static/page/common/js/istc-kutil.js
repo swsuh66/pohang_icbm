@@ -389,9 +389,20 @@ function templetDownLoad(data, pCallback, sCallback, fCallback) {
  * 기존 templetDownLoad와 동일한 파라미터 사용
  */
 function templetDownLoadStream(data, pCallback, sCallback, fCallback) {
+	var payload = {};
+	if (data) {
+		for (var k in data) {
+			if (!data.hasOwnProperty(k)) continue;
+			var v = data[k];
+			if (v === null || v === undefined) continue;
+			if (k === 'fullNm') continue;
+			if (k === 'rnTop' || k === 'rnBottom' || k === 'pageIndex' || k === 'pageSize') continue;
+			payload[k] = v;
+		}
+	}
 	var con = {
 		httpMethod: 'post',
-		data: data,
+		data: payload,
 		contentType: 'application/json;charset=UTF-8',
 		successCallback: function (url) {
 			if (sCallback) sCallback();

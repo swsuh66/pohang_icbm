@@ -751,7 +751,7 @@
 
 		var params = {};
 
-		$.extend(params, searchComponentes);
+		$.extend(params, typeof collectSearchComponentes === 'function' ? collectSearchComponentes() : searchComponentes);
 		$.extend(params, mainGrid.loadParams());
 
 		//params.searchOption = $('#searchOptionSelect').val();

@@ -450,6 +450,10 @@ public class FileController {
 	   }
 	
 	private Map<String, Object> makeParames(HttpServletRequest request) {
+		try {
+			request.setCharacterEncoding("UTF-8");
+		} catch (Exception ignore) {
+		}
 		HttpSession session = request.getSession(false);		
 		CustomUserDetails userDetails = (CustomUserDetails) session.getAttribute(Define.Key.LOGIN_INFO);
 		Map<String, Object> selMap = new HashMap<String, Object>();

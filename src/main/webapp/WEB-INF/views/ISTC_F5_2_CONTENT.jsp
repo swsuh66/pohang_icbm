@@ -37,6 +37,17 @@
 				searchComponentes[$(el).attr('id')] = val;
 			}
 
+			function collectSearchComponentes() {
+				$('.componentsSelect').each(function () {
+					var $el = $(this);
+					var id = $el.attr('id');
+					if (!id || !$el.is('select')) return;
+					var val = $el.val();
+					searchComponentes[id] = (val != null && val !== '' && val !== '-1') ? val : null;
+				});
+				return searchComponentes;
+			}
+
 			function selectChange(url, key) {
 				var params = {};
 

@@ -300,7 +300,7 @@
 	       }, function(result) {
 	            for (var k = 0; k < result.length; k++) {
 	                var r = result[k];
-	                r.statCd = meterStatCd.getStatus(r.amiErrCode, r.metErrCode, r.measDt || r.lastDt).str;
+	                r.statCd = meterStatCd.getHistStatus(r.amiErrCode, r.metErrCode).str;
 	            }
 	            if (qType == '0') {
 	                var includeCon = $('#conExportToggle').is(':checked');
@@ -354,7 +354,7 @@
 	                case 'measDt':
 	                    return kutil.dateFormat(value, 'yy-mm-dd HH:MM:ss');
                 case 'statCd':
-                    return meterStatCd.getStatus(item.amiErrCode, item.metErrCode, item.measDt).str;
+                    return meterStatCd.getHistStatus(item.amiErrCode, item.metErrCode).str;
                 case 'accuIv':
                     if (value != 0 && !value) return '-';
                     value = kutil.v2n(value, 3);
@@ -397,7 +397,7 @@
 	                        : '-');
 
                 case 'statCd':
-                    return meterStatCd.getStatus(item.amiErrCode, item.metErrCode, item.measDt || item.lastDt).str;
+                    return meterStatCd.getHistStatus(item.amiErrCode, item.metErrCode).str;
 
                 case 'rawCnt':
 	                    return value;
