@@ -1067,6 +1067,15 @@
 	left outer join vi_m1_sv_meas_now b on b.POINT_SQ = a.POINT_SQ
 	left outer join tb_m1_wizit_modem_info w on w.dev_no = a.dev_no
 	left outer join tb_m1_info_customer c on c.cust_sq = a.cust_sq
+	<if test="statCd != null">
+	LEFT JOIN LATERAL (
+		SELECT m.ami_err_code, m.met_err_code, m.meas_dt as lr_meas_dt
+		FROM client_meas_raw m
+		WHERE m.point_sq = a.point_sq
+		  AND m.meas_dt >= CURRENT_DATE - 3
+		ORDER BY m.meas_dt DESC LIMIT 1
+	) lr_f ON TRUE
+	</if>
 	where 1=1
 		and a.use_cd = '1'
 		<choose>
@@ -1152,7 +1161,45 @@
 			and a.use_cd = #{useCd}
 		</if>
 		<if test="statCd != null">
-	    	and position('1' in a.stat_cd) = #{statCd}::integer
+			<choose>
+				<when test="statCd == 1">
+					and (lr_f.lr_meas_dt IS NULL OR lr_f.lr_meas_dt &lt; CURRENT_DATE - 3)
+				</when>
+				<when test="statCd == 2">
+					and lr_f.lr_meas_dt IS NOT NULL
+					and lr_f.lr_meas_dt >= CURRENT_DATE - 3
+					and substring(lr_f.ami_err_code, 1, 1) = '1'
+				</when>
+				<when test="statCd == 3">
+					and lr_f.lr_meas_dt IS NOT NULL
+					and lr_f.lr_meas_dt >= CURRENT_DATE - 3
+					and substring(lr_f.ami_err_code, 1, 1) != '1'
+					and substring(lr_f.met_err_code, 1, 1) = '1'
+				</when>
+				<when test="statCd == 4">
+					and lr_f.lr_meas_dt IS NOT NULL
+					and lr_f.lr_meas_dt >= CURRENT_DATE - 3
+					and substring(lr_f.ami_err_code, 1, 1) != '1'
+					and substring(lr_f.met_err_code, 1, 1) != '1'
+					and substring(lr_f.met_err_code, 2, 1) = '1'
+				</when>
+				<when test="statCd == 5">
+					and lr_f.lr_meas_dt IS NOT NULL
+					and lr_f.lr_meas_dt >= CURRENT_DATE - 3
+					and substring(lr_f.ami_err_code, 1, 1) != '1'
+					and substring(lr_f.met_err_code, 1, 1) != '1'
+					and substring(lr_f.met_err_code, 2, 1) != '1'
+					and substring(lr_f.met_err_code, 3, 1) = '1'
+				</when>
+				<when test="statCd == 0">
+					and lr_f.lr_meas_dt IS NOT NULL
+					and lr_f.lr_meas_dt >= CURRENT_DATE - 3
+					and (lr_f.ami_err_code IS NULL OR substring(lr_f.ami_err_code, 1, 1) != '1')
+					and (lr_f.met_err_code IS NULL OR substring(lr_f.met_err_code, 1, 1) != '1')
+					and (lr_f.met_err_code IS NULL OR substring(lr_f.met_err_code, 2, 1) != '1')
+					and (lr_f.met_err_code IS NULL OR substring(lr_f.met_err_code, 3, 1) != '1')
+				</when>
+			</choose>
 	    </if>
 		<if test='cust_nm != null and cust_nm != ""'>
 	        and c.cust_name like '%' || #{cust_nm} || '%'
@@ -3284,7 +3331,7 @@
                 AND p.site_sq = #{siteSq}::integer
             </when>
         </choose>
-        
+		     	
         <choose>
             <when test="upBlkSq != null and lv != null">
                 AND p.blk_sq IN (
@@ -3298,7 +3345,7 @@
                 AND p.blk_sq IS NULL
             </when>
         </choose>
-        
+		     	
         <choose>
             <when test="comSq != null and comSq != -2">
                 AND p.company_sq = #{comSq}::integer
@@ -3334,7 +3381,7 @@
                 AND p.check_day IS NULL
             </when>
         </choose>
-        
+			     
         <choose>
             <when test="useType != null and !useType.equals('-2')">
                 AND p.use_type = #{useType}
