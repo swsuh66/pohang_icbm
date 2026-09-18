@@ -153,7 +153,7 @@
 		        FROM client_meas_raw m
 		        WHERE m.point_sq = a.point_sq
 		          AND m.meas_dt >= CURRENT_DATE - 3
-		          AND m.point_sq NOT IN (<include refid="forceCommFailPointSqs"/>)
+		          AND (m.point_sq NOT IN (<include refid="forceCommFailPointSqs"/>) OR m.accu_iv IS NOT NULL)
 		        ORDER BY m.meas_dt DESC LIMIT 1
 		    ) lr_f ON TRUE
 		    </if>

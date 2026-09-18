@@ -41,7 +41,7 @@
       
    </sql>
 
-	<!-- 임시 개통 전 9대 통신장애. 개통 후 이 조각과 include 를 제거 -->
+	<!-- 임시: 아래 9대는 accu_iv NULL 행만 웹에서 숨김. 개통 후 이 조각과 include 를 제거 -->
 	<sql id="forceCommFailPointSqs">64415,64418,64421,64422,64428,64438,64439,64441,64447</sql>
 
    
@@ -160,7 +160,7 @@
 			FROM client_meas_raw m
 			WHERE m.point_sq = b.point_sq
 			  AND m.meas_dt >= CURRENT_DATE - 3
-			  AND m.point_sq NOT IN (<include refid="forceCommFailPointSqs"/>)
+			  AND (m.point_sq NOT IN (<include refid="forceCommFailPointSqs"/>) OR m.accu_iv IS NOT NULL)
 			ORDER BY m.meas_dt DESC LIMIT 1
 		) lr_f ON TRUE
 		</if>
@@ -332,7 +332,7 @@
 			sum(case when extract(day from d.meas_dt) = 31 then d.accu_iv end) as iv_d31
 		FROM client_meas_day d
 		WHERE d.point_sq IN (SELECT point_sq FROM paged_points)
-		  AND d.point_sq NOT IN (<include refid="forceCommFailPointSqs"/>)
+		  AND (d.point_sq NOT IN (<include refid="forceCommFailPointSqs"/>) OR d.accu_iv IS NOT NULL)
 		  AND d.meas_dt >= date_trunc('month', to_date(#{baseDate}, 'yyyy-mm-dd'))
 		  AND d.meas_dt <![CDATA[<]]> date_trunc('month', to_date(#{baseDate}, 'yyyy-mm-dd')) + INTERVAL '1 month'
 		GROUP BY d.point_sq
@@ -416,7 +416,7 @@
 			FROM client_meas_raw m
 			WHERE m.point_sq = b.point_sq
 			  AND m.meas_dt >= CURRENT_DATE - 3
-			  AND m.point_sq NOT IN (<include refid="forceCommFailPointSqs"/>)
+			  AND (m.point_sq NOT IN (<include refid="forceCommFailPointSqs"/>) OR m.accu_iv IS NOT NULL)
 			ORDER BY m.meas_dt DESC LIMIT 1
 		) lr_f ON TRUE
 		</if>
@@ -584,7 +584,7 @@
 			sum(case when extract(day from d.meas_dt) = 31 then d.accu_iv end) as iv_d31
 		FROM client_meas_day d
 		WHERE d.point_sq IN (SELECT point_sq FROM filtered_points)
-		  AND d.point_sq NOT IN (<include refid="forceCommFailPointSqs"/>)
+		  AND (d.point_sq NOT IN (<include refid="forceCommFailPointSqs"/>) OR d.accu_iv IS NOT NULL)
 		  AND d.meas_dt >= date_trunc('month', to_date(#{baseDate}, 'yyyy-mm-dd'))
 		  AND d.meas_dt <![CDATA[<]]> date_trunc('month', to_date(#{baseDate}, 'yyyy-mm-dd')) + INTERVAL '1 month'
 		GROUP BY d.point_sq
@@ -712,7 +712,7 @@
 	    from client_meas_raw m
 	    where m.meas_dt between now() - interval '25 hours' and now()
 	      and m.point_sq in (select point_sq from search_filtered_points)
-	      and m.point_sq NOT IN (<include refid="forceCommFailPointSqs"/>)
+	      and (m.point_sq NOT IN (<include refid="forceCommFailPointSqs"/>) OR m.accu_iv IS NOT NULL)
 	),
 	leak_suspects as (
 	    -- Step 2-b: 재계산된 term_cv로 누수의심 판정
@@ -839,7 +839,7 @@
  LEFT JOIN LATERAL (
      SELECT last_dt FROM client_meas_day
      WHERE point_sq = a.point_sq
-       AND point_sq NOT IN (<include refid="forceCommFailPointSqs"/>)
+       AND (point_sq NOT IN (<include refid="forceCommFailPointSqs"/>) OR accu_iv IS NOT NULL)
      ORDER BY meas_dt DESC LIMIT 1
  ) cc ON TRUE
  LEFT JOIN LATERAL (
@@ -847,7 +847,7 @@
      FROM client_meas_raw m
      WHERE m.point_sq = a.point_sq
        AND m.meas_dt >= COALESCE(cc.last_dt, CURRENT_DATE - 3)
-       AND m.point_sq NOT IN (<include refid="forceCommFailPointSqs"/>)
+       AND (m.point_sq NOT IN (<include refid="forceCommFailPointSqs"/>) OR m.accu_iv IS NOT NULL)
      ORDER BY m.meas_dt DESC LIMIT 1
  ) lr ON TRUE
 		    
@@ -1084,7 +1084,7 @@
 		FROM client_meas_raw m
 		WHERE m.point_sq = a.point_sq
 		  AND m.meas_dt >= CURRENT_DATE - 3
-		  AND m.point_sq NOT IN (<include refid="forceCommFailPointSqs"/>)
+		  AND (m.point_sq NOT IN (<include refid="forceCommFailPointSqs"/>) OR m.accu_iv IS NOT NULL)
 		ORDER BY m.meas_dt DESC LIMIT 1
 	) lr_f ON TRUE
 	</if>
@@ -1331,7 +1331,7 @@
 		FROM client_meas_raw m
 		WHERE m.point_sq = a.point_sq
 		  AND m.meas_dt >= CURRENT_DATE - 3
-		  AND m.point_sq NOT IN (<include refid="forceCommFailPointSqs"/>)
+		  AND (m.point_sq NOT IN (<include refid="forceCommFailPointSqs"/>) OR m.accu_iv IS NOT NULL)
 		ORDER BY m.meas_dt DESC LIMIT 1
 	) lr_f ON TRUE
 	</if>
@@ -2700,7 +2700,7 @@
 	        client_meas_day a
 	    where
 	        a.point_sq = #{pointSq}::integer
-	        and a.point_sq NOT IN (<include refid="forceCommFailPointSqs"/>)
+	        and (a.point_sq NOT IN (<include refid="forceCommFailPointSqs"/>) OR a.accu_iv IS NOT NULL)
 	<![CDATA[
 	        and a.meas_dt >= (to_date(#{begDate}, 'yyyy-mm-dd') - interval '30 day')::date
 	        and a.meas_dt <= to_date(#{endDate}, 'yyyy-mm-dd')
@@ -2739,7 +2739,7 @@
 	        GREATEST(accu_iv - lag(accu_iv) OVER (PARTITION BY point_sq ORDER BY meas_dt), 0) AS real_term_cv
 	    FROM client_meas_raw
 	    WHERE point_sq = #{pointSq}::integer
-	      AND point_sq NOT IN (<include refid="forceCommFailPointSqs"/>)
+	      AND (point_sq NOT IN (<include refid="forceCommFailPointSqs"/>) OR accu_iv IS NOT NULL)
 	      AND meas_dt &gt;= (SELECT MIN(meas_dt) - interval '24 hours' FROM main_data)
 	      AND meas_dt &lt;= (SELECT MAX(meas_dt) FROM main_data)
 	),
@@ -2798,7 +2798,7 @@
 		    SELECT m.ami_err_code, m.met_err_code
 		    FROM client_meas_raw m
 		    WHERE m.point_sq = md.point_sq
-		      AND m.point_sq NOT IN (<include refid="forceCommFailPointSqs"/>)
+		      AND (m.point_sq NOT IN (<include refid="forceCommFailPointSqs"/>) OR m.accu_iv IS NOT NULL)
 		      AND m.meas_dt >= md.meas_dt::timestamp
 		      AND m.meas_dt &lt; (md.meas_dt + interval '1 day')::timestamp
 		    ORDER BY m.meas_dt DESC LIMIT 1
@@ -2865,7 +2865,7 @@
 		    from
 		        client_meas_raw a 
 		        join vi_m1_sv_point_list b on a.point_sq = b.point_sq
-		          and a.point_sq NOT IN (<include refid="forceCommFailPointSqs"/>)
+		          and (a.point_sq NOT IN (<include refid="forceCommFailPointSqs"/>) OR a.accu_iv IS NOT NULL)
 		        left outer join tb_m1_waterleak_setting w on w.site_sq = b.site_sq
 		        <if test="begRawDate != null">
 		        left outer join client_meas_day d on d.point_sq = a.point_sq and d.meas_dt = to_date(#{begRawDate}, 'yyyy-mm-dd')
@@ -3015,7 +3015,7 @@
 	    WHERE meas_dt &gt;= (SELECT MIN(meas_dt) - interval '24 hours' FROM raw_data)
 	      AND meas_dt &lt;= (SELECT MAX(meas_dt) FROM raw_data)
 	      AND point_sq IN (SELECT point_sq FROM raw_data)
-	      AND point_sq NOT IN (<include refid="forceCommFailPointSqs"/>)
+	      AND (point_sq NOT IN (<include refid="forceCommFailPointSqs"/>) OR accu_iv IS NOT NULL)
 	),
 	leak_suspects as (
 	    select distinct
@@ -3335,7 +3335,7 @@
             FROM client_meas_raw m
             WHERE m.point_sq = p.point_sq
               AND m.meas_dt >= CURRENT_DATE - 3
-              AND m.point_sq NOT IN (<include refid="forceCommFailPointSqs"/>)
+              AND (m.point_sq NOT IN (<include refid="forceCommFailPointSqs"/>) OR m.accu_iv IS NOT NULL)
             ORDER BY m.meas_dt DESC LIMIT 1
         ) lr_f ON TRUE
         </if>
@@ -3444,7 +3444,7 @@
                         SELECT 1 FROM client_meas_raw m
                         WHERE m.point_sq = p.point_sq
                           AND m.meas_dt >= CURRENT_DATE - 3
-                          AND m.point_sq NOT IN (<include refid="forceCommFailPointSqs"/>)
+                          AND (m.point_sq NOT IN (<include refid="forceCommFailPointSqs"/>) OR m.accu_iv IS NOT NULL)
                     )
                 </when>
                 <when test="statCd == 2">
@@ -3517,7 +3517,7 @@
             SUM(m.adjst_os) OVER (PARTITION BY m.point_sq) as total_adjst_os
         FROM tb_m1_meas_day m
         INNER JOIN target_list tl ON m.point_sq = tl.point_sq
-          AND tl.point_sq NOT IN (<include refid="forceCommFailPointSqs"/>)
+          AND (tl.point_sq NOT IN (<include refid="forceCommFailPointSqs"/>) OR m.accu_iv IS NOT NULL)
         <choose>
             <when test='dateOption == "0"'>
                 WHERE m.meas_dt <![CDATA[>=]]> to_date(#{fromDate}, 'yyyy-mm-dd')::DATE
@@ -3609,7 +3609,7 @@
     LEFT JOIN LATERAL (
         SELECT last_dt FROM client_meas_day
         WHERE point_sq = t.point_sq
-          AND point_sq NOT IN (<include refid="forceCommFailPointSqs"/>)
+          AND (point_sq NOT IN (<include refid="forceCommFailPointSqs"/>) OR accu_iv IS NOT NULL)
         ORDER BY meas_dt DESC LIMIT 1
     ) cc ON TRUE
     LEFT JOIN LATERAL (
@@ -3617,7 +3617,7 @@
         FROM client_meas_raw m2
         WHERE m2.point_sq = t.point_sq
           AND m2.meas_dt >= COALESCE(cc.last_dt, CURRENT_DATE - 3)
-          AND m2.point_sq NOT IN (<include refid="forceCommFailPointSqs"/>)
+          AND (m2.point_sq NOT IN (<include refid="forceCommFailPointSqs"/>) OR m2.accu_iv IS NOT NULL)
         ORDER BY m2.meas_dt DESC LIMIT 1
     ) lr ON TRUE
     ORDER BY t.admin_id
@@ -3645,7 +3645,7 @@
 		    FROM client_meas_day
 		    WHERE meas_dt &gt;= to_date(#{fromDate}, 'yyyy-mm-dd')::DATE 
 		      AND meas_dt &lt;= to_date(#{toDate}, 'yyyy-mm-dd')::DATE
-		      AND point_sq NOT IN (<include refid="forceCommFailPointSqs"/>)
+		      AND (point_sq NOT IN (<include refid="forceCommFailPointSqs"/>) OR accu_iv IS NOT NULL)
 		),
 		meter_aggregates AS (
 		    /* 2단계: 첫번째/마지막 값만 추출하여 집계 */
@@ -3726,7 +3726,7 @@
 		        FROM client_meas_raw m2
 		        WHERE m2.point_sq = p.point_sq
 		          AND m2.meas_dt >= CURRENT_DATE - 30
-		          AND m2.point_sq NOT IN (<include refid="forceCommFailPointSqs"/>)
+		          AND (m2.point_sq NOT IN (<include refid="forceCommFailPointSqs"/>) OR m2.accu_iv IS NOT NULL)
 		        ORDER BY m2.meas_dt DESC LIMIT 1
 		    ) lr ON TRUE
 		    WHERE 1=1
@@ -4334,7 +4334,7 @@
 		    LEFT JOIN LATERAL (
 		        SELECT last_dt FROM client_meas_day
 		        WHERE point_sq = b.point_sq
-		          AND point_sq NOT IN (<include refid="forceCommFailPointSqs"/>)
+		          AND (point_sq NOT IN (<include refid="forceCommFailPointSqs"/>) OR accu_iv IS NOT NULL)
 		          AND meas_dt >= CURRENT_DATE - 4
 		        ORDER BY meas_dt DESC LIMIT 1
 		    ) cc ON TRUE
@@ -4343,7 +4343,7 @@
 		        FROM client_meas_raw m
 		        WHERE m.point_sq = b.point_sq
 		          AND m.meas_dt >= COALESCE(cc.last_dt, CURRENT_DATE - 3)
-		          AND m.point_sq NOT IN (<include refid="forceCommFailPointSqs"/>)
+		          AND (m.point_sq NOT IN (<include refid="forceCommFailPointSqs"/>) OR m.accu_iv IS NOT NULL)
 		        ORDER BY m.meas_dt DESC LIMIT 1
 		    ) lr ON TRUE
 		   where 1=1
@@ -5306,7 +5306,7 @@
 			    FROM client_meas_raw m
 			    WHERE m.point_sq = a.point_sq
 			      AND m.meas_dt >= CURRENT_DATE - 3
-			      AND m.point_sq NOT IN (<include refid="forceCommFailPointSqs"/>)
+			      AND (m.point_sq NOT IN (<include refid="forceCommFailPointSqs"/>) OR m.accu_iv IS NOT NULL)
 			    ORDER BY m.meas_dt DESC LIMIT 1
 			) lr_f ON TRUE
 		</if>
@@ -5566,7 +5566,7 @@
 	LEFT JOIN LATERAL (
 	    SELECT last_dt FROM client_meas_day
 	    WHERE point_sq = p.point_sq
-	      AND point_sq NOT IN (<include refid="forceCommFailPointSqs"/>)
+	      AND (point_sq NOT IN (<include refid="forceCommFailPointSqs"/>) OR accu_iv IS NOT NULL)
 	    ORDER BY meas_dt DESC LIMIT 1
 	) cc ON TRUE
 	LEFT JOIN LATERAL (
@@ -5574,7 +5574,7 @@
 	    FROM client_meas_raw m
 	    WHERE m.point_sq = p.point_sq
 	      AND m.meas_dt >= COALESCE(cc.last_dt, CURRENT_DATE - 3)
-	      AND m.point_sq NOT IN (<include refid="forceCommFailPointSqs"/>)
+	      AND (m.point_sq NOT IN (<include refid="forceCommFailPointSqs"/>) OR m.accu_iv IS NOT NULL)
 	    ORDER BY m.meas_dt DESC LIMIT 1
 	) lr ON TRUE
 	ORDER BY p.rn
@@ -5595,7 +5595,7 @@
 		    FROM client_meas_raw m
 		    WHERE m.point_sq = a.point_sq
 		      AND m.meas_dt >= CURRENT_DATE - 3
-		      AND m.point_sq NOT IN (<include refid="forceCommFailPointSqs"/>)
+		      AND (m.point_sq NOT IN (<include refid="forceCommFailPointSqs"/>) OR m.accu_iv IS NOT NULL)
 		    ORDER BY m.meas_dt DESC LIMIT 1
 		) lr_f ON TRUE
 	</if>
@@ -5869,7 +5869,7 @@
 	LEFT JOIN LATERAL (
 	    SELECT last_dt FROM client_meas_day
 	    WHERE point_sq = fp.point_sq
-	      AND point_sq NOT IN (<include refid="forceCommFailPointSqs"/>)
+	      AND (point_sq NOT IN (<include refid="forceCommFailPointSqs"/>) OR accu_iv IS NOT NULL)
 	      AND meas_dt >= CURRENT_DATE - 35
 	    ORDER BY meas_dt DESC LIMIT 1
 	) cc ON TRUE
@@ -5878,7 +5878,7 @@
 	    FROM client_meas_raw m
 	    WHERE m.point_sq = fp.point_sq
 	      AND m.meas_dt >= COALESCE(cc.last_dt, CURRENT_DATE - 3)
-	      AND m.point_sq NOT IN (<include refid="forceCommFailPointSqs"/>)
+	      AND (m.point_sq NOT IN (<include refid="forceCommFailPointSqs"/>) OR m.accu_iv IS NOT NULL)
 	    ORDER BY m.meas_dt DESC LIMIT 1
 	) lr ON TRUE
 	</sql>
@@ -5892,7 +5892,7 @@
 		LEFT JOIN LATERAL (
 		    SELECT last_dt FROM client_meas_day
 		    WHERE point_sq = t.point_sq
-		      AND point_sq NOT IN (<include refid="forceCommFailPointSqs"/>)
+		      AND (point_sq NOT IN (<include refid="forceCommFailPointSqs"/>) OR accu_iv IS NOT NULL)
 		    ORDER BY meas_dt DESC LIMIT 1
 		) cmd ON TRUE
 		WHERE cmd.last_dt IS NOT NULL
@@ -6435,7 +6435,7 @@
 				FROM client_meas_raw r
 				WHERE r.meas_dt >= NOW() - interval '73 hour'
 				  AND r.meas_dt < NOW()
-				  AND r.point_sq NOT IN (<include refid="forceCommFailPointSqs"/>)
+				  AND (r.point_sq NOT IN (<include refid="forceCommFailPointSqs"/>) OR r.accu_iv IS NOT NULL)
 			),
 			-- 2단계: 72시간 내 실제 term_cv로 집계
 			meas_summary AS (
