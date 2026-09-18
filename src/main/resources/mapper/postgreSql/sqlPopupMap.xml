@@ -40,6 +40,8 @@
       
    </sql>
 
+	<sql id="forceCommFailPointSqs">64415,64418,64421,64422,64428,64438,64439,64441,64447</sql>
+
 	<select id="popupPointList" parameterType="java.util.Map" resultType="java.util.Map">
       <include refid="popupPointList_sql"/>      
     </select>
@@ -151,6 +153,7 @@
 		        FROM client_meas_raw m
 		        WHERE m.point_sq = a.point_sq
 		          AND m.meas_dt >= CURRENT_DATE - 3
+		          AND m.point_sq NOT IN (<include refid="forceCommFailPointSqs"/>)
 		        ORDER BY m.meas_dt DESC LIMIT 1
 		    ) lr_f ON TRUE
 		    </if>
