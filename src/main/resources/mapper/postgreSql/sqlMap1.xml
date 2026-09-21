@@ -41,7 +41,7 @@
       
    </sql>
 
-	<!-- 임시: 아래 9대는 accu_iv NULL 행만 웹에서 숨김. 개통 후 이 조각과 include 를 제거 -->
+	<!-- 임시: 아래 9대는 웹에서 accu_iv NULL 행만 숨김. DB raw/day 는 그대로 적재. 개통 후 include 제거 -->
 	<sql id="forceCommFailPointSqs">64415,64418,64421,64422,64428,64438,64439,64441,64447</sql>
 
    
@@ -6435,7 +6435,9 @@
 				FROM client_meas_raw r
 				WHERE r.meas_dt >= NOW() - interval '73 hour'
 				  AND r.meas_dt < NOW()
-				  AND (r.point_sq NOT IN (<include refid="forceCommFailPointSqs"/>) OR r.accu_iv IS NOT NULL)
+				  AND (r.point_sq NOT IN (]]>
+				<include refid="forceCommFailPointSqs"/>
+				<![CDATA[) OR r.accu_iv IS NOT NULL)
 			),
 			-- 2단계: 72시간 내 실제 term_cv로 집계
 			meas_summary AS (
