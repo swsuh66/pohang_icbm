@@ -41,8 +41,8 @@
       
    </sql>
 
-	<!-- 임시: 아래 9대는 웹에서 accu_iv NULL 행만 숨김. DB raw/day 는 그대로 적재. 개통 후 include 제거 -->
-	<sql id="forceCommFailPointSqs">64415,64418,64421,64422,64428,64438,64439,64441,64447</sql>
+	<!-- 임시: 아래 12대는 웹에서 accu_iv NULL 행만 숨김. DB raw/day 는 그대로 적재. 개통 후 include 제거 -->
+	<sql id="forceCommFailPointSqs">64415,64418,64421,64422,64428,64438,64439,64441,64447,62261,62687,64456</sql>
 
    
    <select id="userInfo_paging" parameterType="java.util.Map" resultType="java.util.Map">
@@ -3350,7 +3350,7 @@
                 AND p.site_sq = #{siteSq}::integer
             </when>
         </choose>
-		     	
+        
         <choose>
             <when test="upBlkSq != null and lv != null">
                 AND p.blk_sq IN (
@@ -3364,7 +3364,7 @@
                 AND p.blk_sq IS NULL
             </when>
         </choose>
-		     	
+        
         <choose>
             <when test="comSq != null and comSq != -2">
                 AND p.company_sq = #{comSq}::integer
@@ -3400,7 +3400,7 @@
                 AND p.check_day IS NULL
             </when>
         </choose>
-			     
+        
         <choose>
             <when test="useType != null and !useType.equals('-2')">
                 AND p.use_type = #{useType}
