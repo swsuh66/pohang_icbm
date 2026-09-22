@@ -40,7 +40,7 @@
       
    </sql>
 
-	<sql id="forceCommFailPointSqs">64415,64418,64421,64422,64428,64438,64439,64441,64447,62261,62687,64456</sql>
+	<sql id="forceCommFailPointSqs">64415,64418,64421,64422,64428,64438,64439,64441,64447,62261,62687,64456,64417,64533</sql>
 
 	<select id="popupPointList" parameterType="java.util.Map" resultType="java.util.Map">
       <include refid="popupPointList_sql"/>      
