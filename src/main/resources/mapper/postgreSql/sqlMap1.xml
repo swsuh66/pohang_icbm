@@ -5399,6 +5399,7 @@
 						WHERE d.point_sq = a.point_sq
 						  AND d.meas_dt >= CURRENT_DATE - 4
 						  AND d.last_dt >= CURRENT_TIMESTAMP - interval '3 days'
+						  AND (d.point_sq NOT IN (<include refid="forceCommFailPointSqs"/>) OR d.accu_iv IS NOT NULL)
 					)
 				</when>
 				<when test="statCd == 2">
@@ -5698,6 +5699,7 @@
 						WHERE d.point_sq = a.point_sq
 						  AND d.meas_dt >= CURRENT_DATE - 4
 						  AND d.last_dt >= CURRENT_TIMESTAMP - interval '3 days'
+						  AND (d.point_sq NOT IN (<include refid="forceCommFailPointSqs"/>) OR d.accu_iv IS NOT NULL)
 					)
 				</when>
 				<when test="statCd == 2">
